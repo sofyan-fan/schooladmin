@@ -1,0 +1,329 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+	--responsive-width: 700px;
+	--responsive-heigth: 100px;
+}
+
+*{
+  font-family: 'Poppins', sans-serif;
+}
+
+body{
+  background-color: #06402B;
+  
+}
+
+
+h1{
+  display: flex;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  color: white;
+}
+
+
+.container {
+	width: 800px;
+}
+
+.col-12 {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+ 
+}
+  
+
+
+
+.div-container-left{
+  border-right:solid;
+  border-width: 0.5;
+  border-color: white;
+  height: 600px;
+  width: 500px;
+  display: flex;
+  justify-content: center; /* Centers horizontally */
+  align-items: center;     /* Centers vertically */
+  
+
+}
+
+.div-container-right{
+  background-color: aqua;
+  border: solid;
+  width: 600px;
+  height: 500px;
+}
+
+.input-container{
+
+  display: flex;
+  margin-top: 10px;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 1rem; 
+  width: 100%;
+  
+}
+
+.admin-btn {
+  display: flex;
+  flex-direction: column; /* Stack icon above the text */
+  align-items: center; /* Center icon and text horizontally */
+  justify-content: center; /* Center icon and text vertically */
+  width: 90px;
+  height: 90px;
+  background-color: rgba(255, 255, 255, 0.2);
+  outline: none;
+  color: #fff;
+  backdrop-filter: blur(20px);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: 0.2s;
+  font-size: 12px;
+}
+
+.icon-above {
+  font-size: 24px; /* Adjust icon size as needed */
+  margin-bottom: 4px; /* Space between icon and text */
+}
+
+
+
+.admin-btn {
+	opacity: 0.85;
+	background-color: none;
+	color: white;
+}
+
+.admin-btn:hover{
+  opacity: 0.85;
+  background-color: white;
+  color: 	#006400;
+}
+
+
+.btn-box1{
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+	justify-content: center;
+}
+
+.btn-box2{
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+
+}
+
+.btn{
+  font-weight: 500;
+  padding: 8px 30px;
+  border: none;
+  border-radius: 30px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: .2s;
+}
+
+.submit{
+  display: flex;
+  justify-content: center;
+}
+
+.inputs{
+  width: 300px;
+  height: 55px;
+  margin: 10px 0px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  padding: 0 40px 0 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  outline: none;
+  color: #fff;
+  backdrop-filter: blur(20px);
+
+}
+
+.input-container{
+  position: relative;
+}
+
+.input-box{
+ position: relative;
+
+}
+
+::placeholder{
+  color: white;
+  font-size: 15px;
+}
+
+.form-title{
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  margin: 40px 0;
+  color: white;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.btn-1{
+  background: #895129;
+  color: white;
+}
+
+.btn-1:hover{
+  opacity: 0.85;
+  background-color: white;
+  color: #895129;
+}
+
+.btn-2{
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.btn-2:hover{
+  background-color: white ;
+  color:#06402B;
+}
+
+
+
+.input-box .icon{
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  color: #fff;
+}
+
+
+
+.submit {
+  display: flex;
+  align-items: center; /* Center icon and text horizontally */
+  justify-content: center;
+}
+
+.forgot-pass{
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+.forgot-pass a{
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.forgot-pass a:hover{
+  text-decoration: underline;
+}
+
+.remember-login{
+  display: flex;
+  justify-content: left;
+  gap: 5px;
+  margin-left: 10px;
+  color: white;
+  font-size: 14px;
+ }
+
+.submit-btn {
+  display: flex;
+  align-items: center; /* Center icon and text vertically */
+  justify-content: center;
+  background-color:	#006400;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  padding: 10px 20px;
+  cursor: pointer;
+  outline: none;
+  backdrop-filter: blur(20px);
+  width: 300px;
+  height: 55px;
+  border-radius: 27.5px;
+  transition: 0.2s;
+
+}
+
+.arrow {
+  font-size: 18px; /* Adjust icon size if needed */
+  margin-left: 8px; /* Space between text and icon */
+}
+
+.submit-btn:hover{
+  background-color: white;
+  color: 	#006400; ;
+}
+
+@media (max-width: 900px) {
+  .container {
+    width: 100%; /* Make container take full width */
+    padding: 10px; /* Add padding for smaller screens */
+  }
+
+  .row {
+    width: 100% !important; /* Override w-50 to make it take full width */
+  }
+
+  .responsive-login {
+    padding: 20px; /* Reduce padding for smaller screens */
+  }
+
+  .admin-btn {
+    width: 100px; /* Reduce button size */
+    height: 100px;
+    font-size: 15px; /* Adjust text size */
+  }
+
+  .icon-above {
+    font-size: 35px; /* Adjust icon size as needed */
+    margin-bottom: 4px; /* Space between icon and text */
+  }
+
+  .inputs .input-box {
+    width: 100%; /* Make input fields take full width */
+    font-size: 14px; /* Adjust font size */
+  }
+
+  .submit .submit-btn {
+    width: 50%; /* Full-width button */
+    height: 50px; /* Adjust height */
+    font-size: 14px; /* Smaller text */
+  }
+
+  .form-title {
+    font-size: 24px; /* Smaller form title */
+    margin: 20px 0; /* Adjust margins */
+  }
+
+  .forgot-pass, .remember-login {
+    font-size: 12px; /* Reduce font size for smaller screens */
+    text-align: center; /* Center align */
+  }
+
+  .btn {
+    padding: 8px 20px; /* Adjust padding for smaller buttons */
+  }
+}
+
