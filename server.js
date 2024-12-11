@@ -1,31 +1,41 @@
-import express from 'express';
-import bodyParser from 'body-parser'
-import {dirname} from 'path';
-import { fileURLToPath } from 'url';
+const { createServer } = require("http");
+const express = require('express');
+const bodyParser = require('body-parser');
+const session = require('express-session');
 
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-
-const app = express(); 
 const port = 3000;
+const app = express();
 
-app.use(bodyParser.urlencoded({extended:true}));
-app.use(express.static("public"));
+// Create app
+const server = createServer(app);
+
+app.use(
+	session({
+		secret: "secret-key",
+		resave: false,
+		saveUninitialized: false,
+		cookie: {
+			maxAge: 1000 * 60 * 60 * 24,
+		}
+	}));
+
+//sets up a middleware function so the server can use the JSON from requests
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+	extended: true
+}));
+
+// Static files to be used in memory for example files
+app.use(express.static("."));
+
+// Set view engine
+app.set("view engine", "ejs");
+app.set('views', 'views');
+
+// It sets up all the routes with the correct controller
+app.use('/', require('./router'));
 
 
-app.get("/", (req, res) => {
-  res.render(__dirname + "/views/index.ejs");
-});
-
-app.get("/dashboard", (req, res) => {
-  res.render(__dirname + "/views/dashboard/dashboard.ejs");
-});
-
-app.post("/submit", (req, res) => {
-  console.log(req.body);
-})
-
-app.listen(port, () =>{
-  console.log(`Server is running on ${port}.`)
+app.listen(port, () => {
+	console.log(`Server is running on ${port}.`)
 });
