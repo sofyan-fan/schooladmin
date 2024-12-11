@@ -27,3 +27,11 @@ model sospersoon {
   lastname   String   @db.VarChar(30)
   user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
+
+model event {
+  id         Int      @id @default(autoincrement())
+  event_name String   @db.VarChar(50)
+  event_date String   @db.VarChar(30)
+  start_date String   @db.VarChar(30)
+  end_date   String   @db.VarChar(30)
+}
