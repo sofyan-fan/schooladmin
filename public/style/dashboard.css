@@ -123,3 +123,7 @@ main {
   font-size: 60px;
 
 }
+
+.scrollable-events {
+  max-height: 300px;
+}
