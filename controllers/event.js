@@ -13,14 +13,11 @@ exports.create_event = async (req, res) => {
             });
         }
 
-        // Format the event date to DD/MM/YYYY
-        const formattedEventDate = format(new Date(event_date), 'dd-MM-yyyy');
-
         // Insert the event into the database
         const newEvent = await prisma.event.create({
             data: {
                 event_name,
-                event_date: formattedEventDate, // Use the formatted date here
+                event_date,
             },
         });
 

@@ -1,243 +1,70 @@
-// Array to store events
-
-const events = [];
-
- 
-
-// Add Event
-
-document.getElementById('event-form').addEventListener('submit', function (e) {
-
-    e.preventDefault();
-
- 
-
-    const date = document.getElementById('event-date').value;
-
-    const name = document.getElementById('event-name').value;
-
- 
-
-    if (date && name) {
-
-        const formattedDate = formatDate(date);
-
-        events.push({
-
-            date: formattedDate,
-
-            name
-
-        });
-
-        events.sort((a, b) => new Date(a.date.split('-').reverse().join('-')) - new Date(b.date.split('-').reverse().join('-')));
-
-        updateEventList();
-
- 
-
-        // Reset form
-
-        document.getElementById('event-form').reset();
-
-    }
-
-});
-
- 
-
-// Format Date to dd-mm-yyyy
-
-function formatDate(date) {
-
-    const [year, month, day] = date.split('-');
-
-    return `${day}-${month}-${year}`;
-
-}
-
- 
-
-// Update Event List Display
-
-function updateEventList() {
-
-    const eventList = document.getElementById('event-list');
-
-    eventList.innerHTML = '';
-
- 
-
-    events.forEach((event, index) => {
-
-        const li = document.createElement('li');
-
-        li.className = 'list-group-item d-flex justify-content-between align-items-center m-1 rounded-2';
-
- 
-
-        const eventText = document.createElement('span');
-
-        eventText.textContent = `${event.date} - ${event.name}`;
-
- 
-
-        const btnGroup = document.createElement('div');
-
- 
-
-        // Edit Button
-
-        const editBtn = document.createElement('button');
-
-        editBtn.className = 'btn btn-warning btn-sm me-2';
-
-        editBtn.setAttribute('data-bs-toggle', 'modal');
-
-        editBtn.setAttribute('data-bs-target', '#exampleModal');
-
-        editBtn.textContent = 'Edit';
-
-        editBtn.onclick = () => editEvent(index);
-
- 
-
-        // Delete Button
-
-        const deleteBtn = document.createElement('button');
-
-        deleteBtn.className = 'btn btn-danger btn-sm';
-
-        deleteBtn.textContent = 'Delete';
-
-        deleteBtn.onclick = () => deleteEvent(index);
-
- 
-
-        btnGroup.appendChild(editBtn);
-
-        btnGroup.appendChild(deleteBtn);
-
- 
-
-        li.appendChild(eventText);
-
-        li.appendChild(btnGroup);
-
-        eventList.appendChild(li);
-
-    });
-
-}
-
- 
-
-// Edit Event
-
-function editEvent(index) {
-
-    const event = events[index];
-
-    const [day, month, year] = event.date.split('-');
-
-    const formattedDate = `${year}-${month}-${day}`;
-
-    document.getElementById('event-date').value = formattedDate;
-
-    document.getElementById('event-name').value = event.name;
-
- 
-
-    // Remove the event being edited from the list
-
-    events.splice(index, 1);
-
-    updateEventList();
-
-}
-
- 
-
-// Delete Event
-
-function deleteEvent(index) {
-
-    events.splice(index, 1);
-
-    updateEventList();
-
-}
-
- 
-
-// Generate PDF
+// Ensure this script is linked in your HTML
+// This function generates a PDF of events between the selected start and end dates.
 
 async function generatePDF() {
+    const { jsPDF } = window.jspdf;
+    const startDate = document.getElementById("start-date").value;
+    const endDate = document.getElementById("end-date").value;
+    const eventList = document.getElementById("event-list");
 
-  console.log(window.jspdf);
+    // Validate date inputs
+    if (!startDate || !endDate) {
+        alert("Please select both start and end dates.");
+        return;
+    }
 
- 
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-  const startDate = new Date(document.getElementById('start-date').value);
+    if (start > end) {
+        alert("Start date cannot be later than end date.");
+        return;
+    }
 
-  const endDate = new Date(document.getElementById('end-date').value);
+    const events = Array.from(eventList.getElementsByTagName("li"));
+    const filteredEvents = [];
 
- 
+    events.forEach((eventItem) => {
+        const eventNameElement = eventItem.querySelector(".event-name-pdf");
+        const eventDateElement = eventItem.querySelector(".event-date-pdf");
 
-  if (!startDate || !endDate || startDate > endDate) {
+        if (eventNameElement && eventDateElement) {
+            const eventName = eventNameElement.textContent.trim();
+            const eventDate = new Date(eventDateElement.textContent.trim());
 
-      alert('Please select a valid date range.');
+            if (eventDate >= start && eventDate <= end) {
+                filteredEvents.push({ name: eventName, date: eventDate.toLocaleDateString() });
+            }
+        }
+    });
 
-      return;
+    if (filteredEvents.length === 0) {
+        alert("No events found in the specified date range.");
+        return;
+    }
 
-  }
+    // Create a new PDF instance
+    const doc = new jsPDF();
 
- 
+    doc.setFontSize(18);
+    doc.text("Event List", 105, 15, null, null, "center");
 
-  const filteredEvents = events.filter(event => {
+    doc.setFontSize(12);
+    doc.text(`Events from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`, 105, 25, null, null, "center");
 
-      const [day, month, year] = event.date.split('-');
+    let yOffset = 40;
 
-      const eventDate = new Date(`${year}-${month}-${day}`);
+    filteredEvents.forEach((event, index) => {
+        doc.text(`${index + 1}. ${event.name} - ${event.date}`, 10, yOffset);
+        yOffset += 10;
 
-      return eventDate >= startDate && eventDate <= endDate;
+        // Create a new page if content exceeds page height
+        if (yOffset > 280) {
+            doc.addPage();
+            yOffset = 20;
+        }
+    });
 
-  });
-
- 
-
-  if (filteredEvents.length === 0) {
-
-      alert('No events found in the selected date range.');
-
-      return;
-
-  }
-
- 
-
-  const { jsPDF } = window.jspdf;
-
-  const doc = new jsPDF();
-
- 
-
-  doc.setFontSize(12);
-
-  doc.text('Event List', 10, 10);
-
- 
-
-  filteredEvents.forEach((event, index) => {
-
-      doc.text(`${index + 1}. ${event.date} - ${event.name}`, 10, 20 + index * 10);
-
-  });
-
- 
-
-  doc.save('events.pdf');
-
+    // Save the PDF
+    doc.save("events.pdf");
 }
-
- 
