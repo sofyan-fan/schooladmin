@@ -7,6 +7,14 @@ async function generatePDF() {
     const endDate = document.getElementById("end-date").value;
     const eventList = document.getElementById("event-list");
 
+    // Helper function to format dates as dd/mm/yyyy
+    function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
     // Validate date inputs
     if (!startDate || !endDate) {
         alert("Please select both start and end dates.");
@@ -33,7 +41,7 @@ async function generatePDF() {
             const eventDate = new Date(eventDateElement.textContent.trim());
 
             if (eventDate >= start && eventDate <= end) {
-                filteredEvents.push({ name: eventName, date: eventDate.toLocaleDateString() });
+                filteredEvents.push({ name: eventName, date: formatDate(eventDate) });
             }
         }
     });
@@ -50,7 +58,7 @@ async function generatePDF() {
     doc.text("Event List", 105, 15, null, null, "center");
 
     doc.setFontSize(12);
-    doc.text(`Events from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`, 105, 25, null, null, "center");
+    doc.text(`Events from ${formatDate(start)} to ${formatDate(end)}`, 105, 25, null, null, "center");
 
     let yOffset = 40;
 

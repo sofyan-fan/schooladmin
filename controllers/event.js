@@ -12,12 +12,14 @@ exports.create_event = async (req, res) => {
                 error: 'All fields are required'
             });
         }
+        // Format the event date to DD/MM/YYYY
+        const formattedEventDate = format(new Date(event_date), 'MM/dd/yyyy');
 
         // Insert the event into the database
         const newEvent = await prisma.event.create({
             data: {
                 event_name,
-                event_date,
+                event_date: formattedEventDate, // Use the formatted date here
             },
         });
 
