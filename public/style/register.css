@@ -25,9 +25,6 @@ h1{
 }
 
 
-.container {
-	width: 800px;
-}
 
 .col-12 {
   border: 3px solid rgba(255, 255, 255, 0.3);
@@ -38,27 +35,8 @@ h1{
 
 
 
-.div-container-left{
-  border-right:solid;
-  border-width: 0.5;
-  border-color: white;
-  height: 600px;
-  width: 500px;
-  display: flex;
-  justify-content: center; /* Centers horizontally */
-  align-items: center;     /* Centers vertically */
-  
 
-}
-
-.div-container-right{
-  background-color: aqua;
-  border: solid;
-  width: 600px;
-  height: 500px;
-}
-
-.input-container{
+/* .input-container{
 
   display: flex;
   margin-top: 10px;
@@ -68,7 +46,7 @@ h1{
   gap: 1rem; 
   width: 100%;
   
-}
+} */
 
 .admin-btn {
   display: flex;
@@ -114,24 +92,17 @@ h1{
 }
 
 
-.btn-box1{
-	display: flex;
-	flex-direction: row;
-	gap: 1rem;
-	justify-content: center;
-}
-
 .btn-box2{
+  width: 100px;
   margin-top: 10px;
   display: flex;
   justify-content: center;
-  gap: 1rem;
-
 }
 
 .btn{
   font-weight: 500;
-  padding: 8px 30px;
+  padding: 8px 20px;
+  width: 300px;
   border: none;
   border-radius: 30px;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
@@ -145,7 +116,7 @@ h1{
 }
 
 .inputs {
-  width: 300px;
+  width: 325px;
   height: 55px;
   margin: 10px 0px;
   border: none;
@@ -156,7 +127,30 @@ h1{
   outline: none;
   color: #fff;
   backdrop-filter: blur(20px);
+}
 
+.inputs-telcode {
+  width: 120px;
+  height: 55px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.2);
+  outline: none;
+  color: #fff;
+  backdrop-filter: blur(20px);
+}
+
+.inputs-tel {
+  width: 200px;
+  height: 55px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.2);
+  outline: none;
+  color: #fff;
+  backdrop-filter: blur(20px);
 }
 
 .input-container{
@@ -281,54 +275,4 @@ h1{
   color: 	#006400; ;
 }
 
-@media (max-width: 900px) {
-  .container {
-    width: 100%; /* Make container take full width */
-    padding: 10px; /* Add padding for smaller screens */
-  }
-
-  .row {
-    width: 100% !important; /* Override w-50 to make it take full width */
-  }
-
-  .responsive-login {
-    padding: 20px; /* Reduce padding for smaller screens */
-  }
-
-  .admin-btn {
-    width: 100px; /* Reduce button size */
-    height: 100px;
-    font-size: 15px; /* Adjust text size */
-  }
-
-  .icon-above {
-    font-size: 35px; /* Adjust icon size as needed */
-    margin-bottom: 4px; /* Space between icon and text */
-  }
-
-  .inputs .input-box {
-    width: 100%; /* Make input fields take full width */
-    font-size: 14px; /* Adjust font size */
-  }
-
-  .submit .submit-btn {
-    width: 50%; /* Full-width button */
-    height: 50px; /* Adjust height */
-    font-size: 14px; /* Smaller text */
-  }
-
-  .form-title {
-    font-size: 24px; /* Smaller form title */
-    margin: 20px 0; /* Adjust margins */
-  }
-
-  .forgot-pass, .remember-login {
-    font-size: 12px; /* Reduce font size for smaller screens */
-    text-align: center; /* Center align */
-  }
-
-  .btn {
-    padding: 8px 20px; /* Adjust padding for smaller buttons */
-  }
-}
 

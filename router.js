@@ -4,12 +4,16 @@ const router = express.Router();
 const { get_login, login } = require('./controllers/auth/login');
 const { get_dashboard } = require('./controllers/dashboard');
 const { create_event, delete_event, edit_event } = require('./controllers/event');
+const { get_register} = require('./controllers/register');
 
 
 //login
 router.get('/', get_login);
 router.get('/login', get_login);
 router.post('/login', login);
+
+//register
+router.get('/register', get_register);
 
 //dashboard
 router.get('/dashboard', get_dashboard);
