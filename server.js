@@ -33,7 +33,7 @@ app.set("view engine", "ejs");
 app.set('views', 'views');
 
 // It sets up all the routes with the correct controller
-app.use('/', require('./router'));
+app.use('/', require('./router.js'));
 
 
 app.listen(port, () => {
