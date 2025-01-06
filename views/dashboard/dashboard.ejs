@@ -24,7 +24,7 @@
 				<div class="container">
 					<div class="row mt-3 g-3">
 						<div class="col-md-12 col-lg-4 col-xl">
-							<div class="card">
+							<div class="card card-style">
 								<div class="card-body">
 									<div class="widget-first">
 
@@ -57,7 +57,7 @@
 						</div>
 
 						<div class="col-md-12 col-lg-4 col-xl">
-							<div class="card">
+							<div class="card card-style">
 								<div class="card-body">
 									<div class="widget-first">
 
@@ -89,7 +89,7 @@
 						</div>
 
 						<div class="col-md-12 col-lg-4 col-xl">
-							<div class="card">
+							<div class="card card-style">
 								<div class="card-body">
 									<div class="widget-first">
 
@@ -119,7 +119,7 @@
 					</div>
 
 					<!-- Calender row -->
-					<div class="row m-0 mt-3 bg-light text-dark rounded">
+					<div class="row m-0 mt-3 bg-light text-dark rounded card-style">
 						<h2 class="text-starts my-5 border-bottom pb-4 mt-4 "> <b>Jaarplanning</b></h2>
 						<div class="row">
 
@@ -131,14 +131,14 @@
 										<div class="mb-3">
 											<label for="event-date" class="form-label">Datum</label>
 											<input type="date" name="event_date" id="event-date" class="form-control"
-												required>
+												data-options={&quot;dateFormat&quot;:&quot;d/m/y&quot;,&quot;disableMobile&quot;:true} required>
 										</div>
 										<div class="mb-3">
 											<label for="event-name" class="form-label">Activiteit</label>
 											<input type="text" name="event_name" id="event-name" class="form-control"
 												required>
 										</div>
-										<button type="submit" class="btn btn-primary">Toevoegen</button>
+										<button type="submit" class="btn btn-primary ">+ Toevoegen</button>
 
 									</div>
 
