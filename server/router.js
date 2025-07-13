@@ -24,23 +24,23 @@ const {
 router.post('/auth/login', login);
 router.post('/auth/logout', logout);
 router.post('/auth/register', register);
-router.get('/auth/me', authenticate, get_user);
+router.get('/auth/me', get_user);
 
 // User routes
-router.get('/users', authenticate, get_users);
+router.get('/users', get_users);
 
 // Dashboard route
-router.get('/dashboard', authenticate, get_dashboard_data);
+router.get('/dashboard', get_dashboard_data);
 
 // Event routes
-router.get('/events', authenticate, get_events);
-router.post('/events', authenticate, create_event);
-router.put('/events/:id', authenticate, edit_event);
-router.delete('/events/:id', authenticate, delete_event);
+router.get('/events', get_events);
+router.post('/events', create_event);
+router.put('/events/:id', edit_event);
+router.delete('/events/:id', delete_event);
 
 // Student routes
-router.get('/students', authenticate, get_all_students);
-router.get('/students/search', authenticate, search_students);
-router.get('/students/:id', authenticate, get_student_by_id);
+router.get('/students', get_all_students);
+router.get('/students/search', search_students);
+router.get('/students/:id', get_student_by_id);
 
 module.exports = router;
