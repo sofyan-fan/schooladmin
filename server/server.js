@@ -3,17 +3,16 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors');
 
-const port = 3000;
+const port = 5173;
 const app = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:5173', // or your client's address
+    origin: 'http://localhost:' + port,
     credentials: true,
   })
 );
 
-//extra comment for nassef
 app.use(
   session({
     secret: 'secret-key',
@@ -25,7 +24,6 @@ app.use(
   })
 );
 
-//sets up a middleware function so the server can use the JSON from requests
 app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
@@ -33,7 +31,6 @@ app.use(
   })
 );
 
-// It sets up all the routes with the correct controller
 app.use('/', require('./router.js'));
 
 app.listen(port, () => {
