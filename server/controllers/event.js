@@ -1,9 +1,5 @@
-const {
-	prisma
-} = require('../prisma/connection');
-const {
-	format
-} = require('date-fns');
+const { prisma } = require('../prisma/connection');
+const { format } = require('date-fns');
 
 exports.get_events = async (req, res) => {
 	try {
