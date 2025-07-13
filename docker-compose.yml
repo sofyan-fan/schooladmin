@@ -1,0 +1,67 @@
+services:
+  # CLIENT
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: schooladmin-client
+    ports:
+      - "5173:5173" 
+    volumes:
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - server
+    restart: always
+
+    # SERVER
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: schooladmin-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - ./server/.env
+    depends_on:
+      - db
+    restart: always
+
+    # DB
+  db:
+    image: mysql:8.0
+    container_name: schooladmin-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: supersecret
+      MYSQL_DATABASE: schooladmin
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      
+# PRISMA STUDIO
+  studio:
+    image: node:18
+    working_dir: /usr/src/app
+    volumes:
+      - ./server:/usr/src/app
+    command: npx prisma studio \
+               --schema=./prisma/schema.prisma \
+               --hostname=0.0.0.0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - server
+    restart: "no"
+
+volumes:
+  mysql-data:
+
+
