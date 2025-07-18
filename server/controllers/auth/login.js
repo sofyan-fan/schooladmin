@@ -1,8 +1,6 @@
 const { prisma } = require('../../prisma/connection');
 const bcrypt = require('bcrypt');
 
-const JWT_SECRET = 'your-super-secret-key-that-is-long-and-secure'; // In production, use an environment variable
-
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -46,4 +44,16 @@ exports.login = async (req, res) => {
       message: 'Internal Server Error',
     });
   }
+};
+
+exports.logout = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({
+        message: 'Could not log out, please try again.',
+      });
+    }
+
+    res.status(200).json({ message: 'Logout successful' });
+  });
 };
