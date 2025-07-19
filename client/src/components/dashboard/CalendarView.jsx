@@ -1,11 +1,5 @@
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen } from 'lucide-react';
 import React from 'react';
 
