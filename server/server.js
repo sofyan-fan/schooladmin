@@ -2,8 +2,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors');
+const routes = require('./routes');
 
-const port = 3000;
+const port = 5173;
 const app = express();
 
 app.use(
@@ -31,7 +32,7 @@ app.use(
   })
 );
 
-app.use('/', require('./router.js'));
+app.use('/', routes);
 
 app.listen(port, () => {
   console.log(`Server is running on ${port}.`);

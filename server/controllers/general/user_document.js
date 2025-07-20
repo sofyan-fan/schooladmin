@@ -1,4 +1,4 @@
-const { prisma } = require('../prisma/connection');
+const { prisma } = require('../../prisma/connection');
 
 exports.get_all_students = async (req, res) => {
 	try {
