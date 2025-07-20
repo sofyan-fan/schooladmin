@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const StatCard = ({ title, value, icon, link }) => {
   return (
     <Link to={link}>
-    <Card className="flex flex-row px-2 py-4 justify-center rounded-lg border-[#ffe18fb3] shadow-sm bg-[#FEFEFD]">
+    <Card className="flex flex-row px-2 py-4 justify-center rounded-lg border shadow-sm bg-[#FEFEFD]">
       <div className="flex flex-row items-center justify-end space-y-0 pb-2 w-1/6">
         {icon}
       </div>

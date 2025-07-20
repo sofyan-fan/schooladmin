@@ -7,5 +7,116 @@
       "role": "admin",
       "id": 1
     }
+  ],
+  "stats": {
+    "totalStudents": 130,
+    "studentsPresent": 64,
+    "teachersPresent": 34
+  },
+  "jaarplanning": [
+    {
+      "id": 1,
+      "icon": "moon",
+      "title": "Islamitische Feestdag",
+      "date": "Maandag 30 sept",
+      "time": "10:00-12:00",
+      "tag": "Belangrijk"
+    },
+    {
+      "id": 2,
+      "icon": "book",
+      "title": "Groep 3 - Arabisch Les",
+      "date": "Maandag 18 dec",
+      "time": "14:00-16:00",
+      "tag": "Les"
+    },
+    {
+      "id": 4,
+      "icon": "star",
+      "title": "Koranwedstrijd",
+      "date": "Zaterdag 27 dec",
+      "time": "09:00-17:00",
+      "tag": "Activiteit"
+    },
+    {
+      "id": 5,
+      "icon": "book",
+      "title": "Groep 4 - Arabisch Les",
+      "date": "Dinsdag 19 dec",
+      "time": "14:00-16:00",
+      "tag": "Les"
+    },
+    {
+      "id": 6,
+      "icon": "star",
+      "title": "Koranwedstrijd",
+      "date": "Zaterdag 27 dec",
+      "time": "09:00-17:00",
+      "tag": "Activiteit"
+    },
+    {
+      "title": "Arabische Geschiedenis ",
+      "date": "17-06-2025",
+      "time": "10:00-12:00",
+      "id": 7
+    }
+  ],
+  "studenten": [
+    {
+      "id": 1,
+      "avatar": "",
+      "name": "Ahmad Hassan",
+      "group": "Groep 4",
+      "status": "Aanwezig",
+      "contact": ""
+    },
+    {
+      "id": 2,
+      "avatar": "",
+      "name": "Fatima Al-Sayed",
+      "group": "Groep 5",
+      "status": "Afwezig",
+      "contact": ""
+    }
+  ],
+  "leraren": [
+    {
+      "id": 1,
+      "avatar": "",
+      "name": "Mr. Abdullah",
+      "group": "Groep 4, 5",
+      "status": "Aanwezig",
+      "contact": ""
+    }
+  ],
+  "personeel": [
+    {
+      "id": 1,
+      "avatar": "",
+      "name": "Ali ",
+      "group": "Management",
+      "status": "Aanwezig",
+      "contact": ""
+    }
+  ],
+  "lessons": [
+    {
+      "id": 1,
+      "date": "2025-07-17",
+      "title": "Koran recitatie",
+      "time": "14:00-15:30",
+      "teacher": "Ustadh Rahman",
+      "group": "Groep 5",
+      "classroom": "Lokaal 1"
+    },
+    {
+      "id": 2,
+      "date": "2025-07-17",
+      "title": "Arabische les",
+      "time": "16:00-17:30",
+      "teacher": "Ustadh Ali",
+      "group": "Groep 5",
+      "classroom": "Lokaal 1"
+    }
   ]
 }

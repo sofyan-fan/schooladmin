@@ -1,5 +1,6 @@
-import { dashboardData } from '@/lib/mock-data';
 import { UserCheck, Users, UserX } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import RequestHandler from '../apis/RequestHandler';
 import CalendarView from '../components/dashboard/CalendarView';
 import Members from '../components/dashboard/Members';
 import StatCard from '../components/dashboard/StatCard';
@@ -7,7 +8,53 @@ import YearPlanning from '../components/dashboard/YearPlanning';
 import LayoutWrapper from '../components/layout/LayoutWrapper';
 
 const DashboardPage = () => {
-  const { stats, jaarplanning, members, lessons } = dashboardData;
+  const [stats, setStats] = useState(null);
+  const [jaarplanning, setJaarplanning] = useState([]);
+  const [members, setMembers] = useState({
+    studenten: [],
+    leraren: [],
+    personeel: [],
+  });
+  const [lessons, setLessons] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [
+          statsRes,
+          jaarplanningRes,
+          studentenRes,
+          lerarenRes,
+          personeelRes,
+          lessonsRes,
+        ] = await Promise.all([
+          RequestHandler.get('api/stats'),
+          RequestHandler.get('api/jaarplanning'),
+          RequestHandler.get('api/studenten'),
+          RequestHandler.get('api/leraren'),
+          RequestHandler.get('api/personeel'),
+          RequestHandler.get('api/lessons'),
+        ]);
+
+        setStats(statsRes.data);
+        setJaarplanning(jaarplanningRes.data);
+        setMembers({
+          studenten: studentenRes.data,
+          leraren: lerarenRes.data,
+          personeel: personeelRes.data,
+        });
+        setLessons(lessonsRes.data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (!stats) {
+    return <div>Loading...</div>; // Or a proper loading spinner
+  }
 
   return (
     <LayoutWrapper>
@@ -36,7 +83,7 @@ const DashboardPage = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          <YearPlanning items={jaarplanning} />
+          <YearPlanning items={jaarplanning} setItems={setJaarplanning} />
           <Members members={members} />
         </div>
         <div className="space-y-6">

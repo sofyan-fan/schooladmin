@@ -60,7 +60,7 @@
   --popover-foreground: oklch(0.24 0.02 250); /* #1F2937 */
   
   /* Primary Colors (Header & Active Tab) */
-  --primary: oklch(0.45 0.22 260);             /* #0B57D0 - Deep blue */
+  --primary: oklch(0.5986 0.1875 143.3);             /* #0B57D0 - Deep blue */
   --primary-foreground: oklch(1 0 0);          /* #FFFFFF - White text */
   
   /* Secondary Colors (Inactive Tabs background) */
