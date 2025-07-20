@@ -33,6 +33,20 @@ export const dashboardData = {
       time: '09:00-17:00',
       tag: 'Activiteit',
     },
+    {
+      icon: 'book',
+      title: 'Groep 4 - Arabisch Les',
+      date: 'Dinsdag 19 dec',
+      time: '14:00-16:00',
+      tag: 'Les',
+    },
+    {
+      icon: 'star',
+      title: 'Koranwedstrijd',
+      date: 'Zaterdag 27 dec',
+      time: '09:00-17:00',
+      tag: 'Activiteit',
+    },
   ],
   members: {
     studenten: [

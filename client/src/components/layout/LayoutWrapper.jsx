@@ -10,7 +10,7 @@ const LayoutWrapper = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-background-base">
+    <div className="flex h-screen bg-[#FEFBF3]">
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col">
         <Topbar toggleSidebar={toggleSidebar} />

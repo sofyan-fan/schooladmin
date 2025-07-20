@@ -1,11 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap');
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Cairo", sans-serif;
+  --font-sans: "Roboto", sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -44,17 +45,17 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* --- UPDATED :root VALUES --- */
+/* --- FINAL :root VALUES TO MATCH SCHOOLADMIN DEMO --- */
 :root {
-  --radius: 0.75rem; /* The UI has slightly larger corner rounding */
+  --radius: 0.75rem; /* Matches the card corner radius in the image (12px) */
 
   /* Page & Card Colors */
-  --background: oklch(0.98 0.005 250);         /* #F8F9FA - Light gray page background */
+  --background: oklch(0.982 0.004 250);       /* #F8F9FA - Very light gray page background */
   --foreground: oklch(0.24 0.02 250);         /* #1F2937 - Dark gray for main text */
-  --card: oklch(1 0 0);                        /* #FFFFFF - White card background */
+  --card: oklch(1 0 0);                        /* #FFFFFF - Pure white card background */
   --card-foreground: oklch(0.24 0.02 250);    /* #1F2937 - Dark gray text on cards */
   
-  /* Popover - Assuming same as card */
+  /* Popover */
   --popover: oklch(1 0 0);                     /* #FFFFFF */
   --popover-foreground: oklch(0.24 0.02 250); /* #1F2937 */
   
@@ -62,33 +63,32 @@
   --primary: oklch(0.45 0.22 260);             /* #0B57D0 - Deep blue */
   --primary-foreground: oklch(1 0 0);          /* #FFFFFF - White text */
   
-  /* Secondary Colors (Inactive Tabs, etc.) */
-  --secondary: oklch(0.98 0.005 250);          /* Using page background for inactive tabs */
-  --secondary-foreground: oklch(0.24 0.02 250);/* Dark text for inactive tabs */
+  /* Secondary Colors (Inactive Tabs background) */
+  --secondary: oklch(0.95 0.01 250);           /* #E9ECEF - Light gray for inactive elements */
+  --secondary-foreground: oklch(0.4 0.015 250);/* #5A6472 - Slightly muted text for inactive tabs */
   
-  /* Muted Colors (Sub-labels) */
-  --muted: oklch(0.98 0.005 250);              /* Parent background */
+  /* Muted Colors (Sub-labels like "DATUM", "TIJD") */
+  --muted: oklch(1 0 0);                       /* Muted text is on a white background */
   --muted-foreground: oklch(0.51 0.01 250);    /* #6B7280 - Lighter gray subtext */
   
-  /* Accent Colors */
-  --accent: oklch(0.7 0.18 50);                /* #F97316 - Vibrant orange accent */
-  --accent-foreground: oklch(1 0 0);           /* White text on accent */
+  /* Accent Colors (Icons & Chart) */
+  --accent: oklch(0.73 0.17 65);               /* #F9A825 - Orange/Yellow for icons and hover states */
+  --accent-foreground: oklch(0.24 0.02 250);   /* Dark text on accent elements */
 
-  /* Destructive, Border, Input, and Ring (sensible defaults) */
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.005 250);             /* A slightly darker gray for borders */
-  --input: oklch(0.92 0.005 250);              /* Same as border */
-  --ring: oklch(0.45 0.22 260);                /* Using primary blue for focus rings */
+  /* Border, Input, Ring */
+  --destructive: oklch(0.577 0.245 27.325);    /* Default destructive color */
+  --border: oklch(0.93 0.005 250);             /* #E5E7EB - Light gray for list dividers */
+  --input: oklch(0.93 0.005 250);              /* Use border color for inputs */
+  --ring: oklch(0.45 0.22 260 / 0.8);          /* Primary blue for focus rings */
 
-  /* Chart Colors (from image) */
-  --chart-1: oklch(0.7 0.18 50);               /* #F97316 - Vibrant orange */
-  --chart-2: oklch(0.8 0.15 50);               /* A lighter orange for the second slice */
-  /* --- Keeping other chart colors as placeholders --- */
-  --chart-3: oklch(0.398 0.07 227.392);
+  /* Chart Colors (from image pie chart) */
+  --chart-1: oklch(0.85 0.12 70);              /* #FBCB6F - Light yellow/orange slice ("Late") */
+  --chart-2: oklch(0.73 0.17 65);              /* #F9A825 - Deeper orange/yellow slice ("Present") */
+  --chart-3: oklch(0.45 0.22 260);             /* #0B57D0 - Using primary blue for "Absent" */
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
 
-  /* --- Keeping Sidebar values as placeholders --- */
+  /* Sidebar (Using sensible defaults from your original file) */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -100,8 +100,7 @@
 }
 
 .dark {
-  /* --- Dark mode would need its own palette based on the image's style --- */
-  /* The provided image is light mode only, so these are your original dark mode values. */
+  /* Your original dark mode values are preserved. */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -140,24 +139,6 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
-
-/* @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter-Regular.woff2') format('woff2'),
-       url('/fonts/Inter.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter-Bold.woff2') format('woff2'),
-       url('/fonts/Inter-Bold.woff') format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-} */

@@ -13,24 +13,24 @@ const DashboardPage = () => {
     <LayoutWrapper>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <StatCard
-          title="Totaal Studenten"
+          title=" Studenten"
           value={stats.totalStudents}
-          icon={<Users className="h-6 w-6 text-muted-foreground" />}
+          icon={<Users className="size-12 text-muted-foreground" />}
         />
         <StatCard
-          title="Studenten Aanwezig"
+          title="Aanwezig"
           value={stats.studentsPresent}
-          icon={<UserCheck className="h-6 w-6 text-muted-foreground" />}
+          icon={<UserCheck className="size-12 text-muted-foreground" />}
         />
         <StatCard
-          title="Leraren Aanwezig"
+          title="Leraren"
           value={stats.teachersPresent}
-          icon={<UserCheck className="h-6 w-6 text-muted-foreground" />}
+          icon={<UserCheck className="size-12 text-muted-foreground" />}
         />
         <StatCard
-          title="Totaal Afwezig"
+          title="Afwezig"
           value={stats.totalStudents - stats.studentsPresent}
-          icon={<UserX className="h-6 w-6 text-muted-foreground" />}
+          icon={<UserX className="size-12 text-muted-foreground" />}
         />
       </div>
 

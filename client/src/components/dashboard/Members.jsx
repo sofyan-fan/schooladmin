@@ -1,32 +1,19 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MoreHorizontal } from 'lucide-react';
 
 const MembersTable = ({ members }) => (
   <Table>
-    <TableHeader className="bg-neutral-100 text-xs uppercase tracking-wide text-neutral-600">
+    {/* <TableHeader className="bg-neutral-100 text-xs uppercase tracking-wide text-neutral-600">
       <TableRow>
         <TableHead>Name</TableHead>
         <TableHead>Group/Role</TableHead>
         <TableHead>Status</TableHead>
         <TableHead></TableHead>
       </TableRow>
-    </TableHeader>
+    </TableHeader> */}
     <TableBody>
       {members.map((member, index) => (
         <TableRow
@@ -57,31 +44,31 @@ const MembersTable = ({ members }) => (
 
 const Members = ({ members }) => {
   return (
-    <Card className="p-4 rounded-lg shadow-md bg-white">
-      <CardHeader>
+    <Card className="rounded-lg shadow-md bg-white py-0">
+      {/* <CardHeader>
         <CardTitle>Leden</CardTitle>
         <CardDescription>
           Een overzicht van alle studenten, leraren en personeel.
         </CardDescription>
-      </CardHeader>
-      <CardContent>
+      </CardHeader> */}
+      <CardContent className="p-0">
         <Tabs defaultValue="studenten">
-          <TabsList>
+          <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
             <TabsTrigger
               value="studenten"
-              className="inline-flex px-4 py-2 text-sm font-medium text-neutral-600 hover:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="inline-flex cursor-pointer rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-sm font-medium text-neutral-600 hover:text-primary data-[state=active]:border-primary data-[state=active]:text-primary"
             >
               Studenten
             </TabsTrigger>
             <TabsTrigger
               value="leraren"
-              className="inline-flex px-4 py-2 text-sm font-medium text-neutral-600 hover:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="inline-flex cursor-pointer rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-sm font-medium text-neutral-600 hover:text-primary data-[state=active]:border-primary data-[state=active]:text-primary"
             >
               Leraren
             </TabsTrigger>
             <TabsTrigger
               value="personeel"
-              className="inline-flex px-4 py-2 text-sm font-medium text-neutral-600 hover:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+              className="inline-flex cursor-pointer rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-sm font-medium text-neutral-600 hover:text-primary data-[state=active]:border-primary data-[state=active]:text-primary"
             >
               Personeel
             </TabsTrigger>
