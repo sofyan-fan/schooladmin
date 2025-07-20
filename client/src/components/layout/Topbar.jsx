@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const Topbar = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
-
+  console.log("user: ", user);
   return (
     <header className="bg-primary h-16 flex items-center px-6 w-full text-white">
       <button onClick={toggleSidebar} className="md:hidden mr-4">
@@ -13,7 +13,7 @@ const Topbar = ({ toggleSidebar }) => {
 
       {user && (
         <div className="flex items-center space-x-4">
-          <span>Welkom, {user.username || user.email}</span>
+          <span>Welkom, {user.name}</span>
           <button
             onClick={logout}
             className="underline text-sm hover:text-gray-200"

@@ -15,9 +15,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token])
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
     try {
-      let response
 
       // DIT IS VOOR BACK-END API
       /*
@@ -28,17 +27,20 @@ export const AuthProvider = ({ children }) => {
       */
 
       // DIT IS VOOR JSON-SERVER
-      response = await RequestHandler.post('login', {
-        email: username,
+      const response = await RequestHandler.post('login', {
+        email,
         password
       })
 
       if (response?.data?.accessToken) {
-        const { accessToken, ...userData } = response.data
+        const { accessToken, user: userData } = response.data
+
         setToken(accessToken)
         setUser(userData)
+
         localStorage.setItem('token', accessToken)
         localStorage.setItem('user', JSON.stringify(userData))
+
         navigate('/dashboard')
         return true
       } else {
@@ -51,7 +53,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (username, password, role) => {
+  const register = async (name, email, password, role) => {
     try {
       let response
 
@@ -66,19 +68,25 @@ export const AuthProvider = ({ children }) => {
 
       // DIT IS VOOR JSON-SERVER
       response = await RequestHandler.post('register', {
-        email: username,
+        name,
+        email,
         password,
         role
       })
 
       if (response?.data?.accessToken) {
-        const { accessToken, ...userData } = response.data
+        const { accessToken, user: userData } = response.data
+
         setToken(accessToken)
         setUser(userData)
+
         localStorage.setItem('token', accessToken)
         localStorage.setItem('user', JSON.stringify(userData))
+
         navigate('/dashboard')
+
         return true
+
       } else {
         console.error('Registration failed:', response)
         return false

@@ -7,7 +7,7 @@ RUN npm install
 
 COPY . .
 
-# Dit is voor de database synchronized te houden
+# Dit is om de database synchronized te houden
 COPY docker-entrypoint.sh /usr/src/app/
 RUN chmod +x docker-entrypoint.sh
 

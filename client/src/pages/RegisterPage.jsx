@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label';
 
 export default function RegisterPage() {
   const { register } = useAuth();
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole]         = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await register(username, password, role);
+    await register(name, email, password, role);
   };
 
   return (
@@ -27,11 +28,18 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4">
+            <div className="grid gap-2">
+                <Label htmlFor="naam">Naam</Label>
+                <Input id="name" type="text" required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
               <div className="grid gap-2">
-                <Label htmlFor="username">Email</Label>
-                <Input id="username" type="text" required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="text" required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -49,7 +57,7 @@ export default function RegisterPage() {
                   onChange={(e) => setRole(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full">Registreren</Button>
+              <Button type="submit" className="w-full cursor-pointer">Registreren</Button>
             </div>
           </form>
           <div className="mt-4 text-center text-sm">

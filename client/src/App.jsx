@@ -5,11 +5,11 @@ import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
-function App() {
-  return <AppRoutes />;
-}
+// function App() {
+//   return <AppRoutes />;
+// }
 
-const AppRoutes = () => {
+const App = () => {
   const { isAuthenticated } = useAuth();
 
   return (

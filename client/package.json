@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host --port 5173",
     "build": "vite build",
     "start:server": "json-server --watch db.json --port 8000 -m ./node_modules/json-server-auth --routes routes.json",
     "lint": "eslint .",
     "preview": "vite preview"
+    
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
