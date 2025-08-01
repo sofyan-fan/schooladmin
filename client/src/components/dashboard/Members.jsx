@@ -24,10 +24,17 @@ const MembersTable = ({ members }) => (
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src={member.avatar} />
-                <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                <AvatarFallback>
+                  {member.first_name && member.last_name
+                    ? `${member.first_name.substring(
+                        0,
+                        1
+                      )}${member.last_name.substring(0, 1)}`
+                    : 'N/A'}
+                </AvatarFallback>
               </Avatar>
               <span className="font-medium text-text-default">
-                {member.name}
+                {member.first_name} {member.last_name}
               </span>
             </div>
           </TableCell>
