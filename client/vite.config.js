@@ -12,7 +12,7 @@ export default defineConfig({
   },
   server: {
     host: true,   // equals 0.0.0.0
-    port: 5173,   // keep it explicit
+    port: 3000,   // keep it explicit
     strictPort: true,
   },
 });
