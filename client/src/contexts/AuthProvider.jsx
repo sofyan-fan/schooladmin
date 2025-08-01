@@ -53,26 +53,24 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (name, email, password, role) => {
+  const register = async (email, password, role) => {
     try {
       let response
 
       // DIT IS VOOR BACK-END API
-      /*
       response = await RequestHandler.post('auth/register', {
-        username,
-        password,
-        role
-      })
-      */
-
-      // DIT IS VOOR JSON-SERVER
-      response = await RequestHandler.post('register', {
-        name,
         email,
         password,
         role
       })
+
+      // DIT IS VOOR JSON-SERVER
+      // response = await RequestHandler.post('register', {
+      //   name,
+      //   email,
+      //   password,
+      //   role
+      // })
 
       if (response?.data?.accessToken) {
         const { accessToken, user: userData } = response.data

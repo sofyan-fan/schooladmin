@@ -8,14 +8,14 @@ import { Label } from '@/components/ui/label';
 
 export default function RegisterPage() {
   const { register } = useAuth();
-  const [name, setName] = useState('');
+  // const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole]         = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await register(name, email, password, role);
+    await register(email, password, role);
   };
 
   return (
@@ -29,11 +29,11 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4">
             <div className="grid gap-2">
-                <Label htmlFor="naam">Naam</Label>
+                {/* <Label htmlFor="naam">Naam</Label>
                 <Input id="name" type="text" required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                />
+                /> */}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
