@@ -13,7 +13,7 @@ const Topbar = ({ toggleSidebar }) => {
 
       {user && (
         <div className="flex items-center space-x-4">
-          <span>Welkom, {user.name}</span>
+          <span>Welkom, {user.email}</span>
           <button
             onClick={logout}
             className="underline text-sm hover:text-gray-200"

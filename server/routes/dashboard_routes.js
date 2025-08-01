@@ -1,9 +1,18 @@
 const express = require('express');
 const router = express.Router();
 
-const { create_roster, get_roster, update_roster } = require('../controllers/roster');
+const {
+  create_roster,
+  get_roster,
+  update_roster,
+} = require('../controllers/roster');
 
-const { get_events, create_event, delete_event, edit_event } = require('../controllers/event');
+const {
+  get_events,
+  create_event,
+  delete_event,
+  edit_event,
+} = require('../controllers/dashboard/event');
 
 router.get('/event', get_events);
 router.post('/event', create_event);

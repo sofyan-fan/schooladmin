@@ -22,6 +22,7 @@ import {
 import { FileDown, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import eventApi from '../../apis/dashboard/eventiApi';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
@@ -32,7 +33,12 @@ const YearPlanning = ({ items, setItems }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newItem, setNewItem] = useState({ title: '', date: '', time: '' });
+  const [newItem, setNewItem] = useState({
+    title: '',
+    date: '',
+    time: '',
+    description: '',
+  });
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   // const exportToExcel = () => {
@@ -56,7 +62,7 @@ const YearPlanning = ({ items, setItems }) => {
     worksheet.columns = [
       { header: 'Activiteit', key: 'title', width: 30 },
       { header: 'Datum', key: 'date', width: 20 },
-      { header: 'Tijd', key: 'time', width: 15 },
+      // { header: 'Tijd', key: 'time', width: 15 },
       { header: 'Tag', key: 'tag', width: 20 },
     ];
 
@@ -143,6 +149,7 @@ const YearPlanning = ({ items, setItems }) => {
   };
 
   const handleDeleteClick = (item) => {
+
     setItemToDelete(item);
     setIsDeleteDialogOpen(true);
   };
@@ -153,12 +160,12 @@ const YearPlanning = ({ items, setItems }) => {
   };
 
   const handleConfirmDelete = async () => {
+
     if (!itemToDelete) return;
     try {
-      const response = await RequestHandler.del(
-        `/api/jaarplanning/${itemToDelete.id}`
-      );
+      const response = await eventApi.deleteEvent(itemToDelete.id);
       if (response.status === 200) {
+        console.log(itemToDelete.id);
         setItems((prevItems) =>
           prevItems.filter((item) => item.id !== itemToDelete.id)
         );
@@ -170,54 +177,40 @@ const YearPlanning = ({ items, setItems }) => {
     }
   };
 
-  const handleAddClick = () => {
-    setIsAddDialogOpen(true);
-  };
-
   const handleAddDialogClose = () => {
     setIsAddDialogOpen(false);
     setNewItem({ title: '', date: '', time: '' });
   };
 
-  const handleSaveNewItem = async () => {
+  const handleSaveNewItem = async (event) => {
+    event.preventDefault();
     try {
-      const response = await RequestHandler.post('/api/jaarplanning', newItem);
-      if (response.status === 201) {
+      const response = await eventApi.addEvent(newItem);
+      // console.log(newItem);
+      if (response.status === 200) {
         setItems((prevItems) => [...prevItems, response.data]);
+        handleAddDialogClose();
       }
     } catch (error) {
       console.error('Failed to add item:', error);
-    } finally {
-      handleAddDialogClose();
     }
+  };
+
+  const newEvent = () => {
+    setNewItem({ title: '', date: '', time: '', description: '' });
+    setIsAddDialogOpen(true);
   };
 
   return (
     <>
       <Card className="overflow-hidden rounded-lg border py-0 shadow-sm bg-white">
-        {/* <div className="p-4 flex justify-end">
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-green-600 text-white hover:bg-green-700"
-            onClick={exportToExcel}
-          >
-            Exporteren naar Excel
-          </Button>
-        </div> */}
-        {/* <CardHeader>
-        <CardTitle>Jaarplanning</CardTitle>
-        <CardDescription>
-          Een overzicht van alle gebeurtenissen.
-        </CardDescription>
-      </CardHeader> */}
         <div className="relative max-h-96 overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-white text-xs uppercase tracking-wide text-neutral-600">
               <TableRow>
                 <TableHead>Activiteit</TableHead>
                 <TableHead>Datum</TableHead>
-                <TableHead>Tijd</TableHead>
+                {/* <TableHead>Tijd</TableHead> */}
                 <TableHead className="text-right">
                   <div className="flex items-center justify-end">
                     {/* <span>Acties</span> */}
@@ -225,7 +218,7 @@ const YearPlanning = ({ items, setItems }) => {
                       variant="default"
                       size="sm"
                       className="ml-4 bg-primary text-white hover:cursor-pointer hover:bg-lime-500"
-                      onClick={handleAddClick}
+                      onClick={newEvent}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Toevoegen
@@ -243,36 +236,43 @@ const YearPlanning = ({ items, setItems }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, index) => (
-                <TableRow
-                  key={index}
-                  className="border-b border-neutral-200 hover:bg-neutral-50 text-lg text-neutral-700"
-                >
-                  <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>{item.time}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="cursor-pointer"
-                        onClick={() => handleEditClick(item)}
-                      >
-                        <Pencil className="size-6" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-error hover:text-white cursor-pointer"
-                        onClick={() => handleDeleteClick(item)}
-                      >
-                        <Trash2 className="size-6 " />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {items.map(
+                (item, index) => (
+                  console.log(item),
+                  (
+                    <TableRow
+                      key={index}
+                      className="border-b border-neutral-200 hover:bg-neutral-50 text-lg text-neutral-700"
+                    >
+                      <TableCell className="font-medium">
+                        {item.name}
+                      </TableCell>
+                      <TableCell> {item.date}</TableCell>
+                      <TableCell>{item.time}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-x-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="cursor-pointer"
+                            onClick={() => handleEditClick(item)}
+                          >
+                            <Pencil className="size-6" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-error hover:text-white cursor-pointer"
+                            onClick={() => handleDeleteClick(item)}
+                          >
+                            <Trash2 className="size-6 " />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )
+              )}
             </TableBody>
           </Table>
         </div>
@@ -390,62 +390,65 @@ const YearPlanning = ({ items, setItems }) => {
       </Dialog>
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Nieuwe activiteit toevoegen</DialogTitle>
-            <DialogDescription>
-              Vul de gegevens voor de nieuwe activiteit in.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Activiteit
-              </Label>
-              <Input
-                id="title"
-                name="title"
-                value={newItem.title}
-                onChange={handleNewItemChange}
-                className="col-span-3"
-              />
+          <form onSubmit={handleSaveNewItem}>
+            <DialogHeader>
+              <DialogTitle>Nieuwe activiteit toevoegen</DialogTitle>
+              <DialogDescription>
+                Vul de gegevens voor de nieuwe activiteit in.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">
+                  Activiteit
+                </Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={newItem.title}
+                  onChange={handleNewItemChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="date" className="text-right">
+                  Datum
+                </Label>
+                <Input
+                  type="date"
+                  id="date"
+                  name="date"
+                  value={newItem.date}
+                  onChange={handleNewItemChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="time" className="text-right">
+                  Beschrijving
+                </Label>
+                <Input
+                  // type="textarea"
+                  type="textarea"
+                  id="description"
+                  name="description"
+                  value={newItem.description}
+                  onChange={handleNewItemChange}
+                  className="col-span-3"
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">
-                Datum
-              </Label>
-              <Input
-                id="date"
-                name="date"
-                value={newItem.date}
-                onChange={handleNewItemChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="time" className="text-right">
-                Tijd
-              </Label>
-              <Input
-                id="time"
-                name="time"
-                value={newItem.time}
-                onChange={handleNewItemChange}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleAddDialogClose}
-            >
-              Annuleren
-            </Button>
-            <Button type="submit" onClick={handleSaveNewItem}>
-              Opslaan
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddDialogClose}
+              >
+                Annuleren
+              </Button>
+              <Button type="submit">Opslaan</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>

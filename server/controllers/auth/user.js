@@ -2,7 +2,7 @@ const { prisma } = require('../../prisma/connection');
 
 exports.get_users = async (req, res) => {
 	try {
-		const users = await prisma.users.findMany();
+		const users = await prisma.user.findMany();
 		res.status(200).json(users);
 	} catch (error) {
 		console.error(error);

@@ -2,13 +2,13 @@ const { prisma } = require('../../prisma/connection');
 
 exports.get_dashboard_data = async (req, res) => {
 	try {
-		const totalStudents = await prisma.users.count({
+		const totalStudents = await prisma.user.count({
 			where: {
 				role: 'student',
 			},
 		});
 
-		const totalTeachers = await prisma.users.count({
+		const totalTeachers = await prisma.user.count({
 			where: {
 				role: 'teacher',
 			},
