@@ -1,17 +1,14 @@
-const {
-	prisma
-} = require('../../prisma/connection');
+const { prisma } = require('../../prisma/connection');
 const bcrypt = require('bcrypt');
 
 exports.register = async (req, res) => {
-	console.log('register called');
+
 	try {
 		const {
 			email,
 			password,
 			role
 		} = req.body;
-		console.log('got body:', req.body);
 
 		if (!email || !password || !role) {
 			console.log('missing fields');
@@ -25,7 +22,6 @@ exports.register = async (req, res) => {
 				email
 			}
 		});
-		console.log('existingUser:', existingUser);
 
 		if (existingUser) {
 			console.log('user exists');
@@ -35,7 +31,6 @@ exports.register = async (req, res) => {
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 10);
-		console.log('hashed password created');
 
 		const user = await prisma.user.create({
 			data: {
@@ -44,7 +39,6 @@ exports.register = async (req, res) => {
 				role
 			}
 		});
-		console.log('user created:', user);
 
 		// Set session (this will set a cookie)
 		req.session.user = {

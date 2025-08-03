@@ -1,6 +1,4 @@
-const {
-	prisma
-} = require('../../prisma/connection');
+const { prisma } = require('../../prisma/connection');
 const bcrypt = require('bcrypt');
 
 exports.login = async (req, res) => {
@@ -37,9 +35,6 @@ exports.login = async (req, res) => {
 			firstname: user.firstname,
 			lastname: user.lastname,
 		};
-
-		// Respond with user data
-		console.log("req.session.user: ", req.session.user);
 
 		res.status(200).json({
 			message: 'Login successful',
