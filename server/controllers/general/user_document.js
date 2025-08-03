@@ -1,8 +1,8 @@
-const { prisma } = require('../prisma/connection');
+const { prisma } = require('../../prisma/connection');
 
 exports.get_all_students = async (req, res) => {
 	try {
-		const students = await prisma.users.findMany({
+		const students = await prisma.user.findMany({
 			where: {
 				role: 'student',
 			},
@@ -18,7 +18,7 @@ exports.get_all_students = async (req, res) => {
 
 exports.get_student_by_id = async (req, res) => {
 	try {
-		const student = await prisma.users.findUnique({
+		const student = await prisma.user.findUnique({
 			where: {
 				id: Number(req.params.id),
 				role: 'student',
@@ -43,7 +43,7 @@ exports.search_students = async (req, res) => {
 		const {
 			query
 		} = req.query;
-		const students = await prisma.users.findMany({
+		const students = await prisma.user.findMany({
 			where: {
 				role: 'student',
 				OR: [{

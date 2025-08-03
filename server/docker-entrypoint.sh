@@ -18,9 +18,5 @@ sleep 10
 echo "Pushing database schema..."
 npx prisma db push --accept-data-loss
 
-# Run the database seed script.
-echo "Seeding database..."
-npx prisma db seed
-
 # Execute the main command (e.g., "npm run dev")
 exec "$@" 

@@ -1,11 +1,12 @@
 const { prisma } = require('../../prisma/connection');
 const bcrypt = require('bcrypt');
-
+// console.log('login.js prisma:', prisma);
+// console.log('login.js prisma.user:', prisma ? prisma.user : 'prisma undefined');
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await prisma.users.findUnique({
+    const user = await prisma.user.findUnique({
       where: {
         email: email,
       },
@@ -34,10 +35,14 @@ exports.login = async (req, res) => {
     };
 
     // Respond with user data
+	console.log("req.session.user: ", req.session.user);
+
     res.status(200).json({
       message: 'Login successful',
       user: req.session.user,
+	  session: req.session,
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -45,7 +50,6 @@ exports.login = async (req, res) => {
     });
   }
 };
-
 exports.logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -54,6 +58,8 @@ exports.logout = (req, res) => {
       });
     }
 
-    res.status(200).json({ message: 'Logout successful' });
+    res.status(200).json({
+      message: 'Logout successful',
+    });
   });
 };
