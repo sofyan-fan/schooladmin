@@ -20,7 +20,7 @@ exports.get_events = async (req, res) => {
 
 exports.create_event = async (req, res) => {
   try {
-    let { event_name, event_date } = req.body;
+    let { event_name, event_date, description } = req.body;
 
     if (!event_name || !event_date) {
       return res.status(400).json({
@@ -33,7 +33,7 @@ exports.create_event = async (req, res) => {
       data: {
         name: event_name,
         date: new Date(event_date),
-        description: '',
+        description: description || '',
         start_time: '',
         end_time: '',
       },
@@ -69,7 +69,7 @@ exports.delete_event = async (req, res) => {
 
 exports.edit_event = async (req, res) => {
   try {
-    const { event_name, event_date } = req.body;
+    const { event_name, event_date, description } = req.body;
 
     const updatedEvent = await prisma.events.update({
       where: {
@@ -78,6 +78,7 @@ exports.edit_event = async (req, res) => {
       data: {
         name: event_name,
         date: new Date(event_date),
+        description,
       },
     });
 
