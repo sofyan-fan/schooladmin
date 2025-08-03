@@ -88,6 +88,8 @@ model subject {
   exams     exam[]
 
   roster roster[]
+
+  course_module course_module[]
 }
 
 model progress {
@@ -170,6 +172,8 @@ model book_inventory {
   name      String
   stock     Int
   price     Int
+
+  course_module course_module[]
 }
 
 model courses {
@@ -179,6 +183,19 @@ model courses {
   price           Float
 
   tuition_payments tuition_payment[]
+  course_module course_module[]
+}
+
+model course_module {
+  id        Int     @id @default(autoincrement())
+  course    courses  @relation(fields: [courseId], references: [id])
+  courseId  Int
+
+  subject   subject @relation(fields: [subjectId], references: [id])
+  subjectId Int
+
+  book      book_inventory    @relation(fields: [bookId], references: [id])
+  bookId    Int
 }
 
 model events {
