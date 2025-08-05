@@ -48,13 +48,8 @@ model teacher {
   phone         String
   address       String
   is_active     Boolean  @default(true)
-  compensation  Float?
-  cv_url        String?
-  vog_url       String?
-  id_document   String?
 
   absences      absence[]
-
   roster roster[]
 }
 
