@@ -4,10 +4,9 @@ import { useAuth } from './hooks/useAuth';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import SubjectsPage from './pages/SubjectsPage';
+import CourseModulesPage from './pages/CourseModulesPage';
 
-// function App() {
-//   return <AppRoutes />;
-// }
 
 const App = () => {
   const { isAuthenticated } = useAuth();
@@ -26,6 +25,8 @@ const App = () => {
       />
 
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/vakken" element={<SubjectsPage />} />
+      <Route path="/lespakketten" element={<CourseModulesPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route
         path="/dashboard"
