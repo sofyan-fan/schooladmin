@@ -21,7 +21,7 @@ const {
   get_assessment_by_id,
   update_assessment,
   delete_assessment,
-} = require('../controllers/general/assessment');
+} = require('../controllers/general/assesment');
 
 const {
   create_absence,

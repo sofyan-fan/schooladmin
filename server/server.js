@@ -10,7 +10,6 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors');
 const routes = require('./routes');
-const apiRoutes = require('./routes/api_routes');
 
 const port = 3000; // ✅ Backend on 3000, frontend stays on 5173
 const app = express();
@@ -41,7 +40,6 @@ app.use(
 );
 
 app.use('/', routes);
-app.use('/api', apiRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on ${port}.`);
