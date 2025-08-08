@@ -41,7 +41,6 @@ app.use(
 );
 
 app.use('/', routes);
-// app.use('/api', apiRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on ${port}.`);
