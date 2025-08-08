@@ -48,13 +48,8 @@ model teacher {
   phone         String
   address       String
   is_active     Boolean  @default(true)
-  compensation  Float?
-  cv_url        String?
-  vog_url       String?
-  id_document   String?
 
   absences      absence[]
-
   roster roster[]
 }
 
@@ -69,25 +64,25 @@ model admin {
 }
 
 model class_layout {
-  id         Int       @id @default(autoincrement())
+  id         Int           @id @default(autoincrement())
   name       String
+
   students   student[]
-  tests      test[]
-  exams      exam[]
+  assessments assessment[]
   schedules  schedule[]
 
-  roster roster[]
+  roster     roster[]
 }
 
 model subject {
-  id        Int      @id @default(autoincrement())
-  name      String
-  level     String?
+  id                  Int           @id @default(autoincrement())
+  name                String
+  level               String?
+  passing_grade       Int
 
-  tests     test[]
-  exams     exam[]
-
-  roster roster[]
+  assessments         assessment[]
+  roster              roster[]
+  course_module       course_module[]
 }
 
 model progress {
@@ -112,33 +107,36 @@ model absence {
   reason      String
 }
 
-model test {
-  id           Int         @id @default(autoincrement())
+model assessment {
+  id           Int          @id @default(autoincrement())
+  type         AssessmentType // "TEST" or "EXAM"
   class_layout class_layout @relation(fields: [class_id], references: [id])
   class_id     Int
   subject      subject      @relation(fields: [subject_id], references: [id])
   subject_id   Int
+  leverage     Float        @default(1)
   date         DateTime
+  is_central   Boolean?     // Only relevant if type = "EXAM"
   description  String?
-}
-
-model exam {
-  id           Int         @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
-  class_id     Int
-  subject      subject      @relation(fields: [subject_id], references: [id])
-  subject_id   Int
-  date         DateTime
-  is_central   Boolean
+  
+  results      result[]
 }
 
 model result {
-  id          Int      @id @default(autoincrement())
-  student     student  @relation(fields: [student_id], references: [id])
-  student_id  Int
-  subject_id  Int
-  grade       Float
-  date        DateTime
+  id           Int      @id @default(autoincrement())
+  student      student  @relation(fields: [student_id], references: [id])
+  student_id   Int
+
+  assessment   assessment @relation(fields: [assessment_id], references: [id])
+  assessment_id Int
+
+  grade        Float
+  date         DateTime
+}
+
+enum AssessmentType {
+  TEST
+  EXAM
 }
 
 model schedule {
@@ -170,6 +168,8 @@ model book_inventory {
   name      String
   stock     Int
   price     Int
+
+  course_module course_module[]
 }
 
 model courses {
@@ -179,6 +179,19 @@ model courses {
   price           Float
 
   tuition_payments tuition_payment[]
+  course_module course_module[]
+}
+
+model course_module {
+  id        Int     @id @default(autoincrement())
+  course    courses  @relation(fields: [courseId], references: [id])
+  courseId  Int
+
+  subject   subject @relation(fields: [subjectId], references: [id])
+  subjectId Int
+
+  book      book_inventory    @relation(fields: [bookId], references: [id])
+  bookId    Int
 }
 
 model events {

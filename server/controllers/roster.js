@@ -9,4 +9,3 @@ exports.create_roster = (req, res) => {
   exports.update_roster = (req, res) => {
     res.status(200).json({ message: 'update_roster not implemented' });
   };
-  
