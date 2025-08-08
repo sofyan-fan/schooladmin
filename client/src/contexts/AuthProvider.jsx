@@ -93,6 +93,7 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
 
         localStorage.setItem('token', accessToken);
+        console.log("setToken: ", accessToken);
         localStorage.setItem('user', JSON.stringify(userData));
 
         navigate('/dashboard');
