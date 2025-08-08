@@ -101,7 +101,7 @@ const YearPlanning = ({ items, setItems }) => {
       const updatedEvent = await eventApi.editEvent(eventData);
       setItems((prevItems) =>
         prevItems.map((item) =>
-          item.id === updatedEvent.id ? updatedEvent : item
+          item.id === updatedEvent.id ? { ...item, ...updatedEvent } : item
         )
       );
       handleEditDialogClose();
@@ -147,7 +147,7 @@ const YearPlanning = ({ items, setItems }) => {
         event_date: newItem.date,
         description: newItem.description,
       };
-      const newEventData = await eventApi.addEvent(eventData);
+      const newEventData = await eventApi.add_event(eventData);
       setItems((prevItems) => [...prevItems, newEventData]);
       handleAddDialogClose();
     } catch (error) {
@@ -160,12 +160,18 @@ const YearPlanning = ({ items, setItems }) => {
     setIsAddDialogOpen(true);
   };
 
+  const mappedItems = items.map((item) => ({
+    ...item,
+    name: item.event_name || item.name,
+    date: item.event_date || item.date,
+  }));
+
   return (
     <>
       <Card className="overflow-hidden rounded-lg border py-0 shadow-sm bg-white">
         <div className="relative max-h-96 overflow-y-auto">
           <YearPlanningTable
-            items={items}
+            items={mappedItems}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
             onAddClick={newEvent}

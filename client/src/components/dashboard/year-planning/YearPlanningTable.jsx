@@ -49,7 +49,6 @@ const YearPlanningTable = ({
       </TableHeader>
       <TableBody>
         {items.map((item, index) => (
-          console.log("item: ", item),
           <TableRow
             key={index}
             className="border-b border-neutral-200 hover:bg-neutral-50 text-lg text-neutral-700"
