@@ -79,17 +79,6 @@ model class_layout {
   roster roster[]
 }
 
-model subject {
-  id        Int      @id @default(autoincrement())
-  name      String
-  level     String?
-
-  tests     test[]
-  exams     exam[]
-
-  roster roster[]
-}
-
 model progress {
   id           Int      @id @default(autoincrement())
   student      student  @relation(fields: [student_id], references: [id])
@@ -179,6 +168,55 @@ model courses {
   price           Float
 
   tuition_payments tuition_payment[]
+  subjects        subject[]        @relation("course_subjects")
+}
+
+model course_module {
+  id       Int                      @id @default(autoincrement())
+  name     String
+  subjects course_module_subject[]
+}
+
+model course_module_subject {
+  id               Int            @id @default(autoincrement())
+  course_module    course_module  @relation(fields: [course_module_id], references: [id])
+  course_module_id Int
+
+  subject          subject        @relation(fields: [subject_id], references: [id])
+  subject_id       Int
+
+  level            String
+  material         String
+
+  @@unique([course_module_id, subject_id, level, material])
+}
+
+model subject {
+  id        Int                  @id @default(autoincrement())
+  name      String
+
+  levels    subject_level[]
+  materials subject_material[]
+
+  tests     test[]
+  exams     exam[]
+  roster    roster[]
+  courses   courses[]            @relation("course_subjects")
+  moduleSubjects course_module_subject[]
+}
+
+model subject_level {
+  id         Int      @id @default(autoincrement())
+  level      String
+  subject    subject  @relation(fields: [subject_id], references: [id])
+  subject_id Int
+}
+
+model subject_material {
+  id         Int      @id @default(autoincrement())
+  material   String
+  subject    subject  @relation(fields: [subject_id], references: [id])
+  subject_id Int
 }
 
 model events {

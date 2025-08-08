@@ -17,38 +17,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // DIT IS VOOR BACK-END API
-      /*
-      response = await RequestHandler.post('auth/login', {
-        username,
-        password
-      })
-      */
-
-      // DIT IS VOOR JSON-SERVER
       const response = await RequestHandler.post('auth/login', {
         email,
         password,
       });
-      
-      // if (response?.status === 200) {
-      //   navigate('/dashboard');
-      //   console.log("navigate dashboard");
-      //   return true;
-      // }
-      console.log("response: ", response);
-      
+
+      console.log('response: ', response);
+
       if (response?.data?.session) {
-        
-        console.log("response: ", response.data);
+        console.log('response: ', response.data);
         const { session, user: userData } = response.data;
 
-
         setToken(session);
-        console.log("setToken: ", session);
+        console.log('setToken: ', session);
         setUser(userData);
-
-
 
         localStorage.setItem('token', session);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -69,31 +51,20 @@ export const AuthProvider = ({ children }) => {
     try {
       let response;
 
-      // DIT IS VOOR BACK-END API
       response = await RequestHandler.post('auth/register', {
         email,
         password,
         role,
       });
 
-      // DIT IS VOOR JSON-SERVER
-      // response = await RequestHandler.post('register', {
-      //   name,
-      //   email,
-      //   password,
-      //   role
-      // })
-      // console.log("response: ", response);
-
       if (response?.data?.accessToken) {
         const { accessToken, user: userData } = response.data;
 
         setToken(accessToken);
-        // console.log("setToken: ", accessToken);
         setUser(userData);
 
         localStorage.setItem('token', accessToken);
-        console.log("setToken: ", accessToken);
+        console.log('setToken: ', accessToken);
         localStorage.setItem('user', JSON.stringify(userData));
 
         navigate('/dashboard');

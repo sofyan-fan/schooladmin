@@ -27,3 +27,4 @@ dist-ssr
 /db.json
 /server.js
 /routes.js
+/subjects.json

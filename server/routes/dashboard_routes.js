@@ -5,7 +5,7 @@ const {
   create_roster,
   get_roster,
   update_roster,
-} = require('../controllers/roster');
+} = require('../controllers/dashboard/roster');
 
 const {
   get_events,
