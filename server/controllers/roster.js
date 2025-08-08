@@ -3,7 +3,7 @@ exports.create_roster = (req, res) => {
   };
   
   exports.get_roster = (req, res) => {
-    res.status(200).json({ message: 'get_roster not implemented' });
+    res.status(200).json([]);
   };
   
   exports.update_roster = (req, res) => {
