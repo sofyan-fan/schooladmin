@@ -48,8 +48,13 @@ model teacher {
   phone         String
   address       String
   is_active     Boolean  @default(true)
+  compensation  Float?
+  cv_url        String?
+  vog_url       String?
+  id_document   String?
 
   absences      absence[]
+
   roster roster[]
 }
 
@@ -64,25 +69,14 @@ model admin {
 }
 
 model class_layout {
-  id         Int           @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   name       String
-
   students   student[]
-  assessments assessment[]
+  tests      test[]
+  exams      exam[]
   schedules  schedule[]
 
-  roster     roster[]
-}
-
-model subject {
-  id                  Int           @id @default(autoincrement())
-  name                String
-  level               String?
-  passing_grade       Int
-
-  assessments         assessment[]
-  roster              roster[]
-  course_module       course_module[]
+  roster roster[]
 }
 
 model progress {
@@ -107,36 +101,33 @@ model absence {
   reason      String
 }
 
-model assessment {
-  id           Int          @id @default(autoincrement())
-  type         AssessmentType // "TEST" or "EXAM"
+model test {
+  id           Int         @id @default(autoincrement())
   class_layout class_layout @relation(fields: [class_id], references: [id])
   class_id     Int
   subject      subject      @relation(fields: [subject_id], references: [id])
   subject_id   Int
-  leverage     Float        @default(1)
   date         DateTime
-  is_central   Boolean?     // Only relevant if type = "EXAM"
   description  String?
-  
-  results      result[]
+}
+
+model exam {
+  id           Int         @id @default(autoincrement())
+  class_layout class_layout @relation(fields: [class_id], references: [id])
+  class_id     Int
+  subject      subject      @relation(fields: [subject_id], references: [id])
+  subject_id   Int
+  date         DateTime
+  is_central   Boolean
 }
 
 model result {
-  id           Int      @id @default(autoincrement())
-  student      student  @relation(fields: [student_id], references: [id])
-  student_id   Int
-
-  assessment   assessment @relation(fields: [assessment_id], references: [id])
-  assessment_id Int
-
-  grade        Float
-  date         DateTime
-}
-
-enum AssessmentType {
-  TEST
-  EXAM
+  id          Int      @id @default(autoincrement())
+  student     student  @relation(fields: [student_id], references: [id])
+  student_id  Int
+  subject_id  Int
+  grade       Float
+  date        DateTime
 }
 
 model schedule {
@@ -168,8 +159,6 @@ model book_inventory {
   name      String
   stock     Int
   price     Int
-
-  course_module course_module[]
 }
 
 model courses {
@@ -179,19 +168,55 @@ model courses {
   price           Float
 
   tuition_payments tuition_payment[]
-  course_module course_module[]
+  subjects        subject[]        @relation("course_subjects")
 }
 
 model course_module {
-  id        Int     @id @default(autoincrement())
-  course    courses  @relation(fields: [courseId], references: [id])
-  courseId  Int
+  id       Int                      @id @default(autoincrement())
+  name     String
+  subjects course_module_subject[]
+}
 
-  subject   subject @relation(fields: [subjectId], references: [id])
-  subjectId Int
+model course_module_subject {
+  id               Int            @id @default(autoincrement())
+  course_module    course_module  @relation(fields: [course_module_id], references: [id])
+  course_module_id Int
 
-  book      book_inventory    @relation(fields: [bookId], references: [id])
-  bookId    Int
+  subject          subject        @relation(fields: [subject_id], references: [id])
+  subject_id       Int
+
+  level            String
+  material         String
+
+  @@unique([course_module_id, subject_id, level, material])
+}
+
+model subject {
+  id        Int                  @id @default(autoincrement())
+  name      String
+
+  levels    subject_level[]
+  materials subject_material[]
+
+  tests     test[]
+  exams     exam[]
+  roster    roster[]
+  courses   courses[]            @relation("course_subjects")
+  moduleSubjects course_module_subject[]
+}
+
+model subject_level {
+  id         Int      @id @default(autoincrement())
+  level      String
+  subject    subject  @relation(fields: [subject_id], references: [id])
+  subject_id Int
+}
+
+model subject_material {
+  id         Int      @id @default(autoincrement())
+  material   String
+  subject    subject  @relation(fields: [subject_id], references: [id])
+  subject_id Int
 }
 
 model events {

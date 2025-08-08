@@ -1,167 +1,93 @@
-const {
-	PrismaClient
-} = require('@prisma/client');
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Get all courses with modules
 exports.get_all_courses = async (req, res) => {
 	try {
 		const courses = await prisma.courses.findMany({
 			include: {
-				course_module: {
-					include: {
-						subject: true,
-						book: true,
-					},
-				},
+				subjects: true,
 				tuition_payments: true,
 			},
 		});
-		res.status(200).json(courses);
+		res.json(courses);
 	} catch (error) {
-		console.error(error);
 		res.status(500).json({
-			error: 'Something went wrong.'
+			error: 'Error fetching courses'
 		});
 	}
 };
 
-// Get a single course by ID
-exports.get_course_by_id = async (req, res) => {
-	try {
-		const {
-			id
-		} = req.params;
-		const course = await prisma.courses.findUnique({
-			where: {
-				id: parseInt(id)
-			},
-			include: {
-				course_module: {
-					include: {
-						subject: true,
-						book: true,
-					},
-				},
-				tuition_payments: true,
-			},
-		});
-
-		if (!course) {
-			return res.status(404).json({
-				error: 'Course not found.'
-			});
-		}
-
-		res.status(200).json(course);
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({
-			error: 'Something went wrong.'
-		});
-	}
-};
-
-// Create a new course with modules
 exports.create_course = async (req, res) => {
-	try {
-		const {
-			name,
-			description,
-			price,
-			modules
-		} = req.body;
+	const {
+		name,
+		description,
+		price,
+		subjectIds
+	} = req.body;
 
+	try {
 		const course = await prisma.courses.create({
 			data: {
 				name,
 				description,
 				price,
-				course_module: {
-					create: modules.map(module => ({
-						subjectId: module.subjectId,
-						bookId: module.bookId,
+				subjects: {
+					connect: subjectIds.map(id => ({
+						id
 					})),
 				},
 			},
-			include: {
-				course_module: true,
-			},
 		});
-
 		res.status(201).json(course);
 	} catch (error) {
-		console.error(error);
 		res.status(500).json({
-			error: 'Something went wrong.'
+			error: 'Error creating course'
 		});
 	}
 };
 
-// Update a course and its modules
-exports.update_course = async (req, res) => {
+exports.get_all_modules = async (req, res) => {
 	try {
-		const {
-			id
-		} = req.params;
-		const {
-			name,
-			description,
-			price,
-			modules
-		} = req.body;
-
-		const updatedCourse = await prisma.courses.update({
-			where: {
-				id: parseInt(id)
+		const modules = await prisma.course_module.findMany({
+			include: {
+				subjects: {
+					include: {
+						subject: true,
+					},
+				},
 			},
+		});
+		res.json(modules);
+	} catch (error) {
+		res.status(500).json({
+			error: 'Error fetching course modules'
+		});
+	}
+};
+
+exports.create_module = async (req, res) => {
+	const {
+		name,
+		subjects
+	} = req.body;
+
+	try {
+		const courseModule = await prisma.course_module.create({
 			data: {
 				name,
-				description,
-				price,
-				course_module: {
-					deleteMany: {},
-					create: modules.map(module => ({
-						subjectId: module.subjectId,
-						bookId: module.bookId,
+				subjects: {
+					create: subjects.map(sub => ({
+						subject_id: sub.subject_id,
+						level: sub.level,
+						material: sub.material,
 					})),
 				},
 			},
-			include: {
-				course_module: true,
-			},
 		});
-
-		res.status(200).json(updatedCourse);
+		res.status(201).json(courseModule);
 	} catch (error) {
-		console.error(error);
-		1
 		res.status(500).json({
-			error: 'Something went wrong.'
-		});
-	}
-};
-
-// Delete a course
-exports.delete_course = async (req, res) => {
-	try {
-		const {
-			id
-		} = req.params;
-
-		await prisma.courses.delete({
-			where: {
-				id: parseInt(id)
-			},
-		});
-
-		res.status(200).json({
-			message: 'Course deleted successfully.'
-		});
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({
-			error: 'Something went wrong.'
+			error: 'Error creating course module'
 		});
 	}
 };
