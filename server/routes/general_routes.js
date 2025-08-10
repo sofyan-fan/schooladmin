@@ -26,7 +26,7 @@ const {
 
 // Students routes
 router.get('/students', get_all_students);
-router.get('/teacher', get_all_students);
+router.get('/teacher', get_all_teachers);
 router.get('/student/:id', get_student_by_id);
 router.get('/search/student', search_students);
 
