@@ -25,11 +25,11 @@ export const editEvent = async (event) => {
   return response.data;
 };
 
-const eventApi = {
+const eventAPI = {
   get_events,
   add_event,
   deleteEvent,
   editEvent,
 };
 
-export default eventApi;
+export default eventAPI;
