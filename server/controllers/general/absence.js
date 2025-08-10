@@ -3,133 +3,185 @@ const prisma = new PrismaClient();
 
 // Create an absence
 exports.create_absence = async (req, res) => {
-  try {
-    const { user_id, role, roster_id, date, reason } = req.body;
+	try {
+		const {
+			user_id,
+			role,
+			roster_id,
+			date,
+			reason
+		} = req.body;
 
-    // Teacher absence restriction
-    if (role === 'teacher' && req.session.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can mark teacher absences' });
-    }
+		// Teacher absence restriction
+		if (role === 'teacher' && req.session.user.role !== 'admin') {
+			return res.status(403).json({
+				error: 'Only admins can mark teacher absences'
+			});
+		}
 
-    const absence = await prisma.absence.create({
-      data: {
-        user_id,
-        role,
-        roster_id,
-        date: new Date(date),
-        reason,
-      },
-    });
+		const absence = await prisma.absence.create({
+			data: {
+				user_id,
+				role,
+				roster_id,
+				date: new Date(date),
+				reason,
+			},
+		});
 
-    res.status(201).json(absence);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to create absence' });
-  }
+		res.status(201).json(absence);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			error: 'Failed to create absence'
+		});
+	}
 };
 
 // Get all absences
 exports.get_all_absences = async (req, res) => {
-  try {
-    const absences = await prisma.absence.findMany({
-      include: {
-        user: true,
-        roster: {
-          include: {
-            class_layout: true,
-            subject: true,
-            teacher: true,
-          },
-        },
-      },
-    });
+	try {
+		const absences = await prisma.absence.findMany({
+			include: {
+				user: true,
+				roster: {
+					include: {
+						class_layout: true,
+						subject: true,
+						teacher: true,
+					},
+				},
+			},
+		});
 
-    res.status(200).json(absences);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch absences' });
-  }
+		res.status(200).json(absences);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			error: 'Failed to fetch absences'
+		});
+	}
 };
 
 // Get absence by ID
 exports.get_absence_by_id = async (req, res) => {
-  try {
-    const { id } = req.params;
+	try {
+		const {
+			id
+		} = req.params;
 
-    const absence = await prisma.absence.findUnique({
-      where: { id: Number(id) },
-      include: {
-        user: true,
-        roster: {
-          include: {
-            class_layout: true,
-            subject: true,
-            teacher: true,
-          },
-        },
-      },
-    });
+		const absence = await prisma.absence.findUnique({
+			where: {
+				id: Number(id)
+			},
+			include: {
+				user: true,
+				roster: {
+					include: {
+						class_layout: true,
+						subject: true,
+						teacher: true,
+					},
+				},
+			},
+		});
 
-    if (!absence) {
-      return res.status(404).json({ error: 'Absence not found' });
-    }
+		if (!absence) {
+			return res.status(404).json({
+				error: 'Absence not found'
+			});
+		}
 
-    res.status(200).json(absence);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch absence' });
-  }
+		res.status(200).json(absence);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			error: 'Failed to fetch absence'
+		});
+	}
 };
 
 // Update an absence
 exports.update_absence = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id, role, roster_id, date, reason } = req.body;
+	try {
+		const {
+			id
+		} = req.params;
+		const {
+			user_id,
+			role,
+			roster_id,
+			date,
+			reason
+		} = req.body;
 
-    // Teacher absence restriction
-    if (role === 'teacher' && req.session.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can update teacher absences' });
-    }
+		// Teacher absence restriction
+		if (role === 'teacher' && req.session.user.role !== 'admin') {
+			return res.status(403).json({
+				error: 'Only admins can update teacher absences'
+			});
+		}
 
-    const updatedAbsence = await prisma.absence.update({
-      where: { id: Number(id) },
-      data: {
-        user_id,
-        role,
-        roster_id,
-        date: date ? new Date(date) : undefined,
-        reason,
-      },
-    });
+		const updatedAbsence = await prisma.absence.update({
+			where: {
+				id: Number(id)
+			},
+			data: {
+				user_id,
+				role,
+				roster_id,
+				date: date ? new Date(date) : undefined,
+				reason,
+			},
+		});
 
-    res.status(200).json(updatedAbsence);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to update absence' });
-  }
+		res.status(200).json(updatedAbsence);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			error: 'Failed to update absence'
+		});
+	}
 };
 
 // Delete an absence
 exports.delete_absence = async (req, res) => {
-  try {
-    const { id } = req.params;
+	try {
+		const {
+			id
+		} = req.params;
 
-    // Check role before deleting
-    const absence = await prisma.absence.findUnique({ where: { id: Number(id) } });
-    if (!absence) {
-      return res.status(404).json({ error: 'Absence not found' });
-    }
+		// Check role before deleting
+		const absence = await prisma.absence.findUnique({
+			where: {
+				id: Number(id)
+			}
+		});
+		if (!absence) {
+			return res.status(404).json({
+				error: 'Absence not found'
+			});
+		}
 
-    if (absence.role === 'teacher' && req.session.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can delete teacher absences' });
-    }
+		if (absence.role === 'teacher' && req.session.user.role !== 'admin') {
+			return res.status(403).json({
+				error: 'Only admins can delete teacher absences'
+			});
+		}
 
-    await prisma.absence.delete({ where: { id: Number(id) } });
+		await prisma.absence.delete({
+			where: {
+				id: Number(id)
+			}
+		});
 
-    res.status(200).json({ message: 'Absence deleted successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to delete absence' });
-  }
+		res.status(200).json({
+			message: 'Absence deleted successfully'
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			error: 'Failed to delete absence'
+		});
+	}
 };
