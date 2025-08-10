@@ -5,7 +5,13 @@ const {
   get_all_students,
   get_student_by_id,
   search_students,
+  create_student,
+  update_student,
+  delete_student,
   get_all_teachers,
+  create_teacher,
+  update_teacher,
+  delete_teacher,
 } = require('../controllers/general/user_document');
 
 const {
@@ -24,20 +30,36 @@ const {
   delete_absence,
 } = require('../controllers/general/absence');
 
+// ==============================
 // Students routes
+// ==============================
 router.get('/students', get_all_students);
-router.get('/teacher', get_all_teachers);
 router.get('/student/:id', get_student_by_id);
 router.get('/search/student', search_students);
+router.post('/student', create_student);
+router.put('/student/:id', update_student);
+router.delete('/student/:id', delete_student);
 
+// ==============================
+// Teachers routes
+// ==============================
+router.get('/teachers', get_all_teachers);
+router.post('/teacher', create_teacher);
+router.put('/teacher/:id', update_teacher);
+router.delete('/teacher/:id', delete_teacher);
+
+// ==============================
 // Assessments routes
+// ==============================
 router.post('/assessments', create_assessment);
 router.get('/assessments', get_all_assessments);
 router.get('/assessments/:id', get_assessment_by_id);
 router.put('/assessments/:id', update_assessment);
 router.delete('/assessments/:id', delete_assessment);
 
+// ==============================
 // Absences routes
+// ==============================
 router.post('/absences', create_absence);
 router.get('/absences', get_all_absences);
 router.get('/absences/:id', get_absence_by_id);
