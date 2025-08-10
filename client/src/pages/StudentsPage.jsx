@@ -1,5 +1,7 @@
 // import { useEffect, useState } from 'react';
 // import  studentAPI from '../apis/students/studentAPI';
+import LayoutWrapper from '@/components/layout/LayoutWrapper';
+
 import { useAuth } from '@/hooks/useAuth';
 
 const StudentsPage = () => {
@@ -13,7 +15,7 @@ const StudentsPage = () => {
   //   };
 
   return (
-    <div>
+    <LayoutWrapper>
       <h1>Leerlingen</h1>
       <div>
         {/* {students.map((student) => (
@@ -31,7 +33,7 @@ const StudentsPage = () => {
           <div>Geen gebruiker ingelogd</div>
         )}
       </div>
-    </div>
+    </LayoutWrapper>
   );
 };
 
