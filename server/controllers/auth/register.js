@@ -1,6 +1,3 @@
-const { prisma } = require('../../prisma/connection');
-const bcrypt = require('bcrypt');
-
 exports.register = async (req, res) => {
 	try {
 		const {
@@ -11,7 +8,13 @@ exports.register = async (req, res) => {
 			last_name,
 			phone,
 			address,
-			birth_date // comes from frontend in 'YYYY-MM-DD' format
+			birth_date, // comes from frontend in 'YYYY-MM-DD' format
+			gender,
+			postal_code,
+			city,
+			parent_name,
+			parent_email,
+			lesson_package
 		} = req.body;
 
 		if (!email || !password || !role) {
@@ -60,24 +63,26 @@ exports.register = async (req, res) => {
 				});
 			}
 
+			// Create a new student and populate all fields from the request
 			await prisma.student.create({
 				data: {
 					first_name: first_name || '',
 					last_name: last_name || '',
 					birth_date: new Date(birth_date), // safely parsed
-					gender: '',
+					gender: gender || '',
 					address: address || '',
-					postal_code: '',
-					city: '',
+					postal_code: postal_code || '',
+					city: city || '',
 					phone: phone || '',
-					parent_name: '',
-					parent_email: '',
-					lesson_package: '',
+					parent_name: parent_name || '',
+					parent_email: parent_email || '',
+					lesson_package: lesson_package || '',
 					enrollment_status: true
 				}
 			});
 		}
 
+		// Set session data
 		req.session.user = {
 			id: user.id,
 			email: user.email,
