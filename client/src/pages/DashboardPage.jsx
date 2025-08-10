@@ -6,7 +6,7 @@ import StatCard from '../components/dashboard/StatCard';
 import YearPlanning from '../components/dashboard/YearPlanning';
 import LayoutWrapper from '../components/layout/LayoutWrapper';
 
-import eventApi from '../apis/dashboard/eventiApi';
+import eventAPI from '../apis/dashboard/eventAPI';
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
@@ -21,7 +21,7 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const events = await eventApi.get_events();
+        const events = await eventAPI.get_events();
         setJaarplanning(events);
       } catch (error) {
         console.error('Error fetching events:', error);

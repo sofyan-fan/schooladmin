@@ -2,9 +2,21 @@
   "users": [
     {
       "email": "amin@test.com",
-      "password": "$2a$10$4W992qH.sZ.wpCkto7gbnucmYNzdIVnrHFtJjJNoFQOVScRmBEzb6",
+      "password": "$2a$12$Rj8WxttaX.XMGUyY2Q21Ee54yHiJHJzAJzi.RQUBQpT8mejnF3Yr6",
       "role": "admin",
       "id": 1
+    },
+    {
+      "email": "test@test.com",
+      "password": "$2a$10$Gmzyp.DD80FxXNBNMO3GlOOWfRBZrdw1j8xzTHjUCgpR4gbta4YUu",
+      "role": "admin",
+      "id": 2
+    },
+    {
+      "email": "bayaan@test.com",
+      "password": "$2a$10$SeTm0a6inoXhYrCDl4c69.d/nimkE6PuuRNBUey5yG.FsSbrul6IC",
+      "role": "student",
+      "id": 3
     }
   ],
   "events": [
@@ -42,6 +54,7 @@
       ]
     },
     {
+      "id": 2,
       "name": "abischss",
       "subjects": [
         {
@@ -50,10 +63,10 @@
           "level": "fdfsda",
           "material": "fdafsa"
         }
-      ],
-      "id": 2
+      ]
     },
     {
+      "id": 3,
       "name": "ddddddsa",
       "subjects": [
         {
@@ -62,8 +75,7 @@
           "level": "dsadss",
           "material": "dsadas"
         }
-      ],
-      "id": 3
+      ]
     }
   ],
   "subjects": [
