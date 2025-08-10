@@ -5,6 +5,7 @@ const {
   get_all_students,
   get_student_by_id,
   search_students,
+  get_all_teachers,
 } = require('../controllers/general/user_document');
 
 const {
@@ -24,9 +25,10 @@ const {
 } = require('../controllers/general/absence');
 
 // Students routes
-router.get('/get_students', get_all_students);
-router.get('/get_student/:id', get_student_by_id);
-router.get('/search_student', search_students);
+router.get('/students', get_all_students);
+router.get('/teacher', get_all_students);
+router.get('/student/:id', get_student_by_id);
+router.get('/search/student', search_students);
 
 // Assessments routes
 router.post('/assessments', create_assessment);
