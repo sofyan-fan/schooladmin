@@ -8,13 +8,14 @@ exports.register = async (req, res) => {
 			last_name,
 			phone,
 			address,
-			birth_date, // comes from frontend in 'YYYY-MM-DD' format
+			birth_date, // 'YYYY-MM-DD'
 			gender,
 			postal_code,
 			city,
 			parent_name,
 			parent_email,
-			lesson_package
+			lesson_package,
+			payment_method,
 		} = req.body;
 
 		if (!email || !password || !role) {
@@ -45,8 +46,10 @@ exports.register = async (req, res) => {
 			}
 		});
 
+		let profile = null;
+
 		if (role.toLowerCase() === 'teacher') {
-			await prisma.teacher.create({
+			profile = await prisma.teacher.create({
 				data: {
 					first_name: first_name || '',
 					last_name: last_name || '',
@@ -54,6 +57,7 @@ exports.register = async (req, res) => {
 					phone: phone || '',
 					address: address || '',
 					is_active: true,
+					user_id: user.id // assuming relation exists
 				}
 			});
 		} else if (role.toLowerCase() === 'student') {
@@ -63,12 +67,11 @@ exports.register = async (req, res) => {
 				});
 			}
 
-			// Create a new student and populate all fields from the request
-			await prisma.student.create({
+			profile = await prisma.student.create({
 				data: {
 					first_name: first_name || '',
 					last_name: last_name || '',
-					birth_date: new Date(birth_date), // safely parsed
+					birth_date: new Date(birth_date),
 					gender: gender || '',
 					address: address || '',
 					postal_code: postal_code || '',
@@ -77,24 +80,27 @@ exports.register = async (req, res) => {
 					parent_name: parent_name || '',
 					parent_email: parent_email || '',
 					lesson_package: lesson_package || '',
-					enrollment_status: true
+					payment_method: payment_method || '',
+					enrollment_status: true,
+					user_id: user.id // assuming relation exists
 				}
 			});
 		}
 
-		// Set session data
 		req.session.user = {
-			id: user.id,
-			email: user.email,
-			role: user.role
+			id: 	user.id,
+			email: 	user.email,
+			role: 	user.role,
+			data: 	profile
 		};
 
 		return res.status(201).json({
 			accessToken: 'session',
 			user: {
-				id: user.id,
-				email: user.email,
-				role: user.role
+				id: 	user.id,
+				email: 	user.email,
+				role: 	user.role,
+				data: 	profile
 			}
 		});
 	} catch (err) {
