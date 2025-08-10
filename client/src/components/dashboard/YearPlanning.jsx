@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { useState } from 'react';
-import eventApi from '../../apis/dashboard/eventiApi';
+import eventAPI from '../../apis/dashboard/eventAPI';
 import AddEventDialog from './year-planning/AddEventDialog';
 import DeleteEventDialog from './year-planning/DeleteEventDialog';
 import EditEventDialog from './year-planning/EditEventDialog';
@@ -98,7 +98,7 @@ const YearPlanning = ({ items, setItems }) => {
         event_date: editedItem.date,
         description: editedItem.description,
       };
-      const updatedEvent = await eventApi.editEvent(eventData);
+      const updatedEvent = await eventAPI.editEvent(eventData);
       setItems((prevItems) =>
         prevItems.map((item) =>
           item.id === updatedEvent.id ? { ...item, ...updatedEvent } : item
@@ -123,7 +123,7 @@ const YearPlanning = ({ items, setItems }) => {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     try {
-      await eventApi.deleteEvent(itemToDelete.id);
+      await eventAPI.deleteEvent(itemToDelete.id);
       setItems((prevItems) =>
         prevItems.filter((item) => item.id !== itemToDelete.id)
       );
@@ -147,7 +147,7 @@ const YearPlanning = ({ items, setItems }) => {
         event_date: newItem.date,
         description: newItem.description,
       };
-      const newEventData = await eventApi.add_event(eventData);
+      const newEventData = await eventAPI.add_event(eventData);
       setItems((prevItems) => [...prevItems, newEventData]);
       handleAddDialogClose();
     } catch (error) {

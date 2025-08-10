@@ -24,30 +24,37 @@ export const AuthProvider = ({ children }) => {
 
       console.log('response: ', response);
 
-      if (response?.data?.session) {
-        console.log('response: ', response.data);
-        const { session, user: userData } = response.data;
+      const { user: userData, accessToken, session } = response?.data || {};
 
-        setToken(session);
-        console.log('setToken: ', session);
+      // Treat a 200 with a user payload as success (session-based auth)
+      if (response?.status === 200 && userData) {
+        // Normalize token to a string for local storage compatibility
+        const tokenValue =
+          typeof accessToken === 'string'
+            ? accessToken
+            : typeof session === 'string'
+            ? session
+            : 'session';
+
+        setToken(tokenValue);
         setUser(userData);
 
-        localStorage.setItem('token', session);
+        localStorage.setItem('token', tokenValue);
         localStorage.setItem('user', JSON.stringify(userData));
 
         navigate('/dashboard');
         return true;
-      } else {
-        console.error('Login failed:', response);
-        return false;
       }
+
+      console.error('Login failed:', response);
+      return false;
     } catch (error) {
       console.error('Login error:', error);
       return false;
     }
   };
 
-  const register = async (email, password, role) => {
+  const register = async (email, password, role, profile) => {
     try {
       let response;
 
@@ -55,6 +62,7 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         role,
+        profile,
       });
 
       if (response?.data?.accessToken) {
