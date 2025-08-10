@@ -1,17 +1,47 @@
 const { prisma } = require('../../prisma/connection');
 
+exports.get_all_teachers = async (req, res) => {
+	try {
+		const teachers = await prisma.teacher.findMany({
+			include: {
+				absences: true,
+				roster: {
+					include: {
+						class_layout: true,
+						subject: true
+					}
+				}
+			}
+		});
+		res.status(200).json(teachers);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			error: 'Error retrieving teachers'
+		});
+	}
+};
+
 exports.get_all_students = async (req, res) => {
 	try {
-		const students = await prisma.user.findMany({
-			where: {
-				role: 'student',
-			},
+		const students = await prisma.student.findMany({
+			include: {
+				class_layout: true,
+				progress: true,
+				absences: true,
+				payments: {
+					include: {
+						course: true
+					}
+				},
+				results: true
+			}
 		});
-		res.status(200).json(students);
+		res.status(500).json(students);
 	} catch (error) {
-		console.error('Error fetching students:', error);
+		console.error(error);
 		res.status(500).json({
-			error: 'An error occurred while fetching students',
+			error: 'Error retrieving students'
 		});
 	}
 };
