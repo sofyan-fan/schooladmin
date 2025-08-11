@@ -17,6 +17,21 @@
       "password": "$2a$10$SeTm0a6inoXhYrCDl4c69.d/nimkE6PuuRNBUey5yG.FsSbrul6IC",
       "role": "student",
       "id": 3
+    },
+    {
+      "email": "mockuser@example.com",
+      "password": "$2a$10$ZR3uKa8S98DIxeEE53knGu0UMLFluZJagt8qMP20T.Fy.UsyXlIXq",
+      "role": "student",
+      "firstName": "Mock",
+      "lastName": "User",
+      "dateOfBirth": "2012-01-01",
+      "gender": "male",
+      "address": "Test",
+      "postalCode": "1234 AB",
+      "city": "AMS",
+      "phone": "+31 6 0000",
+      "paymentMethod": "sepa",
+      "id": 4
     }
   ],
   "events": [
@@ -76,6 +91,18 @@
           "material": "dsadas"
         }
       ]
+    },
+    {
+      "name": "dsda",
+      "subjects": [
+        {
+          "subjectId": 2,
+          "subjectName": "dsada",
+          "level": "dsa",
+          "material": "dsadsa"
+        }
+      ],
+      "id": 4
     }
   ],
   "subjects": [

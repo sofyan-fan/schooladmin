@@ -58,30 +58,60 @@ export const AuthProvider = ({ children }) => {
     try {
       let response;
 
-      response = await RequestHandler.post('auth/register', {
+      // Normalize role and map camelCase profile to snake_case expected by backend
+      const normalizedRole =
+        typeof role === 'string' ? role.toLowerCase().trim() : role;
+      const p = profile || {};
+      const requestData = {
         email,
         password,
-        role,
-        profile,
-      });
+        role: normalizedRole,
+        // snake_case fields as expected by Express backend
+        first_name: p.first_name ?? p.firstName,
+        last_name: p.last_name ?? p.lastName,
+        birth_date: p.birth_date ?? p.dateOfBirth,
+        gender: p.gender,
+        address: p.address,
+        postal_code: p.postal_code ?? p.postalCode,
+        city: p.city,
+        phone: p.phone,
+        parent_name: p.parent_name ?? p.parentName,
+        parent_email: p.parent_email ?? p.parentEmail,
+        lesson_package: p.lesson_package ?? p.course,
+        payment_method: p.payment_method ?? p.paymentMethod,
+      };
 
-      if (response?.data?.accessToken) {
+      response = await RequestHandler.post('auth/register', requestData);
+
+      // Success path for session-based backend (201 Created)
+      if (response?.status === 201 && response?.data?.user) {
         const { accessToken, user: userData } = response.data;
+        const tokenValue =
+          typeof accessToken === 'string' ? accessToken : 'session';
 
-        setToken(accessToken);
+        setToken(tokenValue);
         setUser(userData);
 
-        localStorage.setItem('token', accessToken);
-        console.log('setToken: ', accessToken);
+        localStorage.setItem('token', tokenValue);
         localStorage.setItem('user', JSON.stringify(userData));
 
         navigate('/dashboard');
-
         return true;
-      } else {
-        console.error('Registration failed:', response);
-        return false;
       }
+
+      // Backwards compatibility: if API returns token without 201 check
+      if (response?.data?.accessToken && response?.data?.user) {
+        const { accessToken, user: userData } = response.data;
+        setToken(accessToken);
+        setUser(userData);
+        localStorage.setItem('token', accessToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        navigate('/dashboard');
+        return true;
+      }
+
+      console.error('Registration failed:', response);
+      return false;
     } catch (error) {
       console.error('Registration error:', error);
       return false;

@@ -4,7 +4,7 @@ const Topbar = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
   console.log("user: ", user);
   return (
-    <header className="bg-[#1B9A22] h-16 flex items-center justify-end px-6 w-full text-white">
+    <header className="bg-primary h-16 flex items-center justify-end px-6 w-full text-white">
       <button onClick={toggleSidebar} className="md:hidden mr-4">
         ☰
       </button>

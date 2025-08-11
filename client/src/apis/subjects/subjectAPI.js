@@ -1,6 +1,8 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/general/subjects'; // or '/general/subjects' if you have a rewrite rule
+// Real backend exposes subjects under base '/subjects' router, with nested '/subjects' path
+// Final path: '/subjects/subjects'. The mock rewrites this to '/subjects'.
+const BASE_URL = '/subjects';
 
 export const get_subjects = async () => {
   const response = await RequestHandler.get(`${BASE_URL}`);
@@ -18,7 +20,10 @@ export const delete_subject = async (id) => {
 };
 
 export const edit_subject = async (subject) => {
-  const response = await RequestHandler.put(`${BASE_URL}/${subject.id}`, subject);
+  const response = await RequestHandler.put(
+    `${BASE_URL}/${subject.id}`,
+    subject
+  );
   return response.data;
 };
 
