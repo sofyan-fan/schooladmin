@@ -317,7 +317,7 @@ export default function StudentsPage() {
                               title="Bekijken"
                               onClick={() => alert(`Open ${s.id}`)}
                             >
-                              <Eye className="size-7" />
+                              <Eye className="size-5" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -327,17 +327,17 @@ export default function StudentsPage() {
                               title="Bewerken"
                               onClick={() => alert(`Bewerk ${s.id}`)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="size-5" />
                             </Button>
                             <Button
-                              variant="ghost"
+                              variant="destructive"
                               size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              className="h-8 w-8"
                               aria-label="Verwijderen"
                               title="Verwijderen"
                               onClick={() => alert(`Verwijder ${s.id}`)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="size-5" />
                             </Button>
                           </div>
                         </TableCell>
