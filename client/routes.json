@@ -1,0 +1,19 @@
+{
+  "/dashboard/event": "/events",
+  "/dashboard/event/:id": "/events/:id",
+
+  "/general/students": "/students",
+  "/general/student/:id": "/students/:id",
+
+  "/subjects/subjects": "/subjects",
+  "/subjects/subjects/:id": "/subjects/:id",
+
+  "/subjects": "/subjects",
+  "/subjects/:id": "/subjects/:id",
+
+  "/courses/coursemodule": "/coursemodule",
+  "/courses/coursemodule/:id": "/coursemodule/:id",
+
+  "/general/coursemodules": "/coursemodule",
+  "/general/coursemodules/:id": "/coursemodule/:id"
+}

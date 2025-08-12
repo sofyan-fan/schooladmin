@@ -60,7 +60,7 @@ exports.register = async (req, res) => {
           phone: phone || '',
           address: address || '',
           is_active: true,
-          user_id: user.id, // assuming relation exists
+          // user_id: user.id, // removed: no relation in schema
         },
       });
     } else if (role.toLowerCase() === 'student') {
@@ -85,7 +85,7 @@ exports.register = async (req, res) => {
           lesson_package: lesson_package || '',
           payment_method: payment_method || '',
           enrollment_status: true,
-          user_id: user.id, // assuming relation exists
+          // user_id: user.id, // removed: no relation in schema
         },
       });
     }

@@ -1,153 +1,118 @@
 {
   "users": [
     {
+      "id": 1,
+      "email": "teacher@example.com",
+      "password": "password123",
+      "role": "teacher"
+    },
+    {
+      "id": 1,
       "email": "amin@test.com",
-      "password": "$2a$12$Rj8WxttaX.XMGUyY2Q21Ee54yHiJHJzAJzi.RQUBQpT8mejnF3Yr6",
-      "role": "admin",
-      "id": 1
+      "password": "amin123",
+      "role": "admin"
     },
     {
-      "email": "test@test.com",
-      "password": "$2a$10$Gmzyp.DD80FxXNBNMO3GlOOWfRBZrdw1j8xzTHjUCgpR4gbta4YUu",
-      "role": "admin",
-      "id": 2
+      "id": 2,
+      "email": "student@example.com",
+      "password": "password123",
+      "role": "student"
     },
     {
-      "email": "bayaan@test.com",
-      "password": "$2a$10$SeTm0a6inoXhYrCDl4c69.d/nimkE6PuuRNBUey5yG.FsSbrul6IC",
-      "role": "student",
-      "id": 3
-    },
+      "id": 3,
+      "email": "abi@test.com",
+      "password": "abi12345",
+      "role": "student"
+    }
+  ],
+  "teachers": [
     {
-      "email": "mockuser@example.com",
-      "password": "$2a$10$ZR3uKa8S98DIxeEE53knGu0UMLFluZJagt8qMP20T.Fy.UsyXlIXq",
-      "role": "student",
-      "firstName": "Mock",
-      "lastName": "User",
-      "dateOfBirth": "2012-01-01",
+      "id": 1,
+      "first_name": "Amina",
+      "last_name": "Khan",
+      "email": "teacher@example.com",
+      "phone": "+31 6 11111111",
+      "address": "Docentenstraat 1",
+      "is_active": true,
+      "user_id": 1
+    }
+  ],
+  "students": [
+    {
+      "id": 1,
+      "first_name": "Youssef",
+      "last_name": "Boukari",
+      "birth_date": "2010-05-14",
       "gender": "male",
-      "address": "Test",
-      "postalCode": "1234 AB",
-      "city": "AMS",
-      "phone": "+31 6 0000",
-      "paymentMethod": "sepa",
-      "id": 4
-    }
-  ],
-  "events": [
-    {
-      "id": 1,
-      "name": "Team Meeting",
-      "date": "2024-01-10T10:00:00.000Z",
-      "description": "Weekly team sync"
+      "address": "Leerlingenweg 12",
+      "postal_code": "1234 AB",
+      "city": "Amsterdam",
+      "phone": "+31 6 22222222",
+      "parent_name": "Omar Boukari",
+      "parent_email": "omar@example.com",
+      "lesson_package": "arabic-beginner",
+      "payment_method": "sepa",
+      "enrollment_status": true,
+      "user_id": 2
     },
     {
       "id": 2,
-      "name": "Project Deadline",
-      "date": "2024-01-15T17:00:00.000Z",
-      "description": "Final submission for Project X"
-    },
-    {
-      "id": 3,
-      "event_name": "Q1 Planningg",
-      "event_date": "2024-01-20T14:00:00.000Z",
-      "description": "Planning session for the first quarter"
+      "enrollment_status": true,
+      "user_id": 3,
+      "first_name": "Amin",
+      "last_name": "Khachiche",
+      "birth_date": "2025-04-22T00:00:00.000Z",
+      "gender": "Man",
+      "address": "Monseigneur van de Marckstraat 2",
+      "postal_code": "5986 BE",
+      "city": "Beringe",
+      "phone": "+31639173377",
+      "parent_name": "Abi Khachiche",
+      "parent_email": "abi@test.com",
+      "lesson_package": "Arabisch – Beginner",
+      "payment_method": "iDEAL"
     }
   ],
-  "roster": [],
-  "students": [],
-  "coursemodules": [
-    {
-      "id": 1,
-      "name": "Basiscursus Islam",
-      "subjects": [
-        {
-          "subjectId": 1,
-          "level": "1",
-          "material": "Alif Baa"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "name": "abischss",
-      "subjects": [
-        {
-          "subjectId": 1,
-          "subjectName": "dafdsa",
-          "level": "fdfsda",
-          "material": "fdafsa"
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "name": "ddddddsa",
-      "subjects": [
-        {
-          "subjectId": 3,
-          "subjectName": "dasd",
-          "level": "dsadss",
-          "material": "dsadas"
-        }
-      ]
-    },
-    {
-      "name": "dsda",
-      "subjects": [
-        {
-          "subjectId": 2,
-          "subjectName": "dsada",
-          "level": "dsa",
-          "material": "dsadsa"
-        }
-      ],
-      "id": 4
-    }
-  ],
+  "events": [],
   "subjects": [
     {
-      "name": "dafdsa",
-      "levels": [
-        "fdfsda"
-      ],
-      "materials": [
-        "fdafsa"
-      ],
-      "id": 1
+      "id": 1,
+      "name": "Arabisch – Beginner"
     },
     {
-      "name": "dsada",
-      "levels": [
-        "dsa"
-      ],
-      "materials": [
-        "dsadsa"
-      ],
-      "id": 2
+      "id": 2,
+      "name": "Tajwīd"
     },
     {
-      "name": "dasd",
-      "levels": [
-        "dsads",
-        "dsadss",
-        "sss"
-      ],
-      "materials": [
-        "dsadas"
-      ],
-      "id": 3
+      "id": 3,
+      "name": "Fiqh (basics)"
     },
     {
       "name": "Arabisch",
       "levels": [
-        "dsa",
-        "sss"
+        "1",
+        "2",
+        "3"
       ],
       "materials": [
-        "dddd"
+        "Alif Baa",
+        "Thaa"
       ],
       "id": 4
+    }
+  ],
+  "coursemodule": [
+    {
+      "name": "Basis - 1",
+      "subjects": [
+        {
+          "subjectId": 4,
+          "subjectName": "Arabisch",
+          "level": "1",
+          "material": "Alif Baa"
+        }
+      ],
+      "id": 1
     }
   ]
 }
