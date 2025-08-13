@@ -1,8 +1,5 @@
 'use client';
 
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -11,31 +8,93 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { ChevronDownIcon } from 'lucide-react';
+import * as React from 'react';
 
-export function DatePicker({ value, onChange, ...props }) {
+// Helper to accept string | Date | undefined and always return Date | undefined
+function toDateOrUndefined(v) {
+  if (!v) return undefined;
+  if (v instanceof Date) return v;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? undefined : d;
+}
+
+export function DatePicker({
+  value,
+  onChange,
+  fromYear, // optional override
+  toYear, // optional override
+  minDate, // optional override
+  maxDate, // optional override
+  placeholder = 'Select date',
+  id,
+  className,
+  buttonClassName,
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  // Defaults for DOB: 1900 .. (currentYear - 4)
+  const currentYear = new Date().getFullYear();
+  const defaultFromYear = fromYear ?? 1900;
+  const defaultToYear = toYear ?? currentYear - 4;
+
+  // Bound dates for disabling
+  const computedMinDate = minDate ?? new Date(defaultFromYear, 0, 1); // Jan 1, fromYear
+  const computedMaxDate = maxDate ?? new Date(defaultToYear, 11, 31); // Dec 31, toYear
+
+  const selected = toDateOrUndefined(value);
+
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={'outline'}
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !value && 'text-muted-foreground'
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(new Date(value), 'PPP') : <span>Kies een datum</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
-        <Calendar
-          mode="single"
-          selected={value ? new Date(value) : null}
-          onSelect={onChange}
-          initialFocus
-          {...props}
-        />
-      </PopoverContent>
-    </Popover>
+    <div className={cn('w-full', className)}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            id={id}
+            className={cn(
+              'w-full justify-between text-left font-normal',
+              !selected && 'text-muted-foreground',
+              buttonClassName
+            )}
+          >
+            {selected
+              ? selected.toLocaleDateString('nl-NL', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })
+              : placeholder}
+            <ChevronDownIcon className="ml-2 h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+
+        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selected}
+            // shadcn (react-day-picker v9) supports "dropdown" or "dropdown-buttons" depending on your version
+            captionLayout="dropdown"
+            fromYear={defaultFromYear}
+            toYear={defaultToYear}
+            // Disable anything outside bounds (and future dates if your toYear < current year)
+            disabled={{
+              before: computedMinDate,
+              after: computedMaxDate,
+            }}
+            onSelect={(date) => {
+              // ensure we only set valid dates within range
+              if (date) {
+                if (date < computedMinDate || date > computedMaxDate) return;
+                onChange?.(date);
+              } else {
+                onChange?.(undefined);
+              }
+              setOpen(false);
+            }}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
