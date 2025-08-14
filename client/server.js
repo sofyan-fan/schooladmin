@@ -49,6 +49,7 @@ function toSnakeCaseProfile(payload) {
 }
 
 // POST /auth/register — mimic real backend
+
 server.post('/auth/register', (req, res) => {
   try {
     const {

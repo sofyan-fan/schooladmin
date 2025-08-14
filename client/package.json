@@ -10,7 +10,8 @@
     "mock": "node ../mock/server.js",
     "dev:mock": "VITE_USE_JSON_SERVER=true vite --host --port 5173",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "host": "vite --host"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
