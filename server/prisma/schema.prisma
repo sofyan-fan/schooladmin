@@ -12,7 +12,7 @@ model user {
   email        String   @unique
   password     String
   role         String
-  is_active    Boolean  @default(true)
+  active       Boolean  @default(true)
   created_at   DateTime @default(now())
 
   absence absence[]
@@ -32,7 +32,7 @@ model student {
   parent_email      String
   lesson_package    String
   payment_method    String
-
+  sosnumber         String
   enrollment_status Boolean   @default(true)
 
   created_at        DateTime  @default(now())
@@ -41,6 +41,7 @@ model student {
   class_layout      class_layout? @relation(fields: [class_id], references: [id])
   class_id          Int?
 
+  active            Boolean  @default(true)
   progress          progress[]
   absences          absence[]
   payments          tuition_payment[]
@@ -59,10 +60,11 @@ model teacher {
   cv_url        String?
   vog_url       String?
   id_document   String?
+  active        Boolean  @default(true)
 
   absences      absence[]
-
-  roster roster[]
+  roster        roster[]
+  class_layout class_layout[]
 }
 
 model admin {
@@ -78,11 +80,17 @@ model admin {
 model class_layout {
   id         Int       @id @default(autoincrement())
   name       String
+
+  mentor_id  Int?
+  mentor     teacher?  @relation(fields: [mentor_id], references: [id])
+
+  course_id  Int?
+  course     courses?  @relation(fields: [course_id], references: [id])
+
   students   student[]
   tests      test[]
   exams      exam[]
   schedules  schedule[]
-
   roster roster[]
 }
 
@@ -180,7 +188,8 @@ model courses {
   price           Float
 
   tuition_payments tuition_payment[]
-  subjects        subject[]        @relation("course_subjects")
+  subjects         subject[]        @relation("course_subjects")
+  class_layout     class_layout[]
 }
 
 model course_module {
@@ -256,7 +265,8 @@ model roster {
   start_time    String
   end_time      String
 
+  classroom     String
   created_at    DateTime     @default(now())
-
+  
   absence absence[]
 }
