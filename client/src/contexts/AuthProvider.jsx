@@ -1,4 +1,3 @@
-// src/providers/AuthProvider.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RequestHandler from '../apis/RequestHandler';

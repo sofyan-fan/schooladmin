@@ -1,7 +1,6 @@
 import RequestHandler from '../RequestHandler';
 
-// Align with existing usage: '/general/coursemodules' on real backend
-// Mock rewrites to '/coursemodule'
+
 const BASE_URL = '/general/coursemodules';
 
 export const get_coursemodules = async () => {
