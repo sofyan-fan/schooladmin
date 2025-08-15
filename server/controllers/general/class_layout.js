@@ -1,0 +1,208 @@
+const { prisma } = require('../../prisma/connection');
+
+// Create a class layout
+exports.create_class_layout = async (req, res) => {
+	try {
+		const {
+			name,
+			mentor_id,
+			course_id
+		} = req.body;
+
+		const newClassLayout = await prisma.class_layout.create({
+			data: {
+				name,
+				mentor_id: mentor_id || null,
+				course_id: course_id || null
+			}
+		});
+
+		res.status(201).json({
+			message: 'Class layout created',
+			newClassLayout
+		});
+	} catch (error) {
+		console.error('Error creating class layout:', error);
+		res.status(500).json({
+			message: 'Failed to create class layout'
+		});
+	}
+};
+
+// Get all class layouts
+exports.get_class_layouts = async (req, res) => {
+	try {
+		const classLayouts = await prisma.class_layout.findMany({
+			include: {
+				mentor: true,
+				course: true,
+				students: true
+			}
+		});
+
+		res.status(200).json(classLayouts);
+	} catch (error) {
+		console.error('Error fetching class layouts:', error);
+		res.status(500).json({
+			message: 'Failed to fetch class layouts'
+		});
+	}
+};
+
+// Get a single class layout
+exports.get_class_layout = async (req, res) => {
+	try {
+		const {
+			id
+		} = req.params;
+
+		const classLayout = await prisma.class_layout.findUnique({
+			where: {
+				id: parseInt(id)
+			},
+			include: {
+				mentor: true,
+				course: true,
+				students: true
+			}
+		});
+
+		if (!classLayout) {
+			return res.status(404).json({
+				message: 'Class layout not found'
+			});
+		}
+
+		res.status(200).json(classLayout);
+	} catch (error) {
+		console.error('Error fetching class layout:', error);
+		res.status(500).json({
+			message: 'Failed to fetch class layout'
+		});
+	}
+};
+
+// Update class layout
+exports.update_class_layout = async (req, res) => {
+	try {
+		const {
+			id
+		} = req.params;
+		const {
+			name,
+			mentor_id,
+			course_id
+		} = req.body;
+
+		const updatedClassLayout = await prisma.class_layout.update({
+			where: {
+				id: parseInt(id)
+			},
+			data: {
+				name,
+				mentor_id: mentor_id || null,
+				course_id: course_id || null
+			}
+		});
+
+		res.status(200).json({
+			message: 'Class layout updated',
+			updatedClassLayout
+		});
+	} catch (error) {
+		console.error('Error updating class layout:', error);
+		res.status(500).json({
+			message: 'Failed to update class layout'
+		});
+	}
+};
+
+// Delete class layout
+exports.delete_class_layout = async (req, res) => {
+	try {
+		const {
+			id
+		} = req.params;
+
+		await prisma.class_layout.delete({
+			where: {
+				id: parseInt(id)
+			}
+		});
+
+		res.status(200).json({
+			message: 'Class layout deleted'
+		});
+	} catch (error) {
+		console.error('Error deleting class layout:', error);
+		res.status(500).json({
+			message: 'Failed to delete class layout'
+		});
+	}
+};
+
+// Add students to a class layout
+exports.add_students_to_class = async (req, res) => {
+	try {
+		const {
+			class_id
+		} = req.params;
+		const {
+			student_ids
+		} = req.body; // array of student IDs
+
+		const updates = await Promise.all(
+			student_ids.map(studentId =>
+				prisma.student.update({
+					where: {
+						id: studentId
+					},
+					data: {
+						class_id: parseInt(class_id)
+					}
+				})
+			)
+		);
+
+		res.status(200).json({
+			message: 'Students added to class',
+			updates
+		});
+	} catch (error) {
+		console.error('Error adding students to class:', error);
+		res.status(500).json({
+			message: 'Failed to add students'
+		});
+	}
+};
+
+// Assign or change mentor (teacher)
+exports.assign_mentor = async (req, res) => {
+	try {
+		const {
+			class_id
+		} = req.params;
+		const {
+			mentor_id
+		} = req.body;
+
+		const updatedClass = await prisma.class_layout.update({
+			where: {
+				id: parseInt(class_id)
+			},
+			data: {
+				mentor_id
+			}
+		});
+
+		res.status(200).json({
+			message: 'Mentor assigned to class',
+			updatedClass
+		});
+	} catch (error) {
+		console.error('Error assigning mentor:', error);
+		res.status(500).json({
+			message: 'Failed to assign mentor'
+		});
+	}
+};
