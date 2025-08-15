@@ -31,12 +31,17 @@ model student {
   parent_name       String
   parent_email      String
   lesson_package    String
+<<<<<<< HEAD
+  payment_method    String?
+
+=======
   payment_method    String
   sosnumber         String
+>>>>>>> develop
   enrollment_status Boolean   @default(true)
 
   created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+  updated_at        DateTime?  @updatedAt
   
   class_layout      class_layout? @relation(fields: [class_id], references: [id])
   class_id          Int?

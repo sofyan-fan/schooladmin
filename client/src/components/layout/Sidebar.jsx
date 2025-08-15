@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LogOut } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../ui/button';
+import { GraduationCap } from 'lucide-react';
 
 const Sidebar = ({ isOpen }) => {
   
@@ -31,8 +32,9 @@ const Sidebar = ({ isOpen }) => {
       }`}
     >
       <div>
-        <div className="text-2xl font-bold mb-8 text-text-default">
-          SchoolAdmin
+        <div className="flex w-full items-center gap-2 text-2xl font-bold mb-8 text-text-default">
+          <GraduationCap className="size-10" />
+          Maktab
         </div>
         <nav>
           <ul>

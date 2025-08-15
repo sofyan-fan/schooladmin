@@ -1,6 +1,8 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/general/coursemodules'; // or '/general/coursemodules' if you have a rewrite rule
+// Align with existing usage: '/general/coursemodules' on real backend
+// Mock rewrites to '/coursemodule'
+const BASE_URL = '/general/coursemodules';
 
 export const get_coursemodules = async () => {
   const response = await RequestHandler.get(BASE_URL);
@@ -13,12 +15,15 @@ export const add_coursemodule = async (coursemodule) => {
 };
 
 export const delete_coursemodule = async (id) => {
-  const response = await RequestHandler.del(`${BASE_URL}/${id}`); 
+  const response = await RequestHandler.del(`${BASE_URL}/${id}`);
   return response.data;
 };
 
 export const edit_coursemodule = async (coursemodule) => {
-  const response = await RequestHandler.put(`${BASE_URL}/${coursemodule.id}`, coursemodule);
+  const response = await RequestHandler.put(
+    `${BASE_URL}/${coursemodule.id}`,
+    coursemodule
+  );
   return response.data;
 };
 

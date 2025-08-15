@@ -1,117 +1,95 @@
 import { useEffect, useState } from "react";
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
 import courseModuleApi from "../apis/courses/courseModuleAPI";
 import CourseModuleModal from "../components/courses/CourseModuleModal"; 
 import subjectAPI from "@/apis/subjects/subjectAPI";
+import { CourseModuleCard } from "../components/courses/CourseModuleCard"; 
 
 const CourseModulesPage = () => {
   const [courseModules, setCourseModules] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjects, setSubjects] = useState([]);
 
-  // Fetch course modules and subjects on mount
   useEffect(() => {
-    fetchCourseModules();
-    fetchSubjects();
+    const fetchData = async () => {
+      setLoading(true);
+      setApiError("");
+      try {
+        const [modulesData, subjectsData] = await Promise.all([
+          courseModuleApi.get_coursemodules(),
+          subjectAPI.get_subjects()
+        ]);
+        setCourseModules(modulesData);
+        setSubjects(subjectsData);
+      } catch (e) {
+        setApiError(e.message || "Failed to load data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
-
-  const fetchCourseModules = async () => {
-    setLoading(true);
-    setApiError("");
-    try {
-      const data = await courseModuleApi.get_coursemodules();
-      setCourseModules(data);
-    } catch (e) {
-      setApiError(e.message || "Failed to load course modules.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSubjects = async () => {
-    setLoading(true);
-    setApiError("");
-    try {
-      const data = await subjectAPI.get_subjects();
-      setSubjects(data);
-    } catch (e) {
-      setApiError(e.message || "Failed to load subjects.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSaveCourseModule = async (newCourseModule) => {
     try {
       await courseModuleApi.add_coursemodule(newCourseModule);
-      fetchCourseModules();
+      const data = await courseModuleApi.get_coursemodules();
+      setCourseModules(data);
     } catch (e) {
       setApiError(e.message || "Failed to add course module.");
     }
   };
 
+  const renderContent = () => {
+    if (loading) {
+      return <div className="text-center text-muted-foreground mt-8">Loading course modules...</div>;
+    }
+
+    if (apiError) {
+      return <div className="text-center text-red-600 mt-8">{apiError}</div>;
+    }
+
+    if (!courseModules || courseModules.length === 0) {
+      return <div className="text-center text-muted-foreground mt-8">No course modules found. Click "Lespakket toevoegen" to create one.</div>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {courseModules.map((module) => (
+          <CourseModuleCard key={module.id} module={module} />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <LayoutWrapper>
-      <div className="container mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Lespakketten</h1>
-          <Button className="cursor-pointer" onClick={() => setIsModalOpen(true)}>
+      <div className="container mx-auto py-8 px-4 md:px-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Lespakketten</h1>
+            <p className="text-muted-foreground">
+              Beheer en organiseer hier al uw lespakketten.
+            </p>
+          </div>
+          <Button onClick={() => setIsModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Lespakket toevoegen
           </Button>
-          
-            <CourseModuleModal 
-              open={isModalOpen}
-              onOpenChange={setIsModalOpen}
-              onSave={handleSaveCourseModule}
-                subjects={subjects}
-            />
+        </div>
+
+        <CourseModuleModal 
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          onSave={handleSaveCourseModule}
+          subjects={subjects}
+        />
          
-        </div>
-
-        {loading && <div className="text-gray-500 mb-4">Loading course modules...</div>}
-        {apiError && <div className="text-red-500 mb-4">{apiError}</div>}
-
-        <div className="border rounded-sm">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Lespakket naam</TableHead>
-                <TableHead>Inhoud (Vak, Niveau, Literatuur)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courseModules.map((module) => (
-                <TableRow key={module.id}>
-                  <TableCell>{module.name}</TableCell>
-                  <TableCell>
-                    {module.subjects && module.subjects.length > 0 ? (
-                      <ul className="list-disc pl-4">
-                        {module.subjects.map((item, idx) => (
-                          <li key={idx}>
-                            {/* 
-                              You might want to resolve subjectId to subject name, 
-                              if you have all subjects loaded in state. 
-                              For now, just show IDs/strings.
-                            */}
-                            Vak: {item.subjectName || item.subjectId}, Niveau: {item.level}, Literatuur: {item.material}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span className="text-gray-400 italic">Geen vakken toegevoegd</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        {renderContent()}
       </div>
     </LayoutWrapper>
   );

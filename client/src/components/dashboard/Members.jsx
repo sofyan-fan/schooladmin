@@ -6,14 +6,7 @@ import { MoreHorizontal } from 'lucide-react';
 
 const MembersTable = ({ members }) => (
   <Table>
-    {/* <TableHeader className="bg-neutral-100 text-xs uppercase tracking-wide text-neutral-600">
-      <TableRow>
-        <TableHead>Name</TableHead>
-        <TableHead>Group/Role</TableHead>
-        <TableHead>Status</TableHead>
-        <TableHead></TableHead>
-      </TableRow>
-    </TableHeader> */}
+  
     <TableBody>
       {members.map((member, index) => (
         <TableRow
@@ -52,12 +45,7 @@ const MembersTable = ({ members }) => (
 const Members = ({ members }) => {
   return (
     <Card className="rounded-lg shadow-md bg-white py-0">
-      {/* <CardHeader>
-        <CardTitle>Leden</CardTitle>
-        <CardDescription>
-          Een overzicht van alle studenten, leraren en personeel.
-        </CardDescription>
-      </CardHeader> */}
+    
       <CardContent className="p-0">
         <Tabs defaultValue="studenten">
           <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">

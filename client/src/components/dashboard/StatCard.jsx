@@ -8,12 +8,7 @@ const StatCard = ({ title, value, icon, link }) => {
       <div className="flex flex-row items-center justify-end space-y-0 pb-2 w-1/6">
         {icon}
       </div>
-      {/* <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-
-        <CardTitle className="text-lg font-bold text-text-muted">
-          {title}
-        </CardTitle>
-      </CardHeader> */}
+    
       <CardContent className="flex flex-col">
         <CardTitle className="text-lg font-medium text-text-muted">{title}</CardTitle>
         <div className="text-4xl font-medium text-text-default">{value}</div>

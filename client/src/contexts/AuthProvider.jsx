@@ -1,3 +1,4 @@
+// src/providers/AuthProvider.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RequestHandler from '../apis/RequestHandler';
@@ -11,41 +12,31 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse user from localStorage', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        setToken(null);
+      }
     }
   }, [token]);
 
   const login = async (email, password) => {
     try {
-      const response = await RequestHandler.post('auth/login', {
-        email,
-        password,
-      });
+      const response = await RequestHandler.post('auth/login', { email, password });
+      const { user: userData, accessToken } = response?.data || {};
 
-      console.log('response: ', response);
-
-      const { user: userData, accessToken, session } = response?.data || {};
-
-      // Treat a 200 with a user payload as success (session-based auth)
       if (response?.status === 200 && userData) {
-        // Normalize token to a string for local storage compatibility
-        const tokenValue =
-          typeof accessToken === 'string'
-            ? accessToken
-            : typeof session === 'string'
-            ? session
-            : 'session';
-
+        const tokenValue = accessToken || 'session_active';
         setToken(tokenValue);
         setUser(userData);
-
         localStorage.setItem('token', tokenValue);
         localStorage.setItem('user', JSON.stringify(userData));
-
         navigate('/dashboard');
         return true;
       }
-
       console.error('Login failed:', response);
       return false;
     } catch (error) {
@@ -54,36 +45,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, password, role, profile) => {
+  const register = async (email, password, role, profileData) => {
     try {
-      let response;
+      const normalizedRole =
+        typeof role === 'string' && role.trim() ? role.toLowerCase().trim() : null;
 
-      response = await RequestHandler.post('auth/register', {
-        email,
-        password,
-        role,
-        profile,
-      });
-
-      if (response?.data?.accessToken) {
-        const { accessToken, user: userData } = response.data;
-
-        setToken(accessToken);
-        setUser(userData);
-
-        localStorage.setItem('token', accessToken);
-        console.log('setToken: ', accessToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-
-        navigate('/dashboard');
-
-        return true;
-      } else {
-        console.error('Registration failed:', response);
+      if (!normalizedRole || !email || !password) {
+        console.error('Registration error: Missing email/password/role', {
+          emailPresent: Boolean(email),
+          passwordPresent: Boolean(password),
+          role,
+        });
         return false;
       }
+
+      const requestData = {
+        email,
+        password,
+        role: normalizedRole,
+        ...(profileData || {}),
+      };
+
+      // Debug:
+      // console.log('Requesting /auth/register with', requestData);
+
+      const response = await RequestHandler.post('auth/register', requestData);
+
+      if (response?.status === 201 && response?.data?.user) {
+        const { accessToken, user: userData } = response.data;
+        const tokenValue = accessToken || 'session_active';
+        setToken(tokenValue);
+        setUser(userData);
+        localStorage.setItem('token', tokenValue);
+        localStorage.setItem('user', JSON.stringify(userData));
+        navigate('/dashboard');
+        return true;
+      }
+
+      console.error('Registration failed:', response?.data?.message || 'Unknown error', response);
+      return false;
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Registration error:', error?.response?.data?.message || error.message);
       return false;
     }
   };
@@ -99,9 +101,7 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider
-      value={{ isAuthenticated, user, login, logout, token, register }}
-    >
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, token, register }}>
       {children}
     </AuthContext.Provider>
   );
