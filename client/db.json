@@ -41,6 +41,12 @@
       "email": "nnn@test.com",
       "password": "nnn12345",
       "role": "student"
+    },
+    {
+      "id": 7,
+      "email": "test@test.com",
+      "password": "test12345",
+      "role": "student"
     }
   ],
   "teachers": [
@@ -123,9 +129,33 @@
       "parent_email": "nnn@test.com",
       "lesson_package": "Arabisch – Beginner",
       "payment_method": "Contant"
+    },
+    {
+      "id": 5,
+      "enrollment_status": true,
+      "user_id": 7,
+      "first_name": "afadsf",
+      "last_name": "fdsafdsa",
+      "birth_date": "2010-12-02T23:00:00.000Z",
+      "gender": "Man",
+      "address": "Monseigneur van de Marckstraat 2",
+      "postal_code": "5986 BE",
+      "city": "Beringe",
+      "phone": "+31639173377",
+      "parent_name": "fdsaf",
+      "parent_email": "test@test.com",
+      "lesson_package": "Arabisch – Beginner",
+      "payment_method": "iDEAL"
     }
   ],
-  "events": [],
+  "events": [
+    {
+      "event_name": "fdsaa",
+      "event_date": "2025-07-30",
+      "description": "fadfa",
+      "id": 1
+    }
+  ],
   "subjects": [
     {
       "id": 1,
@@ -151,6 +181,19 @@
         "Thaa"
       ],
       "id": 4
+    },
+    {
+      "name": "aaaaaa",
+      "levels": [
+        "beginner",
+        "intermediate",
+        "expert"
+      ],
+      "materials": [
+        "fdsafdfdsafds",
+        "dddddd"
+      ],
+      "id": 5
     }
   ],
   "coursemodule": [
@@ -165,6 +208,28 @@
         }
       ],
       "id": 1
+    },
+    {
+      "name": "ddddd",
+      "subjects": [
+        {
+          "subjectId": 5,
+          "level": "beginner",
+          "material": "fdsafdfdsafds"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "name": "New",
+      "subjects": [
+        {
+          "subjectId": 4,
+          "level": "3",
+          "material": "Thaa"
+        }
+      ],
+      "id": 3
     }
   ]
 }

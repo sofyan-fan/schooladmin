@@ -3,7 +3,6 @@ import { minStudentBirthDate } from './helpers';
 
 // Accept both Date and string inputs via z.coerce.date()
 export const schemaAccount = z.object({
-  role: z.enum(['student', 'teacher'], { required_error: 'Kies een rol.' }),
   email: z.string().email('Voer een geldig e-mailadres in'),
   password: z.string().min(8, 'Minimaal 8 tekens'),
 });

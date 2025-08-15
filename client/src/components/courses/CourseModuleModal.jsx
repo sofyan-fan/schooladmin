@@ -1,33 +1,24 @@
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { X, Plus } from 'lucide-react';
 import { useState } from 'react';
-import courseModuleApi from '../../apis/courses/courseModuleAPI';
-
-function ComboTag({ children, onRemove }) {
-  return (
-    <span className="flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm mr-2 mb-2">
-      {children}
-      <button
-        type="button"
-        className="ml-1 text-gray-400 hover:text-gray-600"
-        onClick={onRemove}
-        tabIndex={-1}
-        aria-label="Remove"
-      >
-        <X size={14} />
-      </button>
-    </span>
-  );
-}
 
 /**
  * @param {object[]} subjects - [{id, name, levels, materials}]
@@ -39,7 +30,6 @@ export default function CourseModuleModal({
   subjects,
 }) {
   const [name, setName] = useState('');
-  // "moduleItems" = [{subjectId, level, material, subjectName}]
   const [moduleItems, setModuleItems] = useState([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('');
@@ -74,7 +64,8 @@ export default function CourseModuleModal({
   const removeCombo = (idx) =>
     setModuleItems((prev) => prev.filter((_, i) => i !== idx));
 
-  const handleSave = async () => {
+  const handleSave = async (event) => {
+    event.preventDefault();
     if (!name.trim()) {
       setError('Please enter a module name.');
       return;
@@ -86,11 +77,14 @@ export default function CourseModuleModal({
     setError('');
     setLoading(true);
     try {
-      const savedModule = await courseModuleApi.add_coursemodule({
+      await onSave({
         name: name.trim(),
-        subjects: moduleItems,
+        subjects: moduleItems.map(({ subjectId, level, material }) => ({
+          subjectId,
+          level,
+          material,
+        })),
       });
-      if (onSave) onSave(savedModule);
       setName('');
       setModuleItems([]);
       onOpenChange(false);
@@ -103,115 +97,148 @@ export default function CourseModuleModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Lespakket toevoegen</DialogTitle>
+          <DialogTitle>Nieuw Lespakket Toevoegen</DialogTitle>
+          <DialogDescription>
+            Creëer een nieuw lespakket door een naam op te geven en de
+            bijbehorende vakken te selecteren.
+          </DialogDescription>
         </DialogHeader>
-        <form
-          className="flex flex-col gap-4 mt-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSave();
-          }}
-        >
-          <div>
-            <label className="block mb-1 font-medium">Lespakket naam</label>
+        <form onSubmit={handleSave} className="space-y-6 pt-2">
+          {/* Module Name Input */}
+          <div className="space-y-2">
+            <Label htmlFor="moduleName">Lespakket naam</Label>
             <Input
+              id="moduleName"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
               required
               disabled={loading}
+              placeholder="e.g. Wiskunde Jaar 1"
             />
           </div>
-          <div className="flex gap-2 items-end">
-            <div className="flex-1">
-              <label className="block mb-1 font-medium">Vak</label>
-              <select
-                className="w-full border rounded px-2 py-1"
+
+          {/* Subject/Level/Material Selectors */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+            <div className="space-y-2">
+              <Label htmlFor="subject">Vak</Label>
+              <Select
                 value={selectedSubjectId}
-                onChange={(e) => {
-                  setSelectedSubjectId(e.target.value);
+                onValueChange={(value) => {
+                  setSelectedSubjectId(value);
                   setSelectedLevel('');
                   setSelectedMaterial('');
                 }}
                 disabled={loading}
               >
-                <option value="">Kies een vak...</option>
-                {Array.isArray(subjects) &&
-                  subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
+                <SelectTrigger id="subject">
+                  <SelectValue placeholder="Kies een vak..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(subjects || []).map((subject) => (
+                    <SelectItem key={subject.id} value={String(subject.id)}>
                       {subject.name}
-                    </option>
+                    </SelectItem>
                   ))}
-              </select>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex-1">
-              <label className="block mb-1 font-medium">Niveau</label>
-              <select
-                className="w-full border rounded px-2 py-1"
+            <div className="space-y-2">
+              <Label htmlFor="level">Niveau</Label>
+              <Select
                 value={selectedLevel}
-                onChange={(e) => setSelectedLevel(e.target.value)}
+                onValueChange={setSelectedLevel}
                 disabled={!selectedSubjectId || loading}
               >
-                <option value="">Kies niveau...</option>
-                {selectedSubject?.levels.map((level, i) => (
-                  <option key={i} value={level}>
-                    {level}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="level">
+                  <SelectValue placeholder="Kies niveau..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* ====== FIX IS HERE ====== */}
+                  {(selectedSubject?.levels || []).map((level, i) => (
+                    <SelectItem key={i} value={level}>
+                      {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex-1">
-              <label className="block mb-1 font-medium">Literatuur</label>
-              <select
-                className="w-full border rounded px-2 py-1"
+            <div className="space-y-2">
+              <Label htmlFor="material">Literatuur</Label>
+              <Select
                 value={selectedMaterial}
-                onChange={(e) => setSelectedMaterial(e.target.value)}
+                onValueChange={setSelectedMaterial}
                 disabled={!selectedSubjectId || loading}
               >
-                <option value="">Kies literatuur...</option>
-                {selectedSubject?.materials.map((material, i) => (
-                  <option key={i} value={material}>
-                    {material}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="material">
+                  <SelectValue placeholder="Kies literatuur..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* ====== FIX IS HERE ====== */}
+                  {(selectedSubject?.materials || []).map((material, i) => (
+                    <SelectItem key={i} value={material}>
+                      {material}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Button
               type="button"
               onClick={handleAddCombo}
-              variant="secondary"
-              className="ml-2 h-10"
+              variant="outline"
+              size="icon"
               disabled={
-                !selectedSubjectId ||
-                !selectedLevel ||
-                !selectedMaterial ||
-                loading
+                !selectedSubjectId || !selectedLevel || !selectedMaterial || loading
               }
             >
-              +
+              <Plus className="h-4 w-4" />
+              <span className="sr-only">Voeg toe</span>
             </Button>
           </div>
-          <div>
-            <label className="block mb-1 font-medium">Gekozen vakken</label>
-            <div className="flex flex-wrap min-h-[28px]">
-              {moduleItems.map((item, i) => (
-                <ComboTag key={i} onRemove={() => removeCombo(i)}>
-                  {item.subjectName} – {item.level} – {item.material}
-                </ComboTag>
-              ))}
+
+          {/* Display for Added Combos */}
+          <div className="space-y-2">
+            <Label>Toegevoegde vakken</Label>
+            <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-muted/50">
+              {moduleItems.length > 0 ? (
+                moduleItems.map((item, i) => (
+                  <Badge
+                    key={i}
+                    variant="secondary"
+                    className="flex items-center gap-2 py-1.5 px-3 text-sm"
+                  >
+                    <span>
+                      {item.subjectName} – {item.level} – {item.material}
+                    </span>
+                    <button
+                      type="button"
+                      className="rounded-full p-0.5 hover:bg-background/50"
+                      onClick={() => removeCombo(i)}
+                      aria-label="Remove item"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground italic px-2">
+                  Nog geen vakken toegevoegd.
+                </p>
+              )}
             </div>
           </div>
-          {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-          <DialogFooter className="flex justify-between pt-4">
-            <DialogClose asChild>
-              <Button type="button" variant="secondary" disabled={loading}>
-                Terug
-              </Button>
-            </DialogClose>
-            <Button type="submit" variant="default" disabled={loading}>
-              {loading ? 'Opslaan...' : 'Opslaan lespakket'}
+          
+          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+
+          <DialogFooter className="pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              Annuleren
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Opslaan...' : 'Lespakket Opslaan'}
             </Button>
           </DialogFooter>
         </form>

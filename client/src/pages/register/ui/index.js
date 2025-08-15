@@ -3,6 +3,7 @@ export { default as FormText } from './FormText';
 export { default as LabelPill } from './LabelPill';
 export { default as PaymentMethodCard } from './PaymentMethodCard';
 export { default as RoleIcon } from './RoleIcon';
+export { default as RoleSelection } from './RoleSelection';
 export { default as StepAccount } from './StepAccount';
 export { default as StepEnroll } from './StepEnroll';
 export { default as StepParentContact } from './StepParentContact';

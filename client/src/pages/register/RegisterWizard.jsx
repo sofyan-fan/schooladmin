@@ -1,10 +1,12 @@
+// src/pages/Register/RegisterWizardPage.jsx (or your chosen path)
+
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { defaultValues } from './form/defaults';
 import { coerceToIso } from './form/helpers';
@@ -15,14 +17,17 @@ import {
   schemaPersonalStudent,
   schemaPersonalTeacher,
 } from './form/schemas';
-
 import {
+  // NOTE: Removed `RoleSelection` from here as it's now part of RoleSelectionPage
   StepAccount,
   StepEnroll,
   StepParentContact,
   Stepper,
   StepPersonal,
 } from './ui';
+import { ValuePropPlaceholder } from '../../components/ValuePropPlaceholder';
+// NEW: The primary component for the initial step
+import RoleSelectionPage from './RoleSelectionPage';
 
 export default function RegisterWizard() {
   const { register } = useAuth();
@@ -30,9 +35,21 @@ export default function RegisterWizard() {
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState('');
 
-  const [currentRole, setCurrentRole] = useState('student');
+  const [currentRole, setCurrentRole] = useState(null);
+  // This state now controls which of the two major layouts are shown
+  const [roleSelected, setRoleSelected] = useState(false);
   const isStudentFlow = currentRole === 'student';
   const totalSteps = isStudentFlow ? 4 : 2;
+
+  const handleRoleSelect = (role) => {
+    setCurrentRole(role);
+  };
+
+  const handleRoleNext = () => {
+    if (currentRole) {
+      setRoleSelected(true);
+    }
+  };
 
   const studentStepInfo = [
     { title: 'Registreren', description: 'Maak een nieuw account aan.' },
@@ -58,6 +75,7 @@ export default function RegisterWizard() {
     },
   ];
 
+  // All your form logic remains unchanged
   const stepInfo = useMemo(() => {
     return isStudentFlow ? studentStepInfo : teacherStepInfo;
   }, [isStudentFlow]);
@@ -87,15 +105,8 @@ export default function RegisterWizard() {
 
   const { handleSubmit, trigger, watch, control, getValues } = methods;
 
-  const watchedRole = watch('role');
-  useEffect(() => {
-    if (watchedRole && watchedRole !== currentRole) {
-      setCurrentRole(watchedRole);
-    }
-  }, [watchedRole, currentRole]);
-
   const currentFields = useMemo(() => {
-    if (step === 0) return ['role', 'email', 'password'];
+    if (step === 0) return ['email', 'password'];
     if (step === 1) {
       return isStudentFlow
         ? ['firstName', 'lastName', 'birthDate', 'gender']
@@ -127,7 +138,7 @@ export default function RegisterWizard() {
   const onSubmit = async () => {
     setFormError('');
     try {
-      const roleValue = getValues('role') || currentRole || 'student';
+      const roleValue = currentRole;
       const email = getValues('email');
       const password = getValues('password');
       const firstName = getValues('firstName');
@@ -165,13 +176,6 @@ export default function RegisterWizard() {
         payment_method: payMethod || null,
       };
 
-      console.log('SUBMIT payload', {
-        email,
-        password,
-        roleValue,
-        ...profileData,
-      });
-
       const success = await register(email, password, roleValue, profileData);
 
       if (success) {
@@ -184,58 +188,83 @@ export default function RegisterWizard() {
     }
   };
 
+  // --- REFACTORED RENDER LOGIC ---
+  if (!roleSelected) {
+    // If a role has NOT been selected, show the full-page selection component.
+    return (
+      <RoleSelectionPage
+        onSelect={handleRoleSelect}
+        onNext={handleRoleNext}
+        selectedRole={currentRole}
+        rightPanelContent={<ValuePropPlaceholder />}
+      />
+    );
+  }
+
+  // If a role HAS been selected, show the multi-step wizard form.
   return (
-    <div className="flex items-start justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4 pt-10">
-      <div className="mx-auto w-full max-w-5xl rounded-2xl border bg-background shadow-sm overflow-hidden grid md:grid-cols-[280px_1fr]">
-        <div className="bg-muted/30 p-8 border-r flex flex-col justify-between ">
-          <Stepper step={step} role={watchedRole || 'student'} />
-        </div>
-
-        <div className="p-8">
-          <div className="flex flex-col space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold">{currentStepInfo.title}</h1>
-              <p className="text-muted-foreground mt-1">
-                {currentStepInfo.description}
-              </p>
-            </div>
-
-            <FormProvider {...methods}>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {step === 0 && <StepAccount control={control} watch={watch} />}
-                {step === 1 && <StepPersonal control={control} watch={watch} />}
-                {step === 2 && isStudentFlow && (
-                  <StepParentContact control={control} />
-                )}
-                {step === 3 && isStudentFlow && (
-                  <StepEnroll control={control} />
-                )}
-
-                {formError && (
-                  <p className="text-sm text-red-600">{formError}</p>
-                )}
-
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={back}
-                    disabled={step === 0}
-                  >
-                    Terug
-                  </Button>
-                  {step < totalSteps - 1 ? (
-                    <Button type="button" onClick={next}>
-                      Doorgaan
-                    </Button>
-                  ) : (
-                    <Button type="submit">Registreren</Button>
-                  )}
-                </div>
-              </form>
-            </FormProvider>
+    <div className="flex items-start justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4 pt-10 sm:p-8">
+      <div className="mx-auto w-full max-w-3xl rounded-2xl border bg-background shadow-sm">
+        <div className="p-6 sm:p-8 space-y-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-center">
+              {currentStepInfo.title}
+            </h1>
+            <p className="text-muted-foreground mt-2 text-center">
+              {currentStepInfo.description}
+            </p>
           </div>
+
+          <div className="mt-5">
+            <Stepper step={step} role={currentRole} />
+          </div>
+
+          <FormProvider {...methods}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-6">
+              {step === 0 && <StepAccount control={control} watch={watch} />}
+              {step === 1 && (
+                <StepPersonal
+                  control={control}
+                  watch={watch}
+                  role={currentRole}
+                />
+              )}
+              {step === 2 && isStudentFlow && (
+                <StepParentContact control={control} />
+              )}
+              {step === 3 && isStudentFlow && <StepEnroll control={control} />}
+
+              {formError && (
+                <p className="text-sm text-red-600 text-center">{formError}</p>
+              )}
+
+              <Separator />
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={back}
+                  disabled={step === 0}
+                  className={step === 0 ? 'invisible' : ''}
+                >
+                  Terug
+                </Button>
+                {step < totalSteps - 1 ? (
+                  <Button type="button" onClick={next}>
+                    Doorgaan
+                  </Button>
+                ) : (
+                  <Button type="submit">Registreren</Button>
+                )}
+              </div>
+            </form>
+          </FormProvider>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Heb je al een account?{' '}
+            <Link className="underline" to="/login">
+              Log hier in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

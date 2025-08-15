@@ -32,7 +32,7 @@ const Sidebar = ({ isOpen }) => {
     >
       <div>
         <div className="text-2xl font-bold mb-8 text-text-default">
-          SchoolAdmin
+          Claro
         </div>
         <nav>
           <ul>

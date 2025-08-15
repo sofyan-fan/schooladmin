@@ -10,11 +10,9 @@ import PropTypes from 'prop-types';
 import FormText from './FormText';
 import LabelPill from './LabelPill';
 
-function StepPersonal({ control, watch }) {
-  const role = watch('role');
+function StepPersonal({ control, role }) {
   return (
     <div className="space-y-6">
-      
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormText
           name="firstName"
@@ -118,7 +116,7 @@ function StepPersonal({ control, watch }) {
 
 StepPersonal.propTypes = {
   control: PropTypes.object.isRequired,
-  watch: PropTypes.func.isRequired,
+  role: PropTypes.string.isRequired,
 };
 
 export default StepPersonal;

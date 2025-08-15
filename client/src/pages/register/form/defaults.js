@@ -1,5 +1,4 @@
 export const defaultValues = {
-  role: 'student',
   email: '',
   password: '',
   firstName: '',
