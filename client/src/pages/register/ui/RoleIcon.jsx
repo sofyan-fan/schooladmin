@@ -1,9 +1,6 @@
-// import StudentIconSelected from '@/assets/user_icons/role_icons/student/selected.svg?react';
 import StudentIcon from '@/assets/user_icons/role_icons/student/student.svg?react';
-// import TeacherIconSelected from '@/assets/user_icons/role_icons/teacher/selected.svg?react';
 import TeacherIcon from '@/assets/user_icons/role_icons/teacher/teacher.svg?react';
 import PropTypes from 'prop-types';
-// import { Presentation, GraduationCap } from 'lucide-react';
 
 function RoleIcon({ role, label, selected, onClick }) {
   const Icon = role === 'student' ? StudentIcon : TeacherIcon;

@@ -1,7 +1,5 @@
 import RequestHandler from '../RequestHandler';
 
-// Real backend exposes subjects under base '/subjects' router, with nested '/subjects' path
-// Final path: '/subjects/subjects'. The mock rewrites this to '/subjects'.
 const BASE_URL = '/subjects';
 
 export const get_subjects = async () => {

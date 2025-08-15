@@ -20,19 +20,16 @@ import {
   import { MoreHorizontal, Edit, Trash2, Eye, Archive, Copy } from "lucide-react";
   
   export const CourseModuleCard = ({ module }) => {
-    // Destructure your ACTUAL module properties
-    // Add a fallback for subjects to prevent errors if it's null or undefined
+    
     const { name, subjects = [] } = module;
   
     const handleEdit = () => {
-      // TODO: Implement your edit logic here
-      // Example: open a modal with the module's data
+    
       console.log("Editing module:", module.id);
     };
   
     const handleDelete = () => {
-      // TODO: Implement your delete logic here
-      // Example: show a confirmation dialog then call the delete API
+ 
       console.log("Deleting module:", module.id);
     };
   
@@ -45,7 +42,6 @@ import {
               <CardDescription>{subjects.length} vak(ken) inbegrepen</CardDescription>
             </div>
             
-            {/* Action Menu is still very useful for admins */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">

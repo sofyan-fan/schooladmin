@@ -20,9 +20,7 @@ import {
 import { X, Plus } from 'lucide-react';
 import { useState } from 'react';
 
-/**
- * @param {object[]} subjects - [{id, name, levels, materials}]
- */
+
 export default function CourseModuleModal({
   open,
   onOpenChange,

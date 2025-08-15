@@ -1,4 +1,4 @@
-import studentAPI from '@/apis/students/studentAPI';
+import teachersAPI from '@/apis/teachers/teachersAPI';
 import ProfileCard from '@/components/general/ProfileCard'; 
 import StudentViewProfileCard from '@/components/StudentViewProfileCard'; 
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
@@ -9,7 +9,7 @@ import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createColumns } from './students/columns';
 
-export default function StudentsPage() {
+export default function TeachersPage() {
 
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function StudentsPage() {
     (async () => {
       setLoading(true);
       try {
-        const response = await studentAPI.get_students();
+        const response = await teachersAPI.get_teachers();
         const mapped = Array.isArray(response)
           ? response.map((s) => ({
               id: s.id,
@@ -73,49 +73,43 @@ export default function StudentsPage() {
   
   const handleDelete = (id) => {
     if (!id) return;
-    // NOTE: You should add a confirmation dialog here!
     alert(`Verwijder ${id}`);
     setStudents((prev) => prev.filter((s) => s.id !== id));
 
-    // Close any open modals for the deleted user
     if (selected?.id === id) {
       setOpenEditProfile(false);
       setOpenViewProfile(false);
     }
   };
 
-  // --- COLUMN DEFINITION ---
   const columns = useMemo(
     () => createColumns({ handleView, handleEdit, handleDelete }),
     []
   );
 
-  // --- RENDER ---
   return (
     <LayoutWrapper>
       <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-2">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              Leerlingen
+              Docenten
             </h1>
             <p className="text-sm text-muted-foreground">
-              Beheer hier alle leerlingen.
+              Beheer hier alle docenten.
             </p>
           </div>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Nieuwe leerling
+            Nieuwe docent
           </Button>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Leerlingenoverzicht</CardTitle>
-          </CardHeader>
+      
           <CardContent>
             {loading ? (
-              <div className="text-center py-10">Laden...</div>
+              <div className="text-center py-5">Laden...</div>
             ) : (
               <DataTable columns={columns} data={students} />
             )}
@@ -123,21 +117,19 @@ export default function StudentsPage() {
         </Card>
       </div>
 
-      {/* RENDER THE NEW VIEW MODAL */}
       <StudentViewProfileCard
         open={openViewProfile}
         onOpenChange={setOpenViewProfile}
         student={selected}
       />
 
-      {/* Your old ProfileCard can now be dedicated to editing */}
       <ProfileCard
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}
         user={selected}
         onSave={handleSave}
         onDelete={handleDelete}
-        viewDateOnly={false} // Assuming this is for an edit form
+        viewDateOnly={false} 
       />
     </LayoutWrapper>
   );

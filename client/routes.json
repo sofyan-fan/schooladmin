@@ -8,6 +8,9 @@
   "/subjects/subjects": "/subjects",
   "/subjects/subjects/:id": "/subjects/:id",
 
+  "/general/teachers": "/teachers",
+  "/general/teacher/:id": "/teachers/:id",
+
   "/subjects": "/subjects",
   "/subjects/:id": "/subjects/:id",
 

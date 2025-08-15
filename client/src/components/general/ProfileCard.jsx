@@ -27,13 +27,7 @@ function fieldValue(obj, path, fallback = '') {
   );
 }
 
-/**
- * Props:
- * - open, onOpenChange
- * - user: { id, role: 'Student'|'Teacher', ... }
- * - onSave(updatedUser)
- * - onDelete(id)
- */
+
 export default function ProfileCard({
   open,
   onOpenChange,

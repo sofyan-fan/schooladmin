@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { ValuePropPlaceholder } from '../../components/ValuePropPlaceholder';
 import { defaultValues } from './form/defaults';
 import { coerceToIso } from './form/helpers';
 import {
@@ -18,15 +19,12 @@ import {
   schemaPersonalTeacher,
 } from './form/schemas';
 import {
-  // NOTE: Removed `RoleSelection` from here as it's now part of RoleSelectionPage
   StepAccount,
   StepEnroll,
   StepParentContact,
   Stepper,
   StepPersonal,
 } from './ui';
-import { ValuePropPlaceholder } from '../../components/ValuePropPlaceholder';
-// NEW: The primary component for the initial step
 import RoleSelectionPage from './RoleSelectionPage';
 
 export default function RegisterWizard() {
@@ -34,9 +32,9 @@ export default function RegisterWizard() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState('');
+  const [showStepErrors, setShowStepErrors] = useState(false);
 
   const [currentRole, setCurrentRole] = useState(null);
-  // This state now controls which of the two major layouts are shown
   const [roleSelected, setRoleSelected] = useState(false);
   const isStudentFlow = currentRole === 'student';
   const totalSteps = isStudentFlow ? 4 : 2;
@@ -75,7 +73,6 @@ export default function RegisterWizard() {
     },
   ];
 
-  // All your form logic remains unchanged
   const stepInfo = useMemo(() => {
     return isStudentFlow ? studentStepInfo : teacherStepInfo;
   }, [isStudentFlow]);
@@ -130,10 +127,18 @@ export default function RegisterWizard() {
 
   const next = async () => {
     const ok = await trigger(currentFields);
-    if (ok && step < totalSteps - 1) setStep((s) => s + 1);
+    if (ok && step < totalSteps - 1) {
+      setShowStepErrors(false);
+      setStep((s) => s + 1);
+    } else if (!ok) {
+      setShowStepErrors(true);
+    }
   };
 
-  const back = () => setStep((s) => Math.max(0, s - 1));
+  const back = () => {
+    setShowStepErrors(false);
+    setStep((s) => Math.max(0, s - 1));
+  };
 
   const onSubmit = async () => {
     setFormError('');
@@ -188,9 +193,7 @@ export default function RegisterWizard() {
     }
   };
 
-  // --- REFACTORED RENDER LOGIC ---
   if (!roleSelected) {
-    // If a role has NOT been selected, show the full-page selection component.
     return (
       <RoleSelectionPage
         onSelect={handleRoleSelect}
@@ -201,7 +204,6 @@ export default function RegisterWizard() {
     );
   }
 
-  // If a role HAS been selected, show the multi-step wizard form.
   return (
     <div className="flex items-start justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4 pt-10 sm:p-8">
       <div className="mx-auto w-full max-w-3xl rounded-2xl border bg-background shadow-sm">
@@ -221,18 +223,30 @@ export default function RegisterWizard() {
 
           <FormProvider {...methods}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-6">
-              {step === 0 && <StepAccount control={control} watch={watch} />}
+              {step === 0 && (
+                <StepAccount
+                  control={control}
+                  watch={watch}
+                  showError={showStepErrors}
+                />
+              )}
               {step === 1 && (
                 <StepPersonal
                   control={control}
                   watch={watch}
                   role={currentRole}
+                  showError={showStepErrors}
                 />
               )}
               {step === 2 && isStudentFlow && (
-                <StepParentContact control={control} />
+                <StepParentContact
+                  control={control}
+                  showError={showStepErrors}
+                />
               )}
-              {step === 3 && isStudentFlow && <StepEnroll control={control} />}
+              {step === 3 && isStudentFlow && (
+                <StepEnroll control={control} showError={showStepErrors} />
+              )}
 
               {formError && (
                 <p className="text-sm text-red-600 text-center">{formError}</p>

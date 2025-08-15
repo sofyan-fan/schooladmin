@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import FormText from './FormText';
 import LabelPill from './LabelPill';
 
-function StepPersonal({ control, role }) {
+function StepPersonal({ control, role, showError = false }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -19,12 +19,14 @@ function StepPersonal({ control, role }) {
           label="Voornaam"
           placeholder="Voornaam"
           control={control}
+          showError={showError}
         />
         <FormText
           name="lastName"
           label="Achternaam"
           placeholder="Achternaam"
           control={control}
+          showError={showError}
         />
       </div>
 
@@ -32,7 +34,7 @@ function StepPersonal({ control, role }) {
         <FormField
           control={control}
           name="birthDate"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Geboortedatum</FormLabel>
               <DatePicker
@@ -42,7 +44,9 @@ function StepPersonal({ control, role }) {
                 toYear={new Date().getFullYear() - 4}
                 fromYear={1900}
               />
-              <FormMessage />
+              {(fieldState.isTouched || fieldState.isDirty || showError) && (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />
@@ -50,7 +54,7 @@ function StepPersonal({ control, role }) {
         <FormField
           control={control}
           name="gender"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <FormItem>
               <FormLabel>Geslacht</FormLabel>
               <RadioGroup
@@ -71,7 +75,9 @@ function StepPersonal({ control, role }) {
                   </LabelPill>
                 ))}
               </RadioGroup>
-              <FormMessage />
+              {(fieldState.isTouched || fieldState.isDirty || showError) && (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />
@@ -87,6 +93,7 @@ function StepPersonal({ control, role }) {
             label="Adres"
             placeholder="Straat en huisnummer"
             control={control}
+            showError={showError}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormText
@@ -94,12 +101,14 @@ function StepPersonal({ control, role }) {
               label="Woonplaats"
               placeholder="Bijv. Rotterdam"
               control={control}
+              showError={showError}
             />
             <FormText
               name="postalCode"
               label="Postcode"
               placeholder="1234 AB"
               control={control}
+              showError={showError}
             />
           </div>
           <FormText
@@ -107,6 +116,7 @@ function StepPersonal({ control, role }) {
             label="Telefoonnummer"
             placeholder="+31 6 12345678"
             control={control}
+            showError={showError}
           />
         </>
       )}
@@ -117,6 +127,7 @@ function StepPersonal({ control, role }) {
 StepPersonal.propTypes = {
   control: PropTypes.object.isRequired,
   role: PropTypes.string.isRequired,
+  showError: PropTypes.bool,
 };
 
 export default StepPersonal;

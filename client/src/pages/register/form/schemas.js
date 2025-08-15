@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { minStudentBirthDate } from './helpers';
 
-// Accept both Date and string inputs via z.coerce.date()
 export const schemaAccount = z.object({
   email: z.string().email('Voer een geldig e-mailadres in'),
   password: z.string().min(8, 'Minimaal 8 tekens'),

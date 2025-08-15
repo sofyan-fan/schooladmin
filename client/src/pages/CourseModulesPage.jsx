@@ -5,8 +5,7 @@ import { Plus } from "lucide-react";
 import courseModuleApi from "../apis/courses/courseModuleAPI";
 import CourseModuleModal from "../components/courses/CourseModuleModal"; 
 import subjectAPI from "@/apis/subjects/subjectAPI";
-// Correctly import the new card component
-import { CourseModuleCard } from "../components/courses/CourseModuleCard"; // Make sure this path is correct
+import { CourseModuleCard } from "../components/courses/CourseModuleCard"; 
 
 const CourseModulesPage = () => {
   const [courseModules, setCourseModules] = useState([]);
@@ -15,7 +14,6 @@ const CourseModulesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjects, setSubjects] = useState([]);
 
-  // Fetch course modules and subjects on mount
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -39,7 +37,6 @@ const CourseModulesPage = () => {
   const handleSaveCourseModule = async (newCourseModule) => {
     try {
       await courseModuleApi.add_coursemodule(newCourseModule);
-      // Refetch to get the latest list
       const data = await courseModuleApi.get_coursemodules();
       setCourseModules(data);
     } catch (e) {
@@ -92,7 +89,6 @@ const CourseModulesPage = () => {
           subjects={subjects}
         />
          
-        {/* Render loading, error, empty, or grid content */}
         {renderContent()}
       </div>
     </LayoutWrapper>

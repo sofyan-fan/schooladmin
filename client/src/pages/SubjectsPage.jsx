@@ -19,7 +19,6 @@ const SubjectsPage = () => {
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  // Fetch subjects from backend
   useEffect(() => {
     setLoading(true);
     subjectApi
@@ -29,7 +28,6 @@ const SubjectsPage = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // When a subject is saved, re-fetch the subjects
   const handleSaveSubject = async () => {
     setLoading(true);
     try {

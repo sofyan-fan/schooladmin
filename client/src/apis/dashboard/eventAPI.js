@@ -1,7 +1,5 @@
 import RequestHandler from '../RequestHandler';
 
-
-
 export const get_events = async () => {
   const response = await RequestHandler.get('dashboard/event');
   return response.data;

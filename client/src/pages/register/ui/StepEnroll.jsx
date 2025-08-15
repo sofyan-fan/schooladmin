@@ -21,7 +21,7 @@ import courses from '../data/courses';
 import CourseCard from './CourseCard';
 import PaymentMethodCard from './PaymentMethodCard';
 
-function StepEnroll({ control }) {
+function StepEnroll({ control, showError = false }) {
   const paymentOptions = [
     {
       id: 'iDEAL',
@@ -48,7 +48,7 @@ function StepEnroll({ control }) {
       <FormField
         control={control}
         name="lesson_package"
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <FormItem className="space-y-4">
             <div className="flex justify-between items-center">
               <FormLabel className="text-xl text-black font-semibold ">
@@ -56,9 +56,7 @@ function StepEnroll({ control }) {
               </FormLabel>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    className="p-1 bg-transparent hover:bg-transparent hover:border-b-1 hover:border-primary rounded-none text-base text-primary shadow-none transform transition-all duration-[50ms]"
-                  >
+                  <Button className="p-1 bg-transparent hover:bg-transparent hover:border-b-1 hover:border-primary rounded-none text-base text-primary shadow-none transform transition-all duration-[50ms]">
                     <Info className="size-5" />
                     Bekijk details
                   </Button>
@@ -110,7 +108,9 @@ function StepEnroll({ control }) {
                 ))}
               </RadioGroup>
             </FormControl>
-            <FormMessage />
+            {(fieldState.isTouched || fieldState.isDirty || showError) && (
+              <FormMessage />
+            )}
           </FormItem>
         )}
       />
@@ -118,7 +118,7 @@ function StepEnroll({ control }) {
       <FormField
         control={control}
         name="payment_method"
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <FormItem className="space-y-4">
             <FormLabel className="text-base font-semibold">
               Kies je betaalmethode
@@ -141,7 +141,9 @@ function StepEnroll({ control }) {
                 ))}
               </RadioGroup>
             </FormControl>
-            <FormMessage />
+            {(fieldState.isTouched || fieldState.isDirty || showError) && (
+              <FormMessage />
+            )}
           </FormItem>
         )}
       />

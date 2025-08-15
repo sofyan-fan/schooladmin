@@ -26,7 +26,7 @@ function RoleSelectionPage({
         {/* <AppLogo /> */}
         <div className="text-2xl font-medium text-primary flex items-center gap-2">
             <GraduationCap className="size-10" />
-            Klaro
+            Maktab
         </div>
         <Button variant="link" onClick={() => {/* handle login navigation */}}>
           Inloggen

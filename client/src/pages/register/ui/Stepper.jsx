@@ -49,13 +49,7 @@ function Stepper({ step, role }) {
                   {label}
                 </span>
               </div>
-              {/* {!isLastStep && (
-                <div
-                  className={`flex-auto border-t-2 transition-colors duration-300  ${
-                    isCompleted ? 'border-primary' : 'border-border'
-                  }`}
-                />
-              )} */}
+            
             </li>
           );
         })}
