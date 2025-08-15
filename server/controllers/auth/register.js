@@ -19,6 +19,7 @@ exports.register = async (req, res) => {
 			parent_email,
 			lesson_package,
 			payment_method,
+			sosnumber
 		} = req.body;
 
 		if (!email || !password || !role) {
@@ -34,7 +35,6 @@ exports.register = async (req, res) => {
 		}
 
 		const existingUser = await prisma.user.findUnique({ where: { email } });
-
 		if (existingUser) {
 			return res.status(400).json({ message: 'User already exists.' });
 		}
@@ -45,7 +45,7 @@ exports.register = async (req, res) => {
 			data: {
 				email,
 				password: hashedPassword,
-				role: role.toLowerCase(),
+				role: role.toLowerCase()
 			}
 		});
 
@@ -59,8 +59,7 @@ exports.register = async (req, res) => {
 					email,
 					phone: phone || '',
 					address: address || '',
-					is_active: true,
-					user_id: user.id // assuming relation exists
+					is_active: true
 				}
 			});
 		} else if (role.toLowerCase() === 'student') {
@@ -84,26 +83,26 @@ exports.register = async (req, res) => {
 					parent_email: parent_email || '',
 					lesson_package: lesson_package || '',
 					payment_method: payment_method || '',
-					enrollment_status: true,
-					user_id: user.id // assuming relation exists
+					sosnumber: sosnumber || '',
+					enrollment_status: false
 				}
 			});
 		}
 
 		req.session.user = {
-			id: 	user.id,
-			email: 	user.email,
-			role: 	user.role,
-			data: 	profile
+			id: user.id,
+			email: user.email,
+			role: user.role,
+			data: profile
 		};
 
 		return res.status(201).json({
 			accessToken: 'session',
 			user: {
-				id: 	user.id,
-				email: 	user.email,
-				role: 	user.role,
-				data: 	profile
+				id: user.id,
+				email: user.email,
+				role: user.role,
+				data: profile
 			}
 		});
 	} catch (err) {
