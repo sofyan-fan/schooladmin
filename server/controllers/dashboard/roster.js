@@ -75,6 +75,7 @@ exports.update_roster = async (req, res) => {
 			message: 'Roster updated',
 			updatedRoster
 		});
+		
 	} catch (error) {
 		console.error('Error updating roster:', error);
 		res.status(500).json({ error: 'Failed to update roster' });

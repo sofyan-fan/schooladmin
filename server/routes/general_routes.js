@@ -28,7 +28,12 @@ const {
   get_absence_by_id,
   update_absence,
   delete_absence,
-} = require('../controllers/general/absence');
+  create_time_registration,
+  update_time_registration,
+  approve_time_registration,
+  get_teacher_time_registrations,
+  get_all_time_registrations
+} = require('../controllers/general/time_registration');
 
 // ==============================
 // Students routes
@@ -65,5 +70,14 @@ router.get('/absences', get_all_absences);
 router.get('/absences/:id', get_absence_by_id);
 router.put('/absences/:id', update_absence);
 router.delete('/absences/:id', delete_absence);
+
+// ==============================
+// Time Registration routes
+// ==============================
+router.post('/time-registrations', create_time_registration);
+router.put('/time-registrations/:id', update_time_registration);
+router.put('/time-registrations/:id/approve', approve_time_registration);
+router.get('/time-registrations/teacher/:teacher_id', get_teacher_time_registrations);
+router.get('/time-registrations', get_all_time_registrations);
 
 module.exports = router;
