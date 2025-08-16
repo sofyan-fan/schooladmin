@@ -57,6 +57,7 @@ model teacher {
   address       String
   is_active     Boolean  @default(true)
   compensation  Float?
+  sosnumber     String?
   cv_url        String?
   vog_url       String?
   id_document   String?
@@ -64,7 +65,7 @@ model teacher {
 
   absences      absence[]
   roster        roster[]
-  class_layout class_layout[]
+  class_layout  class_layout[]
 
   time_registration time_registration[]
 }

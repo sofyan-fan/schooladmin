@@ -59,7 +59,9 @@ exports.register = async (req, res) => {
 					email,
 					phone: phone || '',
 					address: address || '',
-					is_active: true
+					is_active: true,
+					compensation: req.body.compensation ? parseFloat(req.body.compensation) : null,
+					sosnumber: sosnumber || ''
 				}
 			});
 		} else if (role.toLowerCase() === 'student') {
