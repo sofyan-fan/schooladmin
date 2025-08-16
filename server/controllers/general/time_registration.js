@@ -185,3 +185,181 @@ exports.delete_absence = async (req, res) => {
 		});
 	}
 };
+
+// Create a new time registration for a teacher
+exports.create_time_registration = async (req, res) => {
+	try {
+		const {
+			teacher_id,
+			week_start,
+			week_end,
+			monday = 0,
+			tuesday = 0,
+			wednesday = 0,
+			thursday = 0,
+			friday = 0,
+			saturday = 0,
+			sunday = 0
+		} = req.body;
+
+		const total_hours = monday + tuesday + wednesday + thursday + friday + saturday + sunday;
+
+		const registration = await prisma.time_registration.create({
+			data: {
+				teacher_id,
+				week_start: new Date(week_start),
+				week_end: new Date(week_end),
+				monday,
+				tuesday,
+				wednesday,
+				thursday,
+				friday,
+				saturday,
+				sunday,
+				total_hours
+			}
+		});
+
+		res.status(201).json({
+			success: true,
+			data: registration
+		});
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			message: error.message
+		});
+	}
+};
+
+// Update hours for an existing time registration
+exports.update_time_registration = async (req, res) => {
+	try {
+		const {
+			id
+		} = req.params;
+		const {
+			monday,
+			tuesday,
+			wednesday,
+			thursday,
+			friday,
+			saturday,
+			sunday
+		} = req.body;
+
+		const total_hours = monday + tuesday + wednesday + thursday + friday + saturday + sunday;
+
+		const registration = await prisma.time_registration.update({
+			where: {
+				id: parseInt(id)
+			},
+			data: {
+				monday,
+				tuesday,
+				wednesday,
+				thursday,
+				friday,
+				saturday,
+				sunday,
+				total_hours
+			}
+		});
+
+		res.status(200).json({
+			success: true,
+			data: registration
+		});
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			message: error.message
+		});
+	}
+};
+
+// Approve a time registration
+exports.approve_time_registration = async (req, res) => {
+	try {
+		const {
+			id
+		} = req.params;
+		const {
+			admin_id
+		} = req.body; // Ensure you validate this in middleware
+
+		const registration = await prisma.time_registration.update({
+			where: {
+				id: parseInt(id)
+			},
+			data: {
+				approved: true,
+				approved_by: admin_id,
+				approved_at: new Date()
+			}
+		});
+
+		res.status(200).json({
+			success: true,
+			data: registration
+		});
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			message: error.message
+		});
+	}
+};
+
+// Get all time registrations for a specific teacher
+exports.get_teacher_time_registrations = async (req, res) => {
+	try {
+		const {
+			teacher_id
+		} = req.params;
+
+		const registrations = await prisma.time_registration.findMany({
+			where: {
+				teacher_id: parseInt(teacher_id)
+			},
+			orderBy: {
+				week_start: 'desc'
+			}
+		});
+
+		res.status(200).json({
+			success: true,
+			data: registrations
+		});
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			message: error.message
+		});
+	}
+};
+
+
+// Admin: Get all time registrations
+exports.get_all_time_registrations = async (req, res) => {
+	try {
+		const registrations = await prisma.time_registration.findMany({
+			include: {
+				teacher: true
+			},
+			orderBy: {
+				week_start: 'desc'
+			}
+		});
+
+		res.status(200).json({
+			success: true,
+			data: registrations
+		});
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			message: error.message
+		});
+	}
+};

@@ -20,9 +20,11 @@ exports.update_enrollment = async (req, res) => {
 	const {
 		student_id
 	} = req.params;
+	
 	const {
 		enrollment_status
 	} = req.body;
+
 	try {
 		const student = await prisma.student.update({
 			where: {
