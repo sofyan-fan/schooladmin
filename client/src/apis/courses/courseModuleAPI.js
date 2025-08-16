@@ -3,7 +3,7 @@ import RequestHandler from '../RequestHandler';
 const BASE_URL = '/general/coursemodules';
 
 export const get_coursemodules = async () => {
-  const response = await RequestHandler.get('/course/modules');
+  const response = await RequestHandler.get('/courses/modules');
   return response.data;
 };
 

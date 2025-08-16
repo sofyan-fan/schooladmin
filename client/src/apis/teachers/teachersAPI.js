@@ -1,7 +1,6 @@
 
 import RequestHandler from '../RequestHandler';
 
-
 const BASE_URL = '/general/teachers';
 
 export const get_teachers = async () => {

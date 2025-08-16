@@ -114,7 +114,6 @@ export default function CourseModuleModal({
               autoFocus
               required
               disabled={loading}
-              placeholder="e.g. Wiskunde Jaar 1"
             />
           </div>
 

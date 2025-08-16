@@ -38,7 +38,6 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ...Tag logic as before
 
   const addLevel = () => {
     if (levelInput.trim() && !levels.includes(levelInput.trim())) {
@@ -60,7 +59,6 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
   const removeMaterial = (idx) =>
     setMaterials(materials.filter((_, i) => i !== idx));
 
-  // ** Save subject to server! **
   const handleSave = async () => {
     if (!name.trim()) {
       setError("Please enter a subject name.");
@@ -77,18 +75,15 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
     setError("");
     setLoading(true);
     try {
-      // Call your backend via the api
       const savedSubject = await subjectAPI.add_subject({
         name: name.trim(),
         levels,
         materials,
       });
-      // Optionally pass result to parent (to add to state)
       if (onSave) {
         onSave(savedSubject);
         console.log("Subject saved:", savedSubject);
       }
-      // Reset on save
       setName("");
       setLevels([]);
       setMaterials([]);

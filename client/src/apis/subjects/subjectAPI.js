@@ -1,26 +1,26 @@
 import RequestHandler from '../RequestHandler';
 
-// const BASE_URL = '/subjects';
+const BASE_URL = '/subjects/subjects';
 
 export const get_subjects = async () => {
-  const response = await RequestHandler.get('/subjects');
-  console.log('response:', response);
+  const response = await RequestHandler.get(BASE_URL);
+  // console.log('response:', response);
   return response.data;
 };
 
 export const add_subject = async (subject) => {
-  const response = await RequestHandler.post('/subjects', subject);
+  const response = await RequestHandler.post(BASE_URL, subject);
   return response.data;
 };
 
 export const delete_subject = async (id) => {
-  const response = await RequestHandler.del(`/subjects/${id}`);
+  const response = await RequestHandler.del(`${BASE_URL}/${id}`);
   return response.data;
 };
 
 export const edit_subject = async (subject) => {
   const response = await RequestHandler.put(
-    `/subjects/${subject.id}`,
+    `${BASE_URL}/${subject.id}`,
     subject
   );
   return response.data;
