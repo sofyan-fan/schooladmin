@@ -10,6 +10,7 @@ exports.get_all_subjects = async (req, res) => {
 			},
 		});
 		res.json(subjects);
+		console.log('subjects:', subjects);
 	} catch (error) {
 		res.status(500).json({
 			error: 'Error fetching subjects'

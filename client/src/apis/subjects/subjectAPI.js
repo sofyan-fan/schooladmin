@@ -4,6 +4,7 @@ import RequestHandler from '../RequestHandler';
 
 export const get_subjects = async () => {
   const response = await RequestHandler.get('/subjects');
+  console.log('response:', response);
   return response.data;
 };
 

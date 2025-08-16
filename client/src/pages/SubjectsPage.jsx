@@ -41,7 +41,7 @@ const SubjectsPage = () => {
       setLoading(false);
     }
   };
-  console.log(subjects);
+  console.log(subjects.data);
 
   return (
     <LayoutWrapper>
