@@ -152,14 +152,49 @@ model result {
   date        DateTime
 }
 
+model classroom {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  capacity    Int
+  description String?
+
+  schedules   schedule[]
+  rosters     roster[]
+}
+
 model schedule {
   id           Int         @id @default(autoincrement())
   class_layout class_layout @relation(fields: [class_id], references: [id])
   class_id     Int
+  
   day          String
   start_time   String
   end_time     String
-  classroom    String
+
+  classroom    classroom   @relation(fields: [classroom_id], references: [id])
+  classroom_id Int
+}
+
+model roster {
+  id            Int          @id @default(autoincrement())
+  class_layout  class_layout @relation(fields: [class_id], references: [id])
+  class_id      Int
+
+  subject       subject      @relation(fields: [subject_id], references: [id])
+  subject_id    Int
+
+  teacher       teacher      @relation(fields: [teacher_id], references: [id])
+  teacher_id    Int
+
+  day_of_week   String
+  start_time    String
+  end_time      String
+
+  classroom     classroom    @relation(fields: [classroom_id], references: [id])
+  classroom_id  Int
+
+  created_at    DateTime     @default(now())
+  absence       absence[]
 }
 
 model tuition_payment {
@@ -250,27 +285,6 @@ model events {
   start_time  String
   end_time    String
   location    String?
-}
-
-model roster {
-  id            Int          @id @default(autoincrement())
-  class_layout  class_layout @relation(fields: [class_id], references: [id])
-  class_id      Int
-
-  subject       subject      @relation(fields: [subject_id], references: [id])
-  subject_id    Int
-
-  teacher       teacher      @relation(fields: [teacher_id], references: [id])
-  teacher_id    Int
-
-  day_of_week   String
-  start_time    String
-  end_time      String
-
-  classroom     String
-  created_at    DateTime     @default(now())
-  
-  absence absence[]
 }
 
 model time_registration {
