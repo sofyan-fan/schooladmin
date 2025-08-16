@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import subjectApi from "../../apis/subjects/subjectAPI";
+import subjectAPI from "../../apis/subjects/subjectAPI";
 
 function Tag({ children, onRemove }) {
   return (
@@ -78,7 +78,7 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
     setLoading(true);
     try {
       // Call your backend via the api
-      const savedSubject = await subjectApi.add_subject({
+      const savedSubject = await subjectAPI.add_subject({
         name: name.trim(),
         levels,
         materials,

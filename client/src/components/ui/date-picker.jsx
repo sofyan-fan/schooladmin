@@ -57,7 +57,7 @@ export function DatePicker({
               buttonClassName
             )}
           >
-            {selected
+            {selected ?? null
               ? selected.toLocaleDateString('nl-NL', {
                   day: 'numeric',
                   month: 'long',

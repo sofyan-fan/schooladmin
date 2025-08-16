@@ -27,6 +27,7 @@ export const schemaPersonalTeacher = z.object({
   city: z.string().min(1, 'Verplicht'),
   postalCode: z.string().min(1, 'Verplicht'),
   phone: z.string().min(6, 'Te kort'),
+  sosnumber: z.string().min(1, 'Verplicht'),
 });
 
 export const schemaParentContact = z.object({

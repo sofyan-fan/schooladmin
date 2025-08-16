@@ -24,11 +24,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await RequestHandler.post('auth/login', { email, password });
-      const { user: userData, accessToken } = response?.data || {};
+      const response = await RequestHandler.post('auth/login', {
+        email,
+        password,
+      });
+      const { user: userData, session } = response?.data || {};
 
-      if (response?.status === 200 && userData) {
-        const tokenValue = accessToken || 'session_active';
+      if (response?.status === 200 && userData && session) {
+        const tokenValue = 'session_active';
         setToken(tokenValue);
         setUser(userData);
         localStorage.setItem('token', tokenValue);
@@ -47,7 +50,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (email, password, role, profileData) => {
     try {
       const normalizedRole =
-        typeof role === 'string' && role.trim() ? role.toLowerCase().trim() : null;
+        typeof role === 'string' && role.trim()
+          ? role.toLowerCase().trim()
+          : null;
 
       if (!normalizedRole || !email || !password) {
         console.error('Registration error: Missing email/password/role', {
@@ -62,29 +67,28 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         role: normalizedRole,
-        ...(profileData || {}),
+        ...profileData,
       };
-
-      // Debug:
-      // console.log('Requesting /auth/register with', requestData);
 
       const response = await RequestHandler.post('auth/register', requestData);
 
       if (response?.status === 201 && response?.data?.user) {
-        const { accessToken, user: userData } = response.data;
-        const tokenValue = accessToken || 'session_active';
-        setToken(tokenValue);
-        setUser(userData);
-        localStorage.setItem('token', tokenValue);
-        localStorage.setItem('user', JSON.stringify(userData));
-        navigate('/dashboard');
-        return true;
+        // Automatically log in the user after successful registration
+        const loginSuccess = await login(email, password);
+        return loginSuccess;
       }
 
-      console.error('Registration failed:', response?.data?.message || 'Unknown error', response);
+      console.error(
+        'Registration failed:',
+        response?.data?.message || 'Unknown error',
+        response
+      );
       return false;
     } catch (error) {
-      console.error('Registration error:', error?.response?.data?.message || error.message);
+      console.error(
+        'Registration error:',
+        error?.response?.data?.message || error.message
+      );
       return false;
     }
   };
@@ -100,7 +104,9 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, token, register }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, user, login, logout, token, register }}
+    >
       {children}
     </AuthContext.Provider>
   );

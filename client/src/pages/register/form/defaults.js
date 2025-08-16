@@ -9,6 +9,7 @@ export const defaultValues = {
   city: '',
   postalCode: '',
   phone: '',
+  sosnumber: '',
   parentName: '',
   lesson_package: '',
   payment_method: 'iDEAL',

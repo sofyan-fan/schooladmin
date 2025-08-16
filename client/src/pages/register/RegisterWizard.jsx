@@ -18,6 +18,7 @@ import {
   schemaPersonalStudent,
   schemaPersonalTeacher,
 } from './form/schemas';
+import RoleSelectionPage from './RoleSelectionPage';
 import {
   StepAccount,
   StepEnroll,
@@ -25,7 +26,6 @@ import {
   Stepper,
   StepPersonal,
 } from './ui';
-import RoleSelectionPage from './RoleSelectionPage';
 
 export default function RegisterWizard() {
   const { register } = useAuth();
@@ -96,7 +96,7 @@ export default function RegisterWizard() {
     resolver: zodResolver(schemas[step]),
     defaultValues,
     mode: 'onSubmit',
-    reValidateMode: 'onSubmit',
+    reValidateMode: 'onChange',
     shouldUnregister: false,
   });
 
@@ -115,11 +115,19 @@ export default function RegisterWizard() {
             'address',
             'city',
             'postalCode',
+            'sosnumber',
             'phone',
           ];
     }
     if (step === 2 && isStudentFlow)
-      return ['parentName', 'address', 'city', 'postalCode', 'phone'];
+      return [
+        'parentName',
+        'address',
+        'city',
+        'postalCode',
+        'phone',
+        'sosnumber',
+      ];
     if (step === 3 && isStudentFlow)
       return ['lesson_package', 'payment_method'];
     return [];
@@ -153,6 +161,7 @@ export default function RegisterWizard() {
       const address = getValues('address');
       const city = getValues('city');
       const postalCode = getValues('postalCode');
+      const sosnumber = getValues('sosnumber');
       const phone = getValues('phone');
       const parentName = getValues('parentName');
       const lessonPkg = getValues('lesson_package');
@@ -179,7 +188,13 @@ export default function RegisterWizard() {
         parent_email: email,
         lesson_package: lessonPkg || '',
         payment_method: payMethod || null,
+        sosnumber: sosnumber || '',
       };
+
+      if (currentRole === 'teacher') {
+        profileData.birth_date = birth_date;
+        profileData.gender = gender || '';
+      }
 
       const success = await register(email, password, roleValue, profileData);
 

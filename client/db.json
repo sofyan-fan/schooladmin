@@ -288,6 +288,20 @@
         "dddddd"
       ],
       "id": 5
+    },
+    {
+      "name": "dd",
+      "levels": [
+        "dddd",
+        "dddda",
+        "sdsdsa"
+      ],
+      "materials": [
+        "sdasda",
+        "asddsa",
+        "dsadsad"
+      ],
+      "id": 6
     }
   ],
   "coursemodule": [

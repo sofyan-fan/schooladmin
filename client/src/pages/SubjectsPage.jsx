@@ -1,4 +1,4 @@
-import subjectApi from '@/apis/subjects/subjectAPI';
+import subjectAPI from '@/apis/subjects/subjectAPI';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,24 +21,27 @@ const SubjectsPage = () => {
 
   useEffect(() => {
     setLoading(true);
-    subjectApi
+    subjectAPI
       .get_subjects()
       .then((data) => setSubjects(data))
       .catch(() => setApiError('Failed to load subjects'))
       .finally(() => setLoading(false));
   }, []);
 
+
   const handleSaveSubject = async () => {
     setLoading(true);
     try {
-      const updated = await subjectApi.get_subjects();
+      const updated = await subjectAPI.get_subjects();
       setSubjects(updated);
+      console.log('updated:', updated);
     } catch {
       setApiError('Failed to refresh subjects');
     } finally {
       setLoading(false);
     }
   };
+  console.log(subjects);
 
   return (
     <LayoutWrapper>

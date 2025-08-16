@@ -17,7 +17,14 @@ function FormText({ name, label, control, showError = false, ...rest }) {
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input {...field} {...rest} />
+            <Input
+              {...rest}
+              name={field.name}
+              value={field.value ?? ''}
+              onChange={(e) => field.onChange(e.target.value)}
+              onBlur={field.onBlur}
+              ref={field.ref}
+            />
           </FormControl>
           {(fieldState.isTouched || fieldState.isDirty || showError) && (
             <FormMessage />

@@ -111,13 +111,22 @@ function StepPersonal({ control, role, showError = false }) {
               showError={showError}
             />
           </div>
-          <FormText
-            name="phone"
-            label="Telefoonnummer"
-            placeholder="+31 6 12345678"
-            control={control}
-            showError={showError}
-          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormText
+              name="phone"
+              label="Telefoonnummer"
+              placeholder="+31 6 12345678"
+              control={control}
+              showError={showError}
+            />
+            <FormText
+              name="sosnumber"
+              label="SOS-nummer"
+              placeholder="1234567890"
+              control={control}
+              showError={showError}
+            />
+          </div>
         </>
       )}
     </div>
