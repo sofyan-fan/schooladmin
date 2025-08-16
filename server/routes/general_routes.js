@@ -35,6 +35,14 @@ const {
   get_all_time_registrations
 } = require('../controllers/general/time_registration');
 
+const {
+  create_classroom,
+  get_classrooms,
+  get_classroom,
+  update_classroom,
+  delete_classroom
+} = require('../controllers/general/classroom'); // ✅ new controller
+
 // ==============================
 // Students routes
 // ==============================
@@ -79,5 +87,14 @@ router.put('/time-registrations/:id', update_time_registration);
 router.put('/time-registrations/:id/approve', approve_time_registration);
 router.get('/time-registrations/teacher/:teacher_id', get_teacher_time_registrations);
 router.get('/time-registrations', get_all_time_registrations);
+
+// ==============================
+// Classrooms routes
+// ==============================
+router.post('/classrooms', create_classroom);
+router.get('/classrooms', get_classrooms);
+router.get('/classrooms/:id', get_classroom);
+router.put('/classrooms/:id', update_classroom);
+router.delete('/classrooms/:id', delete_classroom);
 
 module.exports = router;
