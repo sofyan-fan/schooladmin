@@ -1,6 +1,4 @@
-const {
-	PrismaClient
-} = require('@prisma/client');
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // Create an absence
@@ -187,10 +185,6 @@ exports.delete_absence = async (req, res) => {
 		});
 	}
 };
-
-const {
-	prisma
-} = require('../../prisma/connection');
 
 // Create a new time registration for a teacher
 exports.create_time_registration = async (req, res) => {
