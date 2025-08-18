@@ -28,7 +28,6 @@ const SubjectsPage = () => {
       .finally(() => setLoading(false));
   }, []);
 
-
   const handleSaveSubject = async () => {
     setLoading(true);
     try {
@@ -80,12 +79,12 @@ const SubjectsPage = () => {
                   <TableCell>{subject.name}</TableCell>
                   <TableCell>
                     {Array.isArray(subject.levels)
-                      ? subject.levels.join(', ')
+                      ? subject.levels.map((l) => l.level).join(', ')
                       : ''}
                   </TableCell>
                   <TableCell>
                     {Array.isArray(subject.materials)
-                      ? subject.materials.join(', ')
+                      ? subject.materials.map((m) => m.material).join(', ')
                       : ''}
                   </TableCell>
                 </TableRow>

@@ -40,7 +40,7 @@ export default function StudentsPage() {
               className: s.class_layout?.name ?? '',
               registrationDate: s.created_at ?? '',
               lessonPackage: s.lesson_package ?? '',
-              status: s.enrollment_status ? 'Active' : 'Inactive', //
+              status: s.enrollment_status ? 'Active' : 'Inactive',
             }))
           : [];
         if (mounted) setStudents(mapped);

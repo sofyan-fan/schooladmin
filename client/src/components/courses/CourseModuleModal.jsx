@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -17,15 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { X, Plus } from 'lucide-react';
-import { useState } from 'react';
-
+import { Plus, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function CourseModuleModal({
   open,
   onOpenChange,
   onSave,
   subjects,
+  module,
 }) {
   const [name, setName] = useState('');
   const [moduleItems, setModuleItems] = useState([]);
@@ -34,6 +34,22 @@ export default function CourseModuleModal({
   const [selectedMaterial, setSelectedMaterial] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isEditMode = !!module;
+
+  useEffect(() => {
+    if (isEditMode) {
+      setName(module.name);
+      setModuleItems(
+        module.subjects.map((s) => ({
+          subjectId: s.subject_id,
+          subjectName: s.subject.name,
+          level: s.level,
+          material: s.material,
+        }))
+      );
+    }
+  }, [module, isEditMode]);
 
   const selectedSubject = Array.isArray(subjects)
     ? subjects.find((s) => s.id === Number(selectedSubjectId))
@@ -76,9 +92,10 @@ export default function CourseModuleModal({
     setLoading(true);
     try {
       await onSave({
+        id: isEditMode ? module.id : undefined,
         name: name.trim(),
         subjects: moduleItems.map(({ subjectId, level, material }) => ({
-          subjectId,
+          subject_id: subjectId,
           level,
           material,
         })),
@@ -97,10 +114,13 @@ export default function CourseModuleModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Nieuw Lespakket Toevoegen</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? 'Edit Lespakket' : 'Nieuw Lespakket Toevoegen'}
+          </DialogTitle>
           <DialogDescription>
-            Creëer een nieuw lespakket door een naam op te geven en de
-            bijbehorende vakken te selecteren.
+            {isEditMode
+              ? 'Bewerk de gegevens van het lespakket.'
+              : 'Creëer een nieuw lespakket door een naam op te geven en de bijbehorende vakken te selecteren.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-6 pt-2">
@@ -154,9 +174,9 @@ export default function CourseModuleModal({
                 </SelectTrigger>
                 <SelectContent>
                   {/* ====== FIX IS HERE ====== */}
-                  {(selectedSubject?.levels || []).map((level, i) => (
-                    <SelectItem key={i} value={level}>
-                      {level}
+                  {(selectedSubject?.levels || []).map((level) => (
+                    <SelectItem key={level.id} value={level.level}>
+                      {level.level}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -174,9 +194,9 @@ export default function CourseModuleModal({
                 </SelectTrigger>
                 <SelectContent>
                   {/* ====== FIX IS HERE ====== */}
-                  {(selectedSubject?.materials || []).map((material, i) => (
-                    <SelectItem key={i} value={material}>
-                      {material}
+                  {(selectedSubject?.materials || []).map((material) => (
+                    <SelectItem key={material.id} value={material.material}>
+                      {material.material}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -188,7 +208,10 @@ export default function CourseModuleModal({
               variant="outline"
               size="icon"
               disabled={
-                !selectedSubjectId || !selectedLevel || !selectedMaterial || loading
+                !selectedSubjectId ||
+                !selectedLevel ||
+                !selectedMaterial ||
+                loading
               }
             >
               <Plus className="h-4 w-4" />
@@ -227,15 +250,26 @@ export default function CourseModuleModal({
               )}
             </div>
           </div>
-          
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
 
           <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Annuleren
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Opslaan...' : 'Lespakket Opslaan'}
+              {loading
+                ? 'Opslaan...'
+                : isEditMode
+                ? 'Wijzigingen Opslaan'
+                : 'Lespakket Opslaan'}
             </Button>
           </DialogFooter>
         </form>

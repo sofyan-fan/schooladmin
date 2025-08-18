@@ -1,90 +1,126 @@
 import teachersAPI from '@/apis/teachers/teachersAPI';
-import ProfileCard from '@/components/general/ProfileCard'; 
-import StudentViewProfileCard from '@/components/StudentViewProfileCard'; 
+import ProfileCard from '@/components/general/ProfileCard';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import StudentViewProfileCard from '@/components/StudentViewProfileCard';
+import { Card, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { Plus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { createColumns } from './students/columns';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from '../components/ui/button';
+import { createColumns } from './teachers/columns.jsx';
 
 export default function TeachersPage() {
-
-  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  
-  const [openEditProfile, setOpenEditProfile] = useState(false); 
-  
-  const [openViewProfile, setOpenViewProfile] = useState(false); 
+  const [openEditProfile, setOpenEditProfile] = useState(false);
+  const [openViewProfile, setOpenViewProfile] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const response = await teachersAPI.get_teachers();
-        const mapped = Array.isArray(response)
-          ? response.map((s) => ({
-              id: s.id,
-              firstName: s.first_name,
-              lastName: s.last_name,
-              email: s.parent_email ?? '',
-              phone: s.phone ?? '',
-              address: s.address ?? '',
-              postalCode: s.postal_code ?? '',
-              city: s.city ?? '',
-              birthDate: s.birth_date ?? '',
-              gender: s.gender ?? '',
-              className: s.class_layout?.name ?? '',
-              registrationDate: s.created_at ?? '',
-              lessonPackage: s.lesson_package ?? '',
-              status: s.enrollment_status ? 'Active' : 'Inactive',
-            }))
-          : [];
-        if (mounted) setStudents(mapped);
-      } catch (e) {
-        console.error('Failed to load students', e);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+  // Fetch teachers on component mount
+  const fetchTeachers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await teachersAPI.get_teachers();
+      const mapped = Array.isArray(response)
+        ? response.map((s) => ({
+            id: s.id,
+            firstName: s.first_name,
+            lastName: s.last_name,
+            email: s.email ?? '',
+            phone: s.phone ?? '',
+            address: s.address ?? '',
+            className: s.class_layout?.name ?? '',
+            registrationDate: s.created_at ?? '',
+            active: s.active ?? false,
+          }))
+        : [];
+      setTeachers(mapped);
+    } catch (e) {
+      console.error('Failed to load teachers', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleEdit = (record) => {
+  useEffect(() => {
+    fetchTeachers();
+  }, [fetchTeachers]);
+
+  // Handler to open the edit/create dialog
+  const handleEdit = useCallback((record) => {
     setSelected(record);
     setOpenEditProfile(true);
-  };
+  }, []);
 
-  const handleView = (record) => {
+  const handleView = useCallback((record) => {
     setSelected(record);
-    setOpenViewProfile(true); 
-  };
+    setOpenViewProfile(true);
+  }, []);
 
-  const handleSave = (updated) => {
-    setStudents((prev) =>
-      prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s))
-    );
-  };
-  
-  const handleDelete = (id) => {
-    if (!id) return;
-    alert(`Verwijder ${id}`);
-    setStudents((prev) => prev.filter((s) => s.id !== id));
+  const handleAddNew = useCallback(() => {
+    setSelected({ role: 'Teacher' }); // Start with a clean object for a new teacher
+    setOpenEditProfile(true);
+  }, []);
 
-    if (selected?.id === id) {
-      setOpenEditProfile(false);
-      setOpenViewProfile(false);
+  // Handler for saving a teacher (both create and update)
+  const handleSave = async (updated) => {
+    try {
+      const payload = {
+        first_name: updated.firstName,
+        last_name: updated.lastName,
+        email: updated.email,
+        phone: updated.phone,
+        address: updated.address,
+        active: updated.active,
+      };
+
+      Object.keys(payload).forEach(
+        (key) => payload[key] === undefined && delete payload[key]
+      );
+
+      const response = await teachersAPI.update_teacher(updated.id, payload);
+
+      const mapped = {
+        id: response.id,
+        firstName: response.first_name,
+        lastName: response.last_name,
+        email: response.email ?? '',
+        phone: response.phone ?? '',
+        address: response.address ?? '',
+        className: response.class_layout?.name ?? '',
+        registrationDate: response.created_at ?? '',
+        active: response.active ?? false,
+      };
+
+      setTeachers((prev) => prev.map((s) => (s.id === mapped.id ? mapped : s)));
+    } catch (e) {
+      console.error('Failed to save teacher', e);
+      // Optionally show an error message to the user
     }
   };
 
+  // Handler for deleting a teacher
+  const handleDelete = useCallback(
+    async (id) => {
+      if (!id) return;
+      // It's a good practice to add a confirmation dialog here
+      try {
+        await teachersAPI.delete_teacher(id);
+        setTeachers((prev) => prev.filter((t) => t.id !== id));
+        if (selected?.id === id) {
+          setOpenEditProfile(false);
+        }
+      } catch (e) {
+        console.error('Failed to delete teacher', e);
+        // Optionally show an error message to the user
+      }
+    },
+    [selected?.id]
+  );
+
   const columns = useMemo(
     () => createColumns({ handleView, handleEdit, handleDelete }),
-    []
+    [handleView, handleEdit, handleDelete]
   );
 
   return (
@@ -92,26 +128,23 @@ export default function TeachersPage() {
       <div className="flex flex-col gap-6">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Docenten
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Docenten</h1>
             <p className="text-sm text-muted-foreground">
               Beheer hier alle docenten.
             </p>
           </div>
-          <Button>
+          <Button onClick={handleAddNew}>
             <Plus className="h-4 w-4 mr-2" />
             Nieuwe docent
           </Button>
         </div>
 
         <Card>
-      
-          <CardContent>
+          <CardContent className="p-4">
             {loading ? (
               <div className="text-center py-5">Laden...</div>
             ) : (
-              <DataTable columns={columns} data={students} />
+              <DataTable columns={columns} data={teachers} />
             )}
           </CardContent>
         </Card>
@@ -123,13 +156,14 @@ export default function TeachersPage() {
         student={selected}
       />
 
+      {/* The ProfileCard is used for both editing and creating */}
       <ProfileCard
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}
-        user={selected}
+        user={{ ...selected, role: 'Teacher' }}
         onSave={handleSave}
         onDelete={handleDelete}
-        viewDateOnly={false} 
+        viewDateOnly={false}
       />
     </LayoutWrapper>
   );

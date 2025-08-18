@@ -42,6 +42,7 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
   const addLevel = () => {
     if (levelInput.trim() && !levels.includes(levelInput.trim())) {
       setLevels([...levels, levelInput.trim()]);
+      console.log("levels", levels);
       setLevelInput("");
     }
   };
