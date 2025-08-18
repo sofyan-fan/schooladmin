@@ -8,27 +8,18 @@ import {
 import { Input } from '@/components/ui/input';
 import PropTypes from 'prop-types';
 
-function FormText({ name, label, control, showError = false, ...rest }) {
+function FormText({ name, label, control, ...rest }) {
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => (
+      render={({ field, fieldState: { error } }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel htmlFor={name}>{label}</FormLabel>
           <FormControl>
-            <Input
-              {...rest}
-              name={field.name}
-              value={field.value ?? ''}
-              onChange={(e) => field.onChange(e.target.value)}
-              onBlur={field.onBlur}
-              ref={field.ref}
-            />
+            <Input id={name} {...field} {...rest} autoComplete="off" />
           </FormControl>
-          {(fieldState.isTouched || fieldState.isDirty || showError) && (
-            <FormMessage />
-          )}
+          {error && <FormMessage>{error.message}</FormMessage>}
         </FormItem>
       )}
     />
@@ -39,7 +30,6 @@ FormText.propTypes = {
   name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   control: PropTypes.object.isRequired,
-  showError: PropTypes.bool,
 };
 
 export default FormText;

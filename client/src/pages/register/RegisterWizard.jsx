@@ -32,7 +32,6 @@ export default function RegisterWizard() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState('');
-  const [showStepErrors, setShowStepErrors] = useState(false);
 
   const [currentRole, setCurrentRole] = useState(null);
   const [roleSelected, setRoleSelected] = useState(false);
@@ -61,7 +60,7 @@ export default function RegisterWizard() {
     },
     {
       title: 'Inschrijving',
-      description: 'Kies een lespakket en voltooi de inschrijving.',
+      description: 'Kies een module en voltooi de inschrijving.',
     },
   ];
 
@@ -100,7 +99,8 @@ export default function RegisterWizard() {
     shouldUnregister: false,
   });
 
-  const { handleSubmit, trigger, watch, control, getValues } = methods;
+  const { handleSubmit, trigger, watch, control, getValues, formState } =
+    methods;
 
   const currentFields = useMemo(() => {
     if (step === 0) return ['email', 'password'];
@@ -136,19 +136,16 @@ export default function RegisterWizard() {
   const next = async () => {
     const ok = await trigger(currentFields);
     if (ok && step < totalSteps - 1) {
-      setShowStepErrors(false);
       setStep((s) => s + 1);
-    } else if (!ok) {
-      setShowStepErrors(true);
     }
   };
 
   const back = () => {
-    setShowStepErrors(false);
     setStep((s) => Math.max(0, s - 1));
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (data) => {
+    console.log('Form submitted', data);
     setFormError('');
     try {
       const roleValue = currentRole;
@@ -174,19 +171,18 @@ export default function RegisterWizard() {
         setStep(1);
         return;
       }
+      console.log('Submitting with role:', roleValue, 'and data:', data);
 
       const profileData = {
         first_name: firstName || '',
         last_name: lastName || '',
-        birth_date,
-        gender: gender || '',
         address: address || '',
         postal_code: postalCode || '',
         city: city || '',
         phone: phone || '',
         parent_name: parentName || '',
         parent_email: email,
-        lesson_package: lessonPkg || '',
+        lesson_package: lessonPkg ? String(lessonPkg) : '',
         payment_method: payMethod || null,
         sosnumber: sosnumber || '',
       };
@@ -194,9 +190,13 @@ export default function RegisterWizard() {
       if (currentRole === 'teacher') {
         profileData.birth_date = birth_date;
         profileData.gender = gender || '';
+      } else if (currentRole === 'student') {
+        profileData.birth_date = birth_date;
+        profileData.gender = gender || '';
       }
 
       const success = await register(email, password, roleValue, profileData);
+      console.log('Registration success:', success);
 
       if (success) {
         navigate('/dashboard');
@@ -204,6 +204,7 @@ export default function RegisterWizard() {
         setFormError('Registratie is mislukt. Bestaat het e-mailadres al?');
       }
     } catch (err) {
+      console.error('Registration submission error', err);
       setFormError(err?.message || 'Er ging iets mis bij het registreren.');
     }
   };
@@ -238,29 +239,19 @@ export default function RegisterWizard() {
 
           <FormProvider {...methods}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-6">
-              {step === 0 && (
-                <StepAccount
-                  control={control}
-                  watch={watch}
-                  showError={showStepErrors}
-                />
-              )}
+              {step === 0 && <StepAccount control={control} watch={watch} />}
               {step === 1 && (
                 <StepPersonal
                   control={control}
                   watch={watch}
                   role={currentRole}
-                  showError={showStepErrors}
                 />
               )}
               {step === 2 && isStudentFlow && (
-                <StepParentContact
-                  control={control}
-                  showError={showStepErrors}
-                />
+                <StepParentContact control={control} />
               )}
               {step === 3 && isStudentFlow && (
-                <StepEnroll control={control} showError={showStepErrors} />
+                <StepEnroll control={control} formState={formState} />
               )}
 
               {formError && (

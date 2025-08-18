@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import subjectAPI from "../../apis/subjects/subjectAPI";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import subjectAPI from '../../apis/subjects/subjectAPI';
 
 function Tag({ children, onRemove }) {
   return (
@@ -29,31 +29,45 @@ function Tag({ children, onRemove }) {
   );
 }
 
-export default function SubjectModal({ open, onOpenChange, onSave }) {
-  const [name, setName] = useState("");
-  const [levelInput, setLevelInput] = useState("");
+export default function SubjectModal({ open, onOpenChange, onSave, subject }) {
+  const [name, setName] = useState('');
+  const [levelInput, setLevelInput] = useState('');
   const [levels, setLevels] = useState([]);
-  const [materialInput, setMaterialInput] = useState("");
+  const [materialInput, setMaterialInput] = useState('');
   const [materials, setMaterials] = useState([]);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isEditing = !!subject;
+
+  useEffect(() => {
+    if (isEditing) {
+      setName(subject.name || '');
+      setLevels(subject.levels ? subject.levels.map((l) => l.level) : []);
+      setMaterials(
+        subject.materials ? subject.materials.map((m) => m.material) : []
+      );
+    } else {
+      setName('');
+      setLevels([]);
+      setMaterials([]);
+    }
+    setError('');
+  }, [subject, isEditing]);
 
   const addLevel = () => {
     if (levelInput.trim() && !levels.includes(levelInput.trim())) {
       setLevels([...levels, levelInput.trim()]);
-      console.log("levels", levels);
-      setLevelInput("");
+      setLevelInput('');
     }
   };
 
-  const removeLevel = (idx) =>
-    setLevels(levels.filter((_, i) => i !== idx));
+  const removeLevel = (idx) => setLevels(levels.filter((_, i) => i !== idx));
 
   const addMaterial = () => {
     if (materialInput.trim() && !materials.includes(materialInput.trim())) {
       setMaterials([...materials, materialInput.trim()]);
-      setMaterialInput("");
+      setMaterialInput('');
     }
   };
 
@@ -62,35 +76,45 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("Please enter a subject name.");
+      setError('Please enter a subject name.');
       return;
     }
     if (levels.length === 0) {
-      setError("Please add at least one level.");
+      setError('Please add at least one level.');
       return;
     }
     if (materials.length === 0) {
-      setError("Please add at least one material.");
+      setError('Please add at least one material.');
       return;
     }
-    setError("");
+    setError('');
     setLoading(true);
     try {
-      const savedSubject = await subjectAPI.add_subject({
+      const subjectData = {
         name: name.trim(),
         levels,
         materials,
-      });
+      };
+
+      let savedSubject;
+      if (isEditing) {
+        savedSubject = await subjectAPI.edit_subject({
+          ...subjectData,
+          id: subject.id,
+        });
+      } else {
+        savedSubject = await subjectAPI.add_subject(subjectData);
+      }
+
       if (onSave) {
         onSave(savedSubject);
-        console.log("Subject saved:", savedSubject);
       }
-      setName("");
+      setName('');
       setLevels([]);
       setMaterials([]);
       onOpenChange(false);
     } catch (err) {
-      setError(err.message || "Failed to save. Please try again.");
+      setError(err.message || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -100,7 +124,9 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Vak Toevoegen</DialogTitle>
+          <DialogTitle>
+            {isEditing ? 'Vak Bewerken' : 'Vak Toevoegen'}
+          </DialogTitle>
         </DialogHeader>
         <form
           className="flex flex-col gap-2 mt-2"
@@ -126,14 +152,19 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
                 value={levelInput}
                 onChange={(e) => setLevelInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     addLevel();
                   }
                 }}
                 disabled={loading}
               />
-              <Button type="button" variant="secondary" onClick={addLevel} disabled={loading}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={addLevel}
+                disabled={loading}
+              >
                 +
               </Button>
             </div>
@@ -152,14 +183,19 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
                 value={materialInput}
                 onChange={(e) => setMaterialInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     addMaterial();
                   }
                 }}
                 disabled={loading}
               />
-              <Button type="button" variant="secondary" onClick={addMaterial} disabled={loading}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={addMaterial}
+                disabled={loading}
+              >
                 +
               </Button>
             </div>
@@ -171,9 +207,7 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
               ))}
             </div>
           </div>
-          {error && (
-            <div className="text-red-500 text-sm mt-2">{error}</div>
-          )}
+          {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
           <DialogFooter className="flex justify-between pt-4">
             <DialogClose asChild>
               <Button type="button" variant="secondary" disabled={loading}>
@@ -181,7 +215,11 @@ export default function SubjectModal({ open, onOpenChange, onSave }) {
               </Button>
             </DialogClose>
             <Button type="submit" variant="default" disabled={loading}>
-              {loading ? "Opslaan..." : "Vak opslaan"}
+              {loading
+                ? 'Opslaan...'
+                : isEditing
+                ? 'Wijzigingen opslaan'
+                : 'Vak opslaan'}
             </Button>
           </DialogFooter>
         </form>

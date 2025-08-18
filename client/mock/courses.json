@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "name": "Weekendprogramma Kinderen",
+    "price": 250,
+    "description": "Een all-inclusive pakket voor weekendlessen, gericht op jonge leerlingen.",
+    "moduleIds": [1, 3]
+  }
+]

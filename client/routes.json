@@ -1,25 +1,20 @@
 {
+  "/auth/login": "/login",
+  "/auth/logout": "/logout",
+  "/auth/register": "/register",
+  "/auth/me": "/me",
+  "/auth/users": "/users",
+  "/auth/students/:student_id/enrollment": "/students/:student_id",
   "/dashboard/event": "/events",
   "/dashboard/event/:id": "/events/:id",
-
+  "/dashboard/roster": "/rosters",
+  "/dashboard/roster/:id": "/rosters/:id",
   "/general/students": "/students",
   "/general/student/:id": "/students/:id",
-
-  "/subjects/subjects": "/subjects",
-  "/subjects/subjects/:id": "/subjects/:id",
-
   "/general/teachers": "/teachers",
   "/general/teacher/:id": "/teachers/:id",
-
-  "/subjects": "/subjects",
-  "/subjects/:id": "/subjects/:id",
-
-  "/course/modules": "/coursemodule",
-  "/courses/modules": "/coursemodule",
-
-  "/courses/coursemodule": "/coursemodule",
-  "/courses/coursemodule/:id": "/coursemodule/:id",
-
-  "/general/coursemodules": "/coursemodule",
-  "/general/coursemodules/:id": "/coursemodule/:id"
+  "/courses/courses": "/courses",
+  "/courses/modules": "/modules",
+  "/subjects/subjects": "/subjects",
+  "/subjects/subjects/:id": "/subjects/:id"
 }

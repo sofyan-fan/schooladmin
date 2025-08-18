@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { strength } from '../form/helpers';
 
-function StepAccount({ control, showError = false }) {
+function StepAccount({ control }) {
   const [show, setShow] = useState(false);
 
   return (
@@ -32,9 +32,7 @@ function StepAccount({ control, showError = false }) {
                 autoComplete="email"
               />
             </FormControl>
-            {(fieldState.isTouched || fieldState.isDirty || showError) && (
-              <FormMessage />
-            )}
+            <FormMessage />
           </FormItem>
         )}
       />
@@ -89,9 +87,7 @@ function StepAccount({ control, showError = false }) {
                 </FormDescription>
               </>
             )}
-            {(fieldState.isTouched || fieldState.isDirty || showError) && (
-              <FormMessage />
-            )}
+            <FormMessage />
           </FormItem>
         )}
       />

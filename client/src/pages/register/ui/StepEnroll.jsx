@@ -1,3 +1,4 @@
+import courseApi from '@/apis/courses/courseAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,13 +16,39 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { RadioGroup } from '@/components/ui/radio-group';
-import { CreditCard, HandCoins, Info, Landmark } from 'lucide-react';
+import {
+  BookOpenCheck,
+  CreditCard,
+  HandCoins,
+  Info,
+  Landmark,
+} from 'lucide-react';
 import PropTypes from 'prop-types';
-import courses from '../data/courses';
+import { useEffect, useState } from 'react';
 import CourseCard from './CourseCard';
 import PaymentMethodCard from './PaymentMethodCard';
 
-function StepEnroll({ control, showError = false }) {
+function StepEnroll({ control, formState }) {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await courseApi.get_courses();
+        setCourses(data);
+      } catch (err) {
+        setError('Failed to load courses.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
   const paymentOptions = [
     {
       id: 'iDEAL',
@@ -43,12 +70,20 @@ function StepEnroll({ control, showError = false }) {
     },
   ];
 
+  if (loading) {
+    return <div>Laden...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
   return (
     <div className="space-y-8">
       <FormField
         control={control}
         name="lesson_package"
-        render={({ field, fieldState }) => (
+        render={({ field }) => (
           <FormItem className="space-y-4">
             <div className="flex justify-between items-center">
               <FormLabel className="text-xl text-black font-semibold ">
@@ -74,16 +109,16 @@ function StepEnroll({ control, showError = false }) {
                         key={course.id}
                         className="flex items-start gap-4 p-4 border rounded-lg"
                       >
-                        <course.icon className="h-8 w-8 text-primary mt-1 flex-shrink-0" />
+                        <BookOpenCheck className="h-8 w-8 text-primary mt-1 flex-shrink-0" />
                         <div>
                           <h4 className="font-semibold">
-                            {course.title} -{' '}
+                            {course.name} -{' '}
                             <span className="text-muted-foreground">
-                              {course.price}
+                              €{course.price}
                             </span>
                           </h4>
                           <p className="text-sm text-muted-foreground">
-                            {course.details}
+                            {course.description}
                           </p>
                         </div>
                       </div>
@@ -102,15 +137,13 @@ function StepEnroll({ control, showError = false }) {
                   <CourseCard
                     key={course.id}
                     course={course}
-                    selected={field.value === course.id}
-                    onClick={() => field.onChange(course.id)}
+                    selected={String(field.value) === String(course.id)}
+                    onClick={() => field.onChange(String(course.id))}
                   />
                 ))}
               </RadioGroup>
             </FormControl>
-            {(fieldState.isTouched || fieldState.isDirty || showError) && (
-              <FormMessage />
-            )}
+            {formState.isSubmitted && <FormMessage />}
           </FormItem>
         )}
       />
@@ -118,7 +151,7 @@ function StepEnroll({ control, showError = false }) {
       <FormField
         control={control}
         name="payment_method"
-        render={({ field, fieldState }) => (
+        render={({ field }) => (
           <FormItem className="space-y-4">
             <FormLabel className="text-base font-semibold">
               Kies je betaalmethode
@@ -141,9 +174,7 @@ function StepEnroll({ control, showError = false }) {
                 ))}
               </RadioGroup>
             </FormControl>
-            {(fieldState.isTouched || fieldState.isDirty || showError) && (
-              <FormMessage />
-            )}
+            {formState.isSubmitted && <FormMessage />}
           </FormItem>
         )}
       />
@@ -153,6 +184,7 @@ function StepEnroll({ control, showError = false }) {
 
 StepEnroll.propTypes = {
   control: PropTypes.object.isRequired,
+  formState: PropTypes.object.isRequired,
 };
 
 export default StepEnroll;

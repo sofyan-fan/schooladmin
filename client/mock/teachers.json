@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1,
+    "first_name": "Amina",
+    "last_name": "Khan",
+    "email": "teacher@example.com",
+    "phone": "+31 6 11111111",
+    "address": "Docentenstraat 1",
+    "is_active": true,
+    "user_id": 1
+  },
+  {
+    "id": 2,
+    "email": "docent1@test.com",
+    "is_active": true,
+    "user_id": 11,
+    "first_name": "Amin",
+    "last_name": "Khachiche",
+    "birth_date": "1995-11-29T23:00:00.000Z",
+    "gender": "Man",
+    "address": "Monseigneur van de Marckstraat 2",
+    "postal_code": "5986 BE",
+    "city": "Beringe",
+    "phone": "+31639173377",
+    "parent_name": "",
+    "parent_email": "docent1@test.com",
+    "lesson_package": "",
+    "payment_method": "iDEAL"
+  },
+  {
+    "id": 3,
+    "email": "docent2@test.com",
+    "is_active": true,
+    "user_id": 12,
+    "first_name": "Gerard",
+    "last_name": "Khachiche",
+    "birth_date": "1996-12-11T23:00:00.000Z",
+    "gender": "Man",
+    "address": "Monseigneur van de Marckstraat 2",
+    "postal_code": "5986 BE",
+    "city": "Beringe",
+    "phone": "+31639173377",
+    "parent_name": "",
+    "parent_email": "docent2@test.com",
+    "lesson_package": "",
+    "payment_method": "iDEAL"
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "email": "teacher@example.com",
+    "password": "password123",
+    "role": "teacher"
+  },
+  {
+    "id": 2,
+    "email": "amin@test.com",
+    "password": "amin123",
+    "role": "admin"
+  },
+  {
+    "id": 3,
+    "email": "student@example.com",
+    "password": "password123",
+    "role": "student"
+  },
+  {
+    "id": 4,
+    "email": "abi@test.com",
+    "password": "abi12345",
+    "role": "student"
+  },
+  {
+    "id": 5,
+    "email": "aminneter@gmail.com",
+    "password": "amin123456",
+    "role": "student"
+  },
+  {
+    "id": 6,
+    "email": "mido@test.com",
+    "password": "mido12345",
+    "role": "student"
+  },
+  {
+    "id": 7,
+    "email": "nnn@test.com",
+    "password": "nnn12345",
+    "role": "student"
+  },
+  {
+    "id": 8,
+    "email": "test@test.com",
+    "password": "test12345",
+    "role": "student"
+  },
+  {
+    "id": 9,
+    "email": "test1@test1.com",
+    "password": "test12345",
+    "role": "student"
+  },
+  {
+    "id": 10,
+    "email": "fdafds@est.com",
+    "password": "asdfg12345",
+    "role": "student"
+  },
+  {
+    "id": 11,
+    "email": "docent1@test.com",
+    "password": "docent12345",
+    "role": "teacher"
+  },
+  {
+    "id": 12,
+    "email": "docent2@test.com",
+    "password": "docent123456",
+    "role": "teacher"
+  }
+]

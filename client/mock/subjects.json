@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Arabisch – Beginner"
+  },
+  {
+    "id": 2,
+    "name": "Tajwīd"
+  },
+  {
+    "id": 3,
+    "name": "Fiqh (basics)"
+  },
+  {
+    "name": "Arabisch",
+    "levels": ["1", "2", "3"],
+    "materials": ["Alif Baa", "Thaa"],
+    "id": 4
+  },
+  {
+    "name": "aaaaaa",
+    "levels": ["beginner", "intermediate", "expert"],
+    "materials": ["fdsafdfdsafds", "dddddd"],
+    "id": 5
+  },
+  {
+    "name": "dd",
+    "levels": ["dddd", "dddda", "sdsdsa"],
+    "materials": ["sdasda", "asddsa", "dsadsad"],
+    "id": 6
+  }
+]

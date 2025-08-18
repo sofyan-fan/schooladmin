@@ -1,13 +1,35 @@
 import teachersAPI from '@/apis/teachers/teachersAPI';
 import ProfileCard from '@/components/general/ProfileCard';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
+import PageHeader from '@/components/shared/PageHeader';
+import DataTable from '@/components/shared/Table';
+import Toolbar from '@/components/shared/Toolbar';
 import StudentViewProfileCard from '@/components/StudentViewProfileCard';
-import { Card, CardContent } from '@/components/ui/card';
-import { DataTable } from '@/components/ui/data-table';
-import { Plus } from 'lucide-react';
+import { createColumns } from '@/components/teachers/columns';
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+  import { BookOpen, Presentation } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from '../components/ui/button';
-import { createColumns } from './teachers/columns.jsx';
+import { TableCell, TableRow } from '@/components/ui/table';
+
+const NoData = (
+  <TableRow>
+    <TableCell colSpan={6} className="h-48 text-center">
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <BookOpen className="size-12 text-gray-400" />
+        <h3 className="text-xl font-semibold">No Teachers Found</h3>
+        <p className="text-muted-foreground">
+          Get started by adding a new teacher.
+        </p>
+      </div>
+    </TableCell>
+  </TableRow>
+);
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState([]);
@@ -16,7 +38,14 @@ export default function TeachersPage() {
   const [openEditProfile, setOpenEditProfile] = useState(false);
   const [openViewProfile, setOpenViewProfile] = useState(false);
 
-  // Fetch teachers on component mount
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
     try {
@@ -46,7 +75,6 @@ export default function TeachersPage() {
     fetchTeachers();
   }, [fetchTeachers]);
 
-  // Handler to open the edit/create dialog
   const handleEdit = useCallback((record) => {
     setSelected(record);
     setOpenEditProfile(true);
@@ -58,11 +86,10 @@ export default function TeachersPage() {
   }, []);
 
   const handleAddNew = useCallback(() => {
-    setSelected({ role: 'Teacher' }); // Start with a clean object for a new teacher
+    setSelected({ role: 'Teacher' });
     setOpenEditProfile(true);
   }, []);
 
-  // Handler for saving a teacher (both create and update)
   const handleSave = async (updated) => {
     try {
       const payload = {
@@ -95,15 +122,12 @@ export default function TeachersPage() {
       setTeachers((prev) => prev.map((s) => (s.id === mapped.id ? mapped : s)));
     } catch (e) {
       console.error('Failed to save teacher', e);
-      // Optionally show an error message to the user
     }
   };
 
-  // Handler for deleting a teacher
   const handleDelete = useCallback(
     async (id) => {
       if (!id) return;
-      // It's a good practice to add a confirmation dialog here
       try {
         await teachersAPI.delete_teacher(id);
         setTeachers((prev) => prev.filter((t) => t.id !== id));
@@ -112,43 +136,56 @@ export default function TeachersPage() {
         }
       } catch (e) {
         console.error('Failed to delete teacher', e);
-        // Optionally show an error message to the user
       }
     },
     [selected?.id]
   );
 
   const columns = useMemo(
-    () => createColumns({ handleView, handleEdit, handleDelete }),
+    () =>
+      createColumns({
+        onView: handleView,
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      }),
     [handleView, handleEdit, handleDelete]
   );
 
+  const table = useReactTable({
+    data: teachers,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      pagination,
+      columnFilters,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
   return (
     <LayoutWrapper>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Docenten</h1>
-            <p className="text-sm text-muted-foreground">
-              Beheer hier alle docenten.
-            </p>
-          </div>
-          <Button onClick={handleAddNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe docent
-          </Button>
-        </div>
-
-        <Card>
-          <CardContent className="p-4">
-            {loading ? (
-              <div className="text-center py-5">Laden...</div>
-            ) : (
-              <DataTable columns={columns} data={teachers} />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <PageHeader
+        title="Docenten"
+        icon={<Presentation className="size-9" />}
+        description="Beheer hier alle docenten."
+        buttonText="Nieuwe docent"
+        onAdd={handleAddNew}
+      />
+      <Toolbar table={table} filterColumn="firstName" />
+      <DataTable
+        table={table}
+        loading={loading}
+        columns={columns}
+        NoDataComponent={NoData}
+      />
 
       <StudentViewProfileCard
         open={openViewProfile}
@@ -156,7 +193,6 @@ export default function TeachersPage() {
         student={selected}
       />
 
-      {/* The ProfileCard is used for both editing and creating */}
       <ProfileCard
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}

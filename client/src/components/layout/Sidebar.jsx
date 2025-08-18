@@ -1,29 +1,47 @@
 import { useAuth } from '@/hooks/useAuth';
-import { LogOut } from 'lucide-react';
+import {
+  CircleDollarSign,
+  GraduationCap,
+  Home,
+  Layers,
+  LayoutDashboard,
+  LibraryBig,
+  LogOut,
+  Presentation,
+  Settings,
+  Component,
+  Users,
+} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import ClassIcon from '../../assets/class.svg?react';
 import { Button } from '../ui/button';
-import { GraduationCap } from 'lucide-react';
 
 const Sidebar = ({ isOpen }) => {
-  
   const { logout } = useAuth();
-
   const { pathname } = useLocation();
+
+  // Store components, not elements
   const menuItems = [
-    'Dashboard',
-    'Leerlingen',
-    'Vakken',
-    'Lespakketten',
-    'Docenten',
-    'Financiën',
-    'Instellingen',
+    { name: 'Dashboard', path: 'dashboard', Icon: Home },
+    { name: 'Leerlingen', path: 'leerlingen', Icon: GraduationCap },
+    { name: 'Docenten', path: 'docenten', Icon: Presentation },
+    { name: 'Klassen', path: 'klassen', Icon: Users },
+    { name: 'Vakken', path: 'vakken', Icon: LibraryBig },
+    { name: 'Modules', path: 'modules', Icon: Component },
+    { name: 'Lespakketten', path: 'lespakketten', Icon: Layers },
+    {
+      name: 'Onderwijsindeling',
+      path: 'onderwijsindeling',
+      Icon: LayoutDashboard,
+    },
+    { name: 'Financiën', path: 'financien', Icon: CircleDollarSign },
+    { name: 'Instellingen', path: 'instellingen', Icon: Settings },
   ];
 
   const firstSegment = pathname.split('/')[1] || '';
-
   const activeItem =
-    menuItems.find((item) => item.toLowerCase() === firstSegment) ||
-    'Dashboard';
+    menuItems.find((item) => item.path.toLowerCase() === firstSegment) ||
+    menuItems[0];
 
   return (
     <aside
@@ -39,14 +57,19 @@ const Sidebar = ({ isOpen }) => {
         <nav>
           <ul>
             {menuItems.map((item) => (
-              <li key={item} className="mb-2">
+              <li key={item.name} className="mb-2">
                 <Link
-                  to={`/${item.toLowerCase()}`}
+                  to={`/${item.path.toLowerCase()}`}
                   className={`block p-2 text-text-muted hover:bg-background-highlight rounded-md ${
-                    activeItem === item ? 'bg-primary text-white font-bold' : ''
+                    activeItem.name === item.name
+                      ? 'bg-primary text-white font-bold'
+                      : ''
                   }`}
                 >
-                  {item}
+                  <div className="flex items-center">
+                    <item.Icon className="size-4 mr-2" />
+                    {item.name}
+                  </div>
                 </Link>
               </li>
             ))}

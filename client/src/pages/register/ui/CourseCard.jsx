@@ -11,11 +11,6 @@ function CourseCard({ course, selected, onClick }) {
       }`}
     >
       <div>
-        <course.icon
-          className={`h-8 w-8 mb-3 ${
-            selected ? 'text-primary' : 'text-muted-foreground'
-          }`}
-        />
         <h4 className="font-semibold">{course.title}</h4>
         <p className="text-sm text-muted-foreground mt-1">
           {course.description}
@@ -32,7 +27,7 @@ CourseCard.propTypes = {
     title: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     price: PropTypes.string.isRequired,
-    icon: PropTypes.elementType.isRequired,
+    details: PropTypes.string.isRequired,
   }).isRequired,
   selected: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,

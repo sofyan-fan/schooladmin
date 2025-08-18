@@ -1,22 +1,50 @@
 import studentAPI from '@/apis/students/studentAPI';
 import ProfileCard from '@/components/general/ProfileCard';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
+import PageHeader from '@/components/shared/PageHeader';
+import DataTable from '@/components/shared/Table';
+import Toolbar from '@/components/shared/Toolbar';
+import { createColumns } from '@/components/students/columns';
 import StudentViewProfileCard from '@/components/StudentViewProfileCard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DataTable } from '@/components/ui/data-table';
-import { Plus } from 'lucide-react';
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table'; 
+import { BookOpen, GraduationCap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '../components/ui/button';
-import { createColumns } from './students/columns';
+import { TableCell, TableRow } from '@/components/ui/table';
+
+const NoData = (
+  <TableRow>
+    <TableCell colSpan={6} className="h-48 text-center">
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <BookOpen className="size-12 text-gray-400" />
+        <h3 className="text-xl font-semibold">No Students Found</h3>
+        <p className="text-muted-foreground">
+          Get started by adding a new student.
+        </p>
+      </div>
+    </TableCell>
+  </TableRow>
+);
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-
   const [openEditProfile, setOpenEditProfile] = useState(false);
-
   const [openViewProfile, setOpenViewProfile] = useState(false);
+
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -66,8 +94,6 @@ export default function StudentsPage() {
   };
 
   const handleSave = async (updated) => {
-    // 1. Create a payload with only the fields the API expects,
-    //    and in the correct snake_case format.
     const apiPayload = {
       first_name: updated.firstName,
       last_name: updated.lastName,
@@ -83,16 +109,13 @@ export default function StudentsPage() {
       enrollment_status: updated.status === 'Active',
     };
 
-    // Remove undefined keys so we don't send them to the server
     Object.keys(apiPayload).forEach(
       (key) => apiPayload[key] === undefined && delete apiPayload[key]
     );
 
     try {
-      // 2. Send snake_case data to the API
       const response = await studentAPI.update_student(updated.id, apiPayload);
 
-      // 3. Map snake_case response back to camelCase for the UI state
       const updatedStudentForState = {
         id: response.id,
         firstName: response.first_name,
@@ -121,81 +144,82 @@ export default function StudentsPage() {
       console.log('updatedStudentForState', updatedStudentForState);
     } catch (error) {
       console.error('Failed to update student', error);
-      // Optionally, show an error message to the user
     }
   };
 
   const handleDelete = async (id) => {
     if (!id) return;
-    // NOTE: You should add a confirmation dialog here!
     try {
       await studentAPI.delete_student(id);
       setStudents((prev) => prev.filter((s) => s.id !== id));
-      // Close any open modals for the deleted user
       if (selected?.id === id) {
         setOpenEditProfile(false);
         setOpenViewProfile(false);
       }
     } catch (error) {
       console.error('Failed to delete student', error);
-      // Optionally, show an error message to the user
     }
   };
 
-  // --- COLUMN DEFINITION ---
   const columns = useMemo(
-    () => createColumns({ handleView, handleEdit, handleDelete }),
-    []
+    () =>
+      createColumns({
+        onView: handleView,
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      }),
+    [handleView, handleEdit, handleDelete]
   );
 
-  // --- RENDER ---
+  const table = useReactTable({
+    data: students,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      pagination,
+      columnFilters,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
   return (
     <LayoutWrapper>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Leerlingen
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Beheer hier alle leerlingen.
-            </p>
-          </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe leerling
-          </Button>
-        </div>
+      <PageHeader
+        title="Leerlingen"
+        icon={<GraduationCap className="size-9" />}
+        description="Beheer hier alle leerlingen."
+        buttonText="Nieuwe leerling"
+        onAdd={() => {}}
+      />
+      <Toolbar table={table} filterColumn="firstName" />
+      <DataTable
+        table={table}
+        loading={loading}
+        columns={columns}
+        NoDataComponent={NoData}
+      />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Leerlingenoverzicht</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-10">Laden...</div>
-            ) : (
-              <DataTable columns={columns} data={students} />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* RENDER THE NEW VIEW MODAL */}
       <StudentViewProfileCard
         open={openViewProfile}
         onOpenChange={setOpenViewProfile}
         student={selected}
       />
 
-      {/* Your old ProfileCard can now be dedicated to editing */}
       <ProfileCard
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}
         user={selected}
         onSave={handleSave}
         onDelete={handleDelete}
-        viewDateOnly={false} // Assuming this is for an edit form
+        viewDateOnly={false}
       />
     </LayoutWrapper>
   );

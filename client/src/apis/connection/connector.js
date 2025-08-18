@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const useJsonServer = import.meta.env.VITE_USE_JSON_SERVER === 'false';
+const useJsonServer = import.meta.env.VITE_USE_JSON_SERVER === 'true';
 
 const baseURL =
   import.meta.env.VITE_API_BASE_URL ||

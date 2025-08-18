@@ -20,12 +20,12 @@ import {
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export default function CourseModuleModal({
+export default function CreateEditModuleModal({
   open,
   onOpenChange,
   onSave,
-  subjects,
-  module,
+  subjects, // This is the list of all available subjects
+  module, // The module object, if we are in edit mode
 }) {
   const [name, setName] = useState('');
   const [moduleItems, setModuleItems] = useState([]);
@@ -38,18 +38,24 @@ export default function CourseModuleModal({
   const isEditMode = !!module;
 
   useEffect(() => {
+    // Pre-fill form if in edit mode
     if (isEditMode) {
       setName(module.name);
       setModuleItems(
         module.subjects.map((s) => ({
           subjectId: s.subject_id,
-          subjectName: s.subject.name,
+          subjectName:
+            subjects.find((sub) => sub.id === s.subject_id)?.name || '',
           level: s.level,
           material: s.material,
         }))
       );
+    } else {
+      // Reset form if opening for create mode
+      setName('');
+      setModuleItems([]);
     }
-  }, [module, isEditMode]);
+  }, [module, isEditMode, open, subjects]); // Depend on 'open' to reset when modal is re-opened
 
   const selectedSubject = Array.isArray(subjects)
     ? subjects.find((s) => s.id === Number(selectedSubjectId))
@@ -80,31 +86,30 @@ export default function CourseModuleModal({
 
   const handleSave = async (event) => {
     event.preventDefault();
+    setError('');
     if (!name.trim()) {
-      setError('Please enter a module name.');
+      setError('Geef de module een naam.');
       return;
     }
     if (moduleItems.length === 0) {
-      setError('Add at least one subject to this module.');
+      setError('Voeg ten minste één vak toe aan deze module.');
       return;
     }
-    setError('');
+
     setLoading(true);
     try {
+      // The onSave prop now comes from ModulesPage.jsx
       await onSave({
-        id: isEditMode ? module.id : undefined,
         name: name.trim(),
         subjects: moduleItems.map(({ subjectId, level, material }) => ({
-          subject_id: subjectId,
+          subjectId: subjectId,
           level,
           material,
         })),
       });
-      setName('');
-      setModuleItems([]);
-      onOpenChange(false);
+      // The parent component will handle closing the modal on success
     } catch (err) {
-      setError(err.message || 'Failed to save. Please try again.');
+      setError(err.message || 'Kon de module niet opslaan. Probeer opnieuw.');
     } finally {
       setLoading(false);
     }
@@ -115,16 +120,15 @@ export default function CourseModuleModal({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? 'Edit Module' : 'Nieuw Module Toevoegen'}
+            {isEditMode ? 'Module Bewerken' : 'Nieuwe Module Toevoegen'}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? 'Bewerk de gegevens van het module.'
-              : 'Creëer een nieuw module door een naam op te geven en de bijbehorende vakken te selecteren.'}
+              ? 'Bewerk de gegevens van deze curriculum module.'
+              : 'Creëer een nieuwe module door een naam op te geven en de bijbehorende vakken te selecteren.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-6 pt-2">
-          {/* Module Name Input */}
           <div className="space-y-2">
             <Label htmlFor="moduleName">Module naam</Label>
             <Input
@@ -137,8 +141,8 @@ export default function CourseModuleModal({
             />
           </div>
 
-          {/* Subject/Level/Material Selectors */}
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+            {/* Subject, Level, and Material selectors remain the same */}
             <div className="space-y-2">
               <Label htmlFor="subject">Vak</Label>
               <Select
@@ -173,10 +177,9 @@ export default function CourseModuleModal({
                   <SelectValue placeholder="Kies niveau..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* ====== FIX IS HERE ====== */}
-                  {(selectedSubject?.levels || []).map((level) => (
-                    <SelectItem key={level.id} value={level.level}>
-                      {level.level}
+                  {(selectedSubject?.levels || []).map((level, index) => (
+                    <SelectItem key={index} value={level}>
+                      {level}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -193,10 +196,9 @@ export default function CourseModuleModal({
                   <SelectValue placeholder="Kies literatuur..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* ====== FIX IS HERE ====== */}
-                  {(selectedSubject?.materials || []).map((material) => (
-                    <SelectItem key={material.id} value={material.material}>
-                      {material.material}
+                  {(selectedSubject?.materials || []).map((material, index) => (
+                    <SelectItem key={index} value={material}>
+                      {material}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -219,7 +221,6 @@ export default function CourseModuleModal({
             </Button>
           </div>
 
-          {/* Display for Added Combos */}
           <div className="space-y-2">
             <Label>Toegevoegde vakken</Label>
             <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-muted/50">

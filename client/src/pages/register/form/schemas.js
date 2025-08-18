@@ -39,6 +39,6 @@ export const schemaParentContact = z.object({
 });
 
 export const schemaEnrollStudent = z.object({
-  lesson_package: z.string().min(1, 'Kies een lespakket'),
+  lesson_package: z.string().min(1, 'Kies een module'),
   payment_method: z.enum(['SEPA incasso', 'iDEAL', 'Contant']).optional(),
 });

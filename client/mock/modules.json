@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Basis - 1",
+    "subjects": [
+      {
+        "subjectId": 4,
+        "subjectName": "Arabisch",
+        "level": "1",
+        "material": "Alif Baa"
+      }
+    ],
+    "id": 1
+  },
+  {
+    "name": "ddddd",
+    "subjects": [
+      {
+        "subjectId": 5,
+        "subjectName": "Engels",
+        "level": "beginner",
+        "material": "fdsafdfdsafds"
+      }
+    ],
+    "id": 2
+  },
+  {
+    "name": "New",
+    "subjects": [
+      {
+        "subjectId": 4,
+        "subjectName": "Arabisch",
+        "level": "3",
+        "material": "Thaa"
+      }
+    ],
+    "id": 3
+  }
+]
