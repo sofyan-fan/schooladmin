@@ -228,11 +228,16 @@ model courses {
   tuition_payments tuition_payment[]
   subjects         subject[]        @relation("course_subjects")
   class_layout     class_layout[]
+  course_module course_module[]
 }
 
 model course_module {
   id       Int                      @id @default(autoincrement())
   name     String
+
+  course     courses  @relation(fields: [course_id], references: [id])
+  course_id  Int
+
   subjects course_module_subject[]
 }
 
@@ -261,7 +266,7 @@ model subject {
   exams     exam[]
   roster    roster[]
   courses   courses[]            @relation("course_subjects")
-  moduleSubjects course_module_subject[]
+  module_subjects course_module_subject[]
 }
 
 model subject_level {
