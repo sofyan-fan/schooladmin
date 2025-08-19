@@ -29,7 +29,7 @@ function Tag({ children, onRemove }) {
   );
 }
 
-export default function SubjectModal({ open, onOpenChange, onSave, subject }) {
+export default function CreateModal({ open, onOpenChange, onSave }) {
   const [name, setName] = useState('');
   const [levelInput, setLevelInput] = useState('');
   const [levels, setLevels] = useState([]);
@@ -38,22 +38,14 @@ export default function SubjectModal({ open, onOpenChange, onSave, subject }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isEditing = !!subject;
-
   useEffect(() => {
-    if (isEditing) {
-      setName(subject.name || '');
-      setLevels(subject.levels ? subject.levels.map((l) => l.level) : []);
-      setMaterials(
-        subject.materials ? subject.materials.map((m) => m.material) : []
-      );
-    } else {
+    if (open) {
       setName('');
       setLevels([]);
       setMaterials([]);
+      setError('');
     }
-    setError('');
-  }, [subject, isEditing]);
+  }, [open]);
 
   const addLevel = () => {
     if (levelInput.trim() && !levels.includes(levelInput.trim())) {
@@ -96,22 +88,11 @@ export default function SubjectModal({ open, onOpenChange, onSave, subject }) {
         materials,
       };
 
-      let savedSubject;
-      if (isEditing) {
-        savedSubject = await subjectAPI.edit_subject({
-          ...subjectData,
-          id: subject.id,
-        });
-      } else {
-        savedSubject = await subjectAPI.add_subject(subjectData);
-      }
+      const savedSubject = await subjectAPI.add_subject(subjectData);
 
       if (onSave) {
         onSave(savedSubject);
       }
-      setName('');
-      setLevels([]);
-      setMaterials([]);
       onOpenChange(false);
     } catch (err) {
       setError(err.message || 'Failed to save. Please try again.');
@@ -124,9 +105,7 @@ export default function SubjectModal({ open, onOpenChange, onSave, subject }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Vak Bewerken' : 'Vak Toevoegen'}
-          </DialogTitle>
+          <DialogTitle>Vak Toevoegen</DialogTitle>
         </DialogHeader>
         <form
           className="flex flex-col gap-2 mt-2"
@@ -215,11 +194,7 @@ export default function SubjectModal({ open, onOpenChange, onSave, subject }) {
               </Button>
             </DialogClose>
             <Button type="submit" variant="default" disabled={loading}>
-              {loading
-                ? 'Opslaan...'
-                : isEditing
-                ? 'Wijzigingen opslaan'
-                : 'Vak opslaan'}
+              {loading ? 'Opslaan...' : 'Vak opslaan'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,26 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
-
-const ActionCell = ({ row, onEdit, onDelete }) => (
-  <div className="flex items-start space-x-2">
-    <Button
-      variant="ghost"
-      className="h-8 w-8 p-0"
-      onClick={() => onEdit(row.original)}
-    >
-      <span className="sr-only">Edit</span>
-      <Pencil className="h-4 w-4" />
-    </Button>
-    <Button
-      variant="ghost"
-      className="h-8 w-8 p-0"
-      onClick={() => onDelete(row.original)}
-    >
-      <span className="sr-only">Delete</span>
-      <Trash2 className="h-4 w-4" />
-    </Button>
-  </div>
-);
+import { ArrowUpDown } from 'lucide-react';
+import ActionCell from './ActionCell';
+import TruncatedListCell from './TruncatedListCell';
 
 export const getColumns = (onEdit, onDelete) => [
   {
@@ -36,9 +17,11 @@ export const getColumns = (onEdit, onDelete) => [
       </Button>
     ),
     cell: ({ row }) => (
-      <div className="font-medium">{row.getValue('name')}</div>
+      <div className="font-medium truncate" title={row.getValue('name')}>
+        {row.getValue('name')}
+      </div>
     ),
-    size: 400,
+    size: 250,
     displayName: 'Subject',
   },
   {
@@ -46,9 +29,7 @@ export const getColumns = (onEdit, onDelete) => [
     header: 'Levels',
     cell: ({ row }) => {
       const levels = row.original.levels;
-      return Array.isArray(levels) && levels.length > 0
-        ? levels.map((l) => l.level).join(', ')
-        : 'N/A';
+      return <TruncatedListCell items={levels} />;
     },
     size: 250,
     displayName: 'Levels',
@@ -58,9 +39,7 @@ export const getColumns = (onEdit, onDelete) => [
     header: 'Materials',
     cell: ({ row }) => {
       const materials = row.original.materials;
-      return Array.isArray(materials) && materials.length > 0
-        ? materials.map((m) => m.material).join(', ')
-        : 'N/A';
+      return <TruncatedListCell items={materials} />;
     },
     size: 250,
     displayName: 'Materials',

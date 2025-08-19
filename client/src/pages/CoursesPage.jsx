@@ -1,7 +1,8 @@
 import courseApi from '@/apis/courses/courseAPI';
 import moduleApi from '@/apis/modules/moduleAPI';
 import { CourseCard } from '@/components/courses/CourseCard'; // You will create this
-import CreateEditCourseModal from '@/components/courses/CreateEditCourseModal'; // You will create this
+import CreateCourseModal from '@/components/courses/CreateCourseModal'; // You will create this
+import EditCourseModal from '@/components/courses/EditCourseModal'; // You will create this
 import ViewCourseDialog from '@/components/courses/ViewCourseDialog';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import {
@@ -29,6 +30,7 @@ const CoursesPage = () => {
 
   // State for modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [courseToEdit, setCourseToEdit] = useState(null);
   const [courseToDelete, setCourseToDelete] = useState(null);
   const [courseToView, setCourseToView] = useState(null);
@@ -82,19 +84,17 @@ const CoursesPage = () => {
   // --- API Handlers ---
 
   const handleSaveCourse = async (courseData) => {
-    // This function handles both create and update
     try {
-      if (courseToEdit) {
+      if (isEditModalOpen) {
         await courseApi.edit_course({ ...courseData, id: courseToEdit.id });
       } else {
         await courseApi.add_course(courseData);
       }
       await refreshCourses();
-      // Close the relevant modal
       setIsCreateModalOpen(false);
+      setIsEditModalOpen(false);
       setCourseToEdit(null);
     } catch (e) {
-      // Pass the error to the modal to display it there
       throw new Error(e.message || 'Kon het lespakket niet opslaan.');
     }
   };
@@ -112,7 +112,10 @@ const CoursesPage = () => {
 
   // --- UI Click Handlers ---
 
-  const handleEditClick = (course) => setCourseToEdit(course);
+  const handleEditClick = (course) => {
+    setCourseToEdit(course);
+    setIsEditModalOpen(true);
+  };
   const handleDeleteClick = (course) => setCourseToDelete(course);
   const handleViewClick = (course) => setCourseToView(course);
 
@@ -184,19 +187,25 @@ const CoursesPage = () => {
 
       {/* --- Modals & Dialogs --- */}
 
-      {/* Create or Edit Dialog */}
-      {(isCreateModalOpen || courseToEdit) && (
-        <CreateEditCourseModal
-          open={isCreateModalOpen || !!courseToEdit}
-          onOpenChange={() => {
-            setIsCreateModalOpen(false);
+      <CreateCourseModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSave={handleSaveCourse}
+        availableModules={modules}
+      />
+
+      <EditCourseModal
+        open={isEditModalOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
             setCourseToEdit(null);
-          }}
-          onSave={handleSaveCourse}
-          availableModules={modules}
-          course={courseToEdit} // Pass the course object if in edit mode
-        />
-      )}
+          }
+          setIsEditModalOpen(isOpen);
+        }}
+        onSave={handleSaveCourse}
+        availableModules={modules}
+        course={courseToEdit}
+      />
 
       {/* View Dialog */}
       <ViewCourseDialog

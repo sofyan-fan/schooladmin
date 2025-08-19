@@ -2,7 +2,8 @@ import moduleApi from '@/apis/modules/moduleAPI';
 import subjectAPI from '@/apis/subjects/subjectAPI';
 import ViewCourseModuleDialog from '@/components/coursemodules/ViewCourseModuleDialog';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import CreateEditModuleModal from '@/components/modules/CreateEditModuleModal';
+import CreateModal from '@/components/modules/CreateModal';
+import EditModal from '@/components/modules/EditModal';
 import { ModuleCard } from '@/components/modules/ModuleCard'; // Note the organized path
 import {
   AlertDialog,
@@ -31,6 +32,25 @@ const ModulesPage = () => {
   const [moduleToEdit, setModuleToEdit] = useState(null);
   const [moduleToDelete, setModuleToDelete] = useState(null);
 
+  // --- Data Enrichment ---
+  const enrichModulesWithSubjectNames = (modules, subjects) => {
+    if (!Array.isArray(modules) || !Array.isArray(subjects)) return [];
+
+    const subjectMap = subjects.reduce((acc, subject) => {
+      acc[subject.id] = subject.name;
+      return acc;
+    }, {});
+
+    return modules.map((module) => ({
+      ...module,
+      subjects: (module.subjects || []).map((s) => ({
+        ...s,
+        subjectId: s.subjectId, // Ensure subjectId is consistently used
+        subjectName: subjectMap[s.subjectId] || 'Onbekend vak',
+      })),
+    }));
+  };
+
   // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
@@ -41,7 +61,7 @@ const ModulesPage = () => {
           moduleApi.get_modules(),
           subjectAPI.get_subjects(),
         ]);
-        setModules(modulesData);
+        setModules(enrichModulesWithSubjectNames(modulesData, subjectsData));
         setSubjects(subjectsData);
       } catch (e) {
         setApiError(e.message || 'Kon de gegevens niet laden.');
@@ -55,7 +75,7 @@ const ModulesPage = () => {
   const refreshModules = async () => {
     try {
       const data = await moduleApi.get_modules();
-      setModules(data);
+      setModules(enrichModulesWithSubjectNames(data, subjects));
     } catch (e) {
       setApiError(e.message || 'Kon de modules niet vernieuwen.');
     }
@@ -63,18 +83,23 @@ const ModulesPage = () => {
 
   // --- API Handlers ---
 
-  const handleSaveModule = async (moduleData) => {
+  const handleCreateModule = async (moduleData) => {
     try {
-      if (moduleToEdit) {
-        await moduleApi.edit_module({ ...moduleData, id: moduleToEdit.id });
-      } else {
-        await moduleApi.add_module(moduleData);
-      }
+      await moduleApi.add_module(moduleData);
       await refreshModules();
       setIsCreateModalOpen(false);
+    } catch (e) {
+      throw new Error(e.message || 'Kon de module niet aanmaken.');
+    }
+  };
+
+  const handleEditModule = async (moduleData) => {
+    try {
+      await moduleApi.edit_module({ ...moduleData, id: moduleToEdit.id });
+      await refreshModules();
       setModuleToEdit(null);
     } catch (e) {
-      throw new Error(e.message || 'Kon het module niet opslaan.');
+      throw new Error(e.message || 'Kon de module niet bijwerken.');
     }
   };
 
@@ -143,7 +168,7 @@ const ModulesPage = () => {
               <h1 className="text-3xl font-[530] tracking-tight">Modules</h1>
             </div>
             <p className="text-muted-foreground">
-              Beheer en organiseer hier al uw modules.
+              Beheer en organiseer hier alle modules.
             </p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -157,19 +182,20 @@ const ModulesPage = () => {
 
       {/* --- Modals & Dialogs --- */}
 
-      {/* Create or Edit Dialog */}
-      {(isCreateModalOpen || moduleToEdit) && (
-        <CreateEditModuleModal
-          open={isCreateModalOpen || !!moduleToEdit}
-          onOpenChange={() => {
-            setIsCreateModalOpen(false);
-            setModuleToEdit(null);
-          }}
-          onSave={handleSaveModule}
-          subjects={subjects}
-          module={moduleToEdit}
-        />
-      )}
+      <CreateModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSave={handleCreateModule}
+        subjects={subjects}
+      />
+
+      <EditModal
+        open={!!moduleToEdit}
+        onOpenChange={() => setModuleToEdit(null)}
+        onSave={handleEditModule}
+        subjects={subjects}
+        module={moduleToEdit}
+      />
 
       {/* View Dialog */}
       <ViewCourseModuleDialog

@@ -19,7 +19,7 @@ model user {
 }
 
 model student {
-  id                Int       @id @default(autoincrement())
+  id                Int      @id @default(autoincrement())
   first_name        String
   last_name         String
   birth_date        DateTime
@@ -33,7 +33,7 @@ model student {
   lesson_package    String
   payment_method    String
   sosnumber         String
-  enrollment_status Boolean   @default(true)
+  enrollment_status Boolean  @default(true)
 
   created_at DateTime  @default(now())
   updated_at DateTime? @updatedAt
@@ -49,23 +49,23 @@ model student {
 }
 
 model teacher {
-  id            Int      @id @default(autoincrement())
-  first_name    String
-  last_name     String
-  email         String
-  phone         String
-  address       String
-  is_active     Boolean  @default(true)
-  compensation  Float?
-  sosnumber     String?
-  cv_url        String?
-  vog_url       String?
-  id_document   String?
-  active        Boolean  @default(true)
+  id           Int     @id @default(autoincrement())
+  first_name   String
+  last_name    String
+  email        String
+  phone        String
+  address      String
+  is_active    Boolean @default(true)
+  compensation Float?
+  sosnumber    String?
+  cv_url       String?
+  vog_url      String?
+  id_document  String?
+  active       Boolean @default(true)
 
-  absences      absence[]
-  roster        roster[]
-  class_layout  class_layout[]
+  absences     absence[]
+  roster       roster[]
+  class_layout class_layout[]
 
   time_registration time_registration[]
 }
@@ -154,48 +154,48 @@ model result {
 }
 
 model classroom {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
   capacity    Int
   description String?
 
-  schedules   schedule[]
-  rosters     roster[]
+  schedules schedule[]
+  rosters   roster[]
 }
 
 model schedule {
   id           Int          @id @default(autoincrement())
   class_layout class_layout @relation(fields: [class_id], references: [id])
   class_id     Int
-  
-  day          String
-  start_time   String
-  end_time     String
 
-  classroom    classroom   @relation(fields: [classroom_id], references: [id])
+  day        String
+  start_time String
+  end_time   String
+
+  classroom    classroom @relation(fields: [classroom_id], references: [id])
   classroom_id Int
 }
 
 model roster {
-  id            Int          @id @default(autoincrement())
-  class_layout  class_layout @relation(fields: [class_id], references: [id])
-  class_id      Int
+  id           Int          @id @default(autoincrement())
+  class_layout class_layout @relation(fields: [class_id], references: [id])
+  class_id     Int
 
-  subject       subject      @relation(fields: [subject_id], references: [id])
-  subject_id    Int
+  subject    subject @relation(fields: [subject_id], references: [id])
+  subject_id Int
 
-  teacher       teacher      @relation(fields: [teacher_id], references: [id])
-  teacher_id    Int
+  teacher    teacher @relation(fields: [teacher_id], references: [id])
+  teacher_id Int
 
-  day_of_week   String
-  start_time    String
-  end_time      String
+  day_of_week String
+  start_time  String
+  end_time    String
 
-  classroom     classroom    @relation(fields: [classroom_id], references: [id])
-  classroom_id  Int
+  classroom    classroom @relation(fields: [classroom_id], references: [id])
+  classroom_id Int
 
-  created_at    DateTime     @default(now())
-  absence       absence[]
+  created_at DateTime  @default(now())
+  absence    absence[]
 }
 
 model tuition_payment {
@@ -289,33 +289,33 @@ model events {
 }
 
 model time_registration {
-  id           Int       @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  teacher      teacher   @relation(fields: [teacher_id], references: [id])
-  teacher_id   Int
+  teacher    teacher @relation(fields: [teacher_id], references: [id])
+  teacher_id Int
 
   // Identify the week this record belongs to
-  week_start   DateTime  // e.g., Monday of the week
-  week_end     DateTime  // Sunday of the week
+  week_start DateTime // e.g., Monday of the week
+  week_end   DateTime // Sunday of the week
 
   // Hours worked for each day
-  monday       Float     @default(0)
-  tuesday      Float     @default(0)
-  wednesday    Float     @default(0)
-  thursday     Float     @default(0)
-  friday       Float     @default(0)
-  saturday     Float     @default(0)
-  sunday       Float     @default(0)
+  monday    Float @default(0)
+  tuesday   Float @default(0)
+  wednesday Float @default(0)
+  thursday  Float @default(0)
+  friday    Float @default(0)
+  saturday  Float @default(0)
+  sunday    Float @default(0)
 
-  total_hours  Float     @default(0)
+  total_hours Float @default(0)
 
   // Approval by admin
-  approved     Boolean   @default(false)
-  approved_by  Int?      // admin id
-  approved_at  DateTime?
+  approved    Boolean   @default(false)
+  approved_by Int? // admin id
+  approved_at DateTime?
 
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@index([teacher_id, week_start, week_end])
 }

@@ -1,6 +1,6 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/courses/modules';
+const BASE_URL = '/modules';
 
 export const get_modules = async () => {
   const response = await RequestHandler.get(BASE_URL);

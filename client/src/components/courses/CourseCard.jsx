@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Edit, Eye, MoreVertical, Trash2 } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
+
 export const CourseCard = ({ course, onEdit, onDelete, onView }) => {
   if (!course) {
     return null;
@@ -68,12 +70,13 @@ export const CourseCard = ({ course, onEdit, onDelete, onView }) => {
         {modules.length > 0 ? (
           <div className="space-y-4 text-sm">
             <h4 className="font-semibold">Modules:</h4>
-            <ul className="space-y-2 list-disc list-inside">
+            <ul className="space-y-2 flex list-none gap-1
+            2">
               {modules.map((module) => (
                 <li key={module.id} className="text-muted-foreground ">
-                  <span className="font-semibold text-foreground">
+                  <Badge variant="outline" className="text-sm">
                     {module.name}
-                  </span>
+                  </Badge>
                 </li>
               ))}
             </ul>

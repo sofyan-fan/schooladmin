@@ -13,12 +13,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useEffect, useState } from 'react';
 
-export default function CreateEditCourseModal({
+export default function CreateCourseModal({
   open,
   onOpenChange,
   onSave,
   availableModules = [],
-  course,
 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -27,22 +26,14 @@ export default function CreateEditCourseModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isEditMode = !!course;
-
   useEffect(() => {
-    if (isEditMode && course) {
-      setName(course.name || '');
-      setDescription(course.description || '');
-      setPrice(course.price || '');
-      setSelectedModuleIds(new Set(course.moduleIds || []));
-    } else {
-      // Reset form for create mode or when course is not available
+    if (open) {
       setName('');
       setDescription('');
       setPrice('');
       setSelectedModuleIds(new Set());
     }
-  }, [course, isEditMode, open]);
+  }, [open]);
 
   const handleModuleToggle = (moduleId) => {
     setSelectedModuleIds((prev) => {
@@ -70,13 +61,12 @@ export default function CreateEditCourseModal({
     setLoading(true);
     try {
       await onSave({
-        id: isEditMode ? course.id : undefined,
         name: name.trim(),
         description: description.trim(),
         price: parseFloat(price),
         moduleIds: Array.from(selectedModuleIds),
       });
-      onOpenChange(false); // Close modal on success
+      onOpenChange(false);
     } catch (err) {
       setError(err.message || 'Kon het lespakket niet opslaan.');
     } finally {
@@ -88,17 +78,13 @@ export default function CreateEditCourseModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? 'Lespakket Bewerken' : 'Nieuw Lespakket Toevoegen'}
-          </DialogTitle>
+          <DialogTitle>Nieuw Lespakket Toevoegen</DialogTitle>
           <DialogDescription>
-            {isEditMode
-              ? 'Bewerk de gegevens van het lespakket.'
-              : 'Creëer een nieuw lespakket door de details in te vullen en de bijbehorende modules te selecteren.'}
+            Creëer een nieuw lespakket door de details in te vullen en de
+            bijbehorende modules te selecteren.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-6 pt-2">
-          {/* Course Details */}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="courseName">Naam lespakket</Label>
@@ -135,7 +121,6 @@ export default function CreateEditCourseModal({
             </div>
           </div>
 
-          {/* Module Selector */}
           <div className="space-y-2">
             <Label>Selecteer Modules</Label>
             <div className="max-h-60 overflow-y-auto p-3 border rounded-md bg-muted/50 space-y-3">
@@ -178,11 +163,7 @@ export default function CreateEditCourseModal({
               Annuleren
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading
-                ? 'Opslaan...'
-                : isEditMode
-                ? 'Wijzigingen Opslaan'
-                : 'Lespakket Opslaan'}
+              {loading ? 'Opslaan...' : 'Lespakket Opslaan'}
             </Button>
           </DialogFooter>
         </form>
@@ -190,3 +171,5 @@ export default function CreateEditCourseModal({
     </Dialog>
   );
 }
+
+

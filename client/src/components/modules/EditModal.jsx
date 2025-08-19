@@ -20,12 +20,12 @@ import {
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export default function CreateEditModuleModal({
+export default function EditModal({
   open,
   onOpenChange,
   onSave,
-  subjects, // This is the list of all available subjects
-  module, // The module object, if we are in edit mode
+  subjects,
+  module,
 }) {
   const [name, setName] = useState('');
   const [moduleItems, setModuleItems] = useState([]);
@@ -35,27 +35,19 @@ export default function CreateEditModuleModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isEditMode = !!module;
-
   useEffect(() => {
-    // Pre-fill form if in edit mode
-    if (isEditMode) {
+    if (open && module) {
       setName(module.name);
       setModuleItems(
-        module.subjects.map((s) => ({
-          subjectId: s.subject_id,
-          subjectName:
-            subjects.find((sub) => sub.id === s.subject_id)?.name || '',
+        (module.subjects || []).map((s) => ({
+          subjectId: s.subjectId,
+          subjectName: s.subjectName,
           level: s.level,
           material: s.material,
         }))
       );
-    } else {
-      // Reset form if opening for create mode
-      setName('');
-      setModuleItems([]);
     }
-  }, [module, isEditMode, open, subjects]); // Depend on 'open' to reset when modal is re-opened
+  }, [module, open]);
 
   const selectedSubject = Array.isArray(subjects)
     ? subjects.find((s) => s.id === Number(selectedSubjectId))
@@ -98,18 +90,21 @@ export default function CreateEditModuleModal({
 
     setLoading(true);
     try {
-      // The onSave prop now comes from ModulesPage.jsx
       await onSave({
         name: name.trim(),
-        subjects: moduleItems.map(({ subjectId, level, material }) => ({
-          subjectId: subjectId,
-          level,
-          material,
-        })),
+        subjects: moduleItems.map(
+          ({ subjectId, subjectName, level, material }) => ({
+            subjectId,
+            subjectName,
+            level,
+            material,
+          })
+        ),
       });
-      // The parent component will handle closing the modal on success
     } catch (err) {
-      setError(err.message || 'Kon de module niet opslaan. Probeer opnieuw.');
+      setError(
+        err.message || 'Kon de wijzigingen niet opslaan. Probeer opnieuw.'
+      );
     } finally {
       setLoading(false);
     }
@@ -119,13 +114,9 @@ export default function CreateEditModuleModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? 'Module Bewerken' : 'Nieuwe Module Toevoegen'}
-          </DialogTitle>
+          <DialogTitle>Module Bewerken</DialogTitle>
           <DialogDescription>
-            {isEditMode
-              ? 'Bewerk de gegevens van deze curriculum module.'
-              : 'Creëer een nieuwe module door een naam op te geven en de bijbehorende vakken te selecteren.'}
+            Bewerk de gegevens van deze curriculum module.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-6 pt-2">
@@ -142,7 +133,6 @@ export default function CreateEditModuleModal({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
-            {/* Subject, Level, and Material selectors remain the same */}
             <div className="space-y-2">
               <Label htmlFor="subject">Vak</Label>
               <Select
@@ -266,11 +256,7 @@ export default function CreateEditModuleModal({
               Annuleren
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading
-                ? 'Opslaan...'
-                : isEditMode
-                ? 'Wijzigingen Opslaan'
-                : 'Module Opslaan'}
+              {loading ? 'Opslaan...' : 'Wijzigingen Opslaan'}
             </Button>
           </DialogFooter>
         </form>

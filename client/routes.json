@@ -14,7 +14,7 @@
   "/general/teachers": "/teachers",
   "/general/teacher/:id": "/teachers/:id",
   "/courses/courses": "/courses",
-  "/courses/modules": "/modules",
+  "/modules": "/modules",
   "/subjects/subjects": "/subjects",
   "/subjects/subjects/:id": "/subjects/:id"
 }

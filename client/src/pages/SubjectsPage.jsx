@@ -3,7 +3,8 @@ import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
-import SubjectModal from '@/components/subjects/SubjectModal';
+import CreateModal from '@/components/subjects/CreateModal';
+import EditModal from '@/components/subjects/EditModal';
 import { getColumns } from '@/components/subjects/columns';
 import {
   AlertDialog,
@@ -15,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { TableCell, TableRow } from '@/components/ui/table';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -24,7 +26,6 @@ import {
 } from '@tanstack/react-table';
 import { BookOpen, LibraryBig } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const NoData = (
   <TableRow>
@@ -42,7 +43,8 @@ const NoData = (
 
 const SubjectsPage = () => {
   const [subjects, setSubjects] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState(null);
   const [deletingSubject, setDeletingSubject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ const SubjectsPage = () => {
 
   const handleEdit = (subject) => {
     setEditingSubject(subject);
-    setIsModalOpen(true);
+    setIsEditModalOpen(true);
   };
 
   const handleDelete = (subject) => {
@@ -105,7 +107,8 @@ const SubjectsPage = () => {
   };
 
   const handleSaveSubject = () => {
-    setIsModalOpen(false);
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
     setEditingSubject(null);
     fetchSubjects();
   };
@@ -133,7 +136,7 @@ const SubjectsPage = () => {
         icon={<LibraryBig className="size-9" />}
         description="Beheer hier de vakken, niveaus en lesmaterialen."
         buttonText="Vak Toevoegen"
-        onAdd={() => setIsModalOpen(true)}
+        onAdd={() => setIsCreateModalOpen(true)}
       />
       <Toolbar table={table} filterColumn="name" />
 
@@ -150,13 +153,19 @@ const SubjectsPage = () => {
         NoDataComponent={NoData}
       />
 
-      <SubjectModal
-        open={isModalOpen}
+      <CreateModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSave={handleSaveSubject}
+      />
+
+      <EditModal
+        open={isEditModalOpen}
         onOpenChange={(isOpen) => {
           if (!isOpen) {
             setEditingSubject(null);
           }
-          setIsModalOpen(isOpen);
+          setIsEditModalOpen(isOpen);
         }}
         onSave={handleSaveSubject}
         subject={editingSubject}
