@@ -1,18 +1,21 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import { useAuth } from './hooks/useAuth';
+import AssessmentsPage from './pages/AssessmentsPage';
 import ClassesPage from './pages/ClassesPage';
 import ClassLayoutsPage from './pages/ClassLayoutsPage';
-import ModulesPage from './pages/ModulesPage';
+import CoursesPage from './pages/CoursesPage';
 import DashboardPage from './pages/DashboardPage';
 import FinancePage from './pages/FinancePage';
 import LoginPage from './pages/LoginPage';
+import ModulesPage from './pages/ModulesPage';
 import RegisterPage from './pages/RegisterPage';
+import RosterPage from './pages/RosterPage';
 import SettingsPage from './pages/SettingsPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
-import CoursesPage from './pages/CoursesPage';
+
 const App = () => {
   const { isAuthenticated } = useAuth();
 
@@ -31,6 +34,8 @@ const App = () => {
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/klassen" element={<ClassesPage />} />
+      <Route path="/rooster" element={<RosterPage />} />
+      <Route path="/toetsen-en-examens" element={<AssessmentsPage />} />
       <Route path="/leerlingen" element={<StudentsPage />} />
       <Route path="/docenten" element={<TeachersPage />} />
       <Route path="/vakken" element={<SubjectsPage />} />

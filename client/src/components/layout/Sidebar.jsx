@@ -1,34 +1,50 @@
-import { useAuth } from '@/hooks/useAuth';
 import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
+import {
+  BookCheck,
+  CalendarDays,
   CircleDollarSign,
+  Component,
   GraduationCap,
   Home,
   Layers,
   LayoutDashboard,
   LibraryBig,
   LogOut,
+  PanelLeft,
   Presentation,
   Settings,
-  Component,
   Users,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import ClassIcon from '../../assets/class.svg?react';
 import { Button } from '../ui/button';
 
-const Sidebar = ({ isOpen }) => {
+const SidebarComponent = () => {
   const { logout } = useAuth();
   const { pathname } = useLocation();
+  const { toggleSidebar } = useSidebar();
 
-  // Store components, not elements
   const menuItems = [
     { name: 'Dashboard', path: 'dashboard', Icon: Home },
     { name: 'Leerlingen', path: 'leerlingen', Icon: GraduationCap },
     { name: 'Docenten', path: 'docenten', Icon: Presentation },
     { name: 'Klassen', path: 'klassen', Icon: Users },
+    { name: 'Roosters', path: 'rooster', Icon: CalendarDays },
     { name: 'Vakken', path: 'vakken', Icon: LibraryBig },
     { name: 'Modules', path: 'modules', Icon: Component },
     { name: 'Lespakketten', path: 'lespakketten', Icon: Layers },
+    { name: 'Toetsen & Examens', path: 'toetsen-en-examens', Icon: BookCheck },
     {
       name: 'Onderwijsindeling',
       path: 'onderwijsindeling',
@@ -44,43 +60,67 @@ const Sidebar = ({ isOpen }) => {
     menuItems[0];
 
   return (
-    <aside
-      className={`bg-background-elevated w-64 p-4 h-screen border-r border-border flex flex-col justify-between md:flex ${
-        isOpen ? 'flex' : 'hidden'
-      }`}
-    >
-      <div>
+    <Sidebar collapsible="icon" variant="sidebar">
+      <SidebarHeader>
         <div className="flex w-full items-center gap-2 text-2xl font-bold mb-8 text-text-default">
           <GraduationCap className="size-10" />
-          Maktab
+          <span
+            className={cn(
+              'transition-opacity duration-150 ease-in-out',
+              'group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden'
+            )}
+          >
+            Maktab
+          </span>
         </div>
-        <nav>
-          <ul>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
             {menuItems.map((item) => (
-              <li key={item.name} className="mb-2">
-                <Link
-                  to={`/${item.path.toLowerCase()}`}
-                  className={`block p-2 text-text-muted hover:bg-background-highlight rounded-md ${
-                    activeItem.name === item.name
-                      ? 'bg-primary text-white font-bold'
-                      : ''
-                  }`}
+              <SidebarMenuItem key={item.name}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={activeItem.name === item.name}
+                  tooltip={item.name}
                 >
-                  <div className="flex items-center">
-                    <item.Icon className="size-4 mr-2" />
-                    {item.name}
-                  </div>
-                </Link>
-              </li>
+                  <Link to={`/${item.path.toLowerCase()}`}>
+                    <item.Icon className="size-10 mr-2" />
+                    <span
+                      className={cn(
+                        'transition-opacity text-lg duration-150 ease-in-out',
+                        'group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden'
+                      )}
+                    >
+                      {item.name}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             ))}
-          </ul>
-        </nav>
-      </div>
-      <Button onClick={logout} className="w-full cursor-pointer">
-        Logout <LogOut />
-      </Button>
-    </aside>
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="hidden md:inline-flex"
+        >
+          <PanelLeft />
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
+        <Button
+          onClick={logout}
+          className="w-full cursor-pointer"
+          tooltip="Logout"
+        >
+          Logout <LogOut />
+        </Button>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
-export default Sidebar;
+export default SidebarComponent;

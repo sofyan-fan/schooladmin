@@ -1,6 +1,6 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/subjects/subjects';
+const BASE_URL = '/subjects';
 
 export const get_subjects = async () => {
   const response = await RequestHandler.get(BASE_URL);

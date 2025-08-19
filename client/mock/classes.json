@@ -2,9 +2,9 @@
   {
     "id": 1,
     "name": "Groep A - Weekend",
-    "courseId": 1,
     "teacherId": 1,
-    "studentIds": [1, 2],
-    "schedule": "Zaterdag 10:00 - 13:00"
+    "studentIds": [1, 2, 3, 4, 5],
+    "courseIds": [1],
+    "rosterId": 1
   }
 ]

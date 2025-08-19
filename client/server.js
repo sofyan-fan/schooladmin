@@ -8,7 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const mockDir = path.join(__dirname, 'mock');
-const db = {
+const dbPath = path.join(mockDir, 'db.json'); // Corrected path to db.json
+
+const dbFiles = {
   users: JSON.parse(fs.readFileSync(path.join(mockDir, 'users.json'))),
   teachers: JSON.parse(fs.readFileSync(path.join(mockDir, 'teachers.json'))),
   students: JSON.parse(fs.readFileSync(path.join(mockDir, 'students.json'))),
@@ -17,10 +19,18 @@ const db = {
   modules: JSON.parse(fs.readFileSync(path.join(mockDir, 'modules.json'))),
   courses: JSON.parse(fs.readFileSync(path.join(mockDir, 'courses.json'))),
   classes: JSON.parse(fs.readFileSync(path.join(mockDir, 'classes.json'))),
+  tests: JSON.parse(fs.readFileSync(path.join(mockDir, 'tests.json'))),
+  exams: JSON.parse(fs.readFileSync(path.join(mockDir, 'exams.json'))),
+  rosters: JSON.parse(fs.readFileSync(path.join(mockDir, 'rosters.json'))),
 };
 
+// Create db.json if it doesn't exist
+if (!fs.existsSync(dbPath)) {
+  fs.writeFileSync(dbPath, JSON.stringify(dbFiles));
+}
+
 const server = jsonServer.create();
-const router = jsonServer.router(db);
+const router = jsonServer.router(dbPath); // Use db.json for the router
 const middlewares = jsonServer.defaults();
 
 // Allow frontend at 5173 and credentials like the real backend

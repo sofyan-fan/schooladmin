@@ -1,9 +1,9 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/general/student';
+const BASE_URL = '/students';
 
 export const get_students = async () => {
-  const response = await RequestHandler.get('/general/students');
+  const response = await RequestHandler.get(BASE_URL);
   return response.data;
 };
 

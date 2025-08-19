@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "classId": 1,
+    "schedules": [
+      {
+        "day": "Saturday",
+        "startTime": "10:00",
+        "endTime": "11:30",
+        "location": "Room 101"
+      },
+      {
+        "day": "Saturday",
+        "startTime": "11:30",
+        "endTime": "13:00",
+        "location": "Room 102"
+      }
+    ]
+  }
+]
