@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   get_all_courses,
   create_course,
+  update_course,
   get_all_modules,
   create_module
 } = require('../controllers/general/course');
@@ -11,6 +12,7 @@ const {
 // Course routes
 router.get('/courses', get_all_courses);
 router.post('/courses', create_course);
+router.put('/courses', update_course);
 
 // Course Module routes
 router.get('/modules', get_all_modules);
