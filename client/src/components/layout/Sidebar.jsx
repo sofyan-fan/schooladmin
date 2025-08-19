@@ -85,10 +85,10 @@ const SidebarComponent = () => {
                   tooltip={item.name}
                 >
                   <Link to={`/${item.path.toLowerCase()}`}>
-                    <item.Icon className="size-10 mr-2" />
+                    <item.Icon className="size-10 mr-1" />
                     <span
                       className={cn(
-                        'transition-opacity text-lg duration-150 ease-in-out',
+                        'transition-opacity text-base duration-150 ease-in-out',
                         'group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden'
                       )}
                     >
@@ -106,7 +106,7 @@ const SidebarComponent = () => {
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="hidden md:inline-flex"
+          className="inline-flex md:hidden"
         >
           <PanelLeft />
           <span className="sr-only">Toggle sidebar</span>
@@ -116,7 +116,8 @@ const SidebarComponent = () => {
           className="w-full cursor-pointer"
           tooltip="Logout"
         >
-          Logout <LogOut />
+          Logout
+           <LogOut />
         </Button>
       </SidebarFooter>
     </Sidebar>
