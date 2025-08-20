@@ -117,7 +117,7 @@ const SidebarComponent = () => {
           tooltip="Logout"
         >
           Logout
-           <LogOut />
+          <LogOut />
         </Button>
       </SidebarFooter>
     </Sidebar>

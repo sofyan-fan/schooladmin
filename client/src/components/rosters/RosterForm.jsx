@@ -1,3 +1,4 @@
+import classApi from '@/apis/classes/classAPI';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -16,13 +17,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { useFieldArray } from 'react-hook-form';
 import { PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 const formSchema = z.object({
-  classId: z.string().min(1, 'Class is required'),
+  classId: z.coerce.number().int().positive('Class is required'),
   schedules: z.array(
     z.object({
       day: z.string().min(1, 'Day is required'),
@@ -38,22 +39,39 @@ export default function RosterForm({
   onSubmit,
   isEditing = false,
 }) {
+  const [classes, setClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues:
-      defaultValues ||
-      {
-        classId: '',
-        schedules: [
-          { day: '', startTime: '', endTime: '', location: '' },
-        ],
-      },
+    defaultValues: defaultValues || {
+      classId: '',
+      schedules: [{ day: '', startTime: '', endTime: '', location: '' }],
+    },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'schedules',
   });
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoadingClasses(true);
+      try {
+        const data = await classApi.get_classes();
+        if (mounted) setClasses(data || []);
+      } catch (e) {
+        console.error('Failed to load classes', e);
+      } finally {
+        if (mounted) setLoadingClasses(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <Form {...form}>
@@ -64,16 +82,28 @@ export default function RosterForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Class</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={(val) => field.onChange(Number(val))}
+                value={
+                  field.value !== undefined &&
+                  field.value !== null &&
+                  field.value !== ''
+                    ? String(field.value)
+                    : undefined
+                }
+                disabled={loadingClasses}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a class" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {/* TODO: Replace with dynamic class data */}
-                  <SelectItem value="1">Class 1</SelectItem>
-                  <SelectItem value="2">Class 2</SelectItem>
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />

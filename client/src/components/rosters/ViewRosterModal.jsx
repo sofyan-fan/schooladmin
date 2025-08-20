@@ -1,10 +1,10 @@
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
 export default function ViewRosterModal({ isOpen, onClose, roster }) {
@@ -14,7 +14,7 @@ export default function ViewRosterModal({ isOpen, onClose, roster }) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>View Roster: {roster.class}</DialogTitle>
+          <DialogTitle>View Roster: {roster.className}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Schedules</h3>

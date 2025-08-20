@@ -4,7 +4,7 @@ import { ArrowUpDown, Eye, Pencil, Trash2 } from 'lucide-react';
 
 export const createColumns = ({ onView, onEdit, onDelete }) => [
   {
-    accessorKey: 'class',
+    accessorKey: 'className',
     header: ({ column }) => (
       <Button
         className="hover:bg-transparent hover:text-primary text-lg"

@@ -28,13 +28,12 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
       });
-      const { user: userData, session } = response?.data || {};
+      const { user: userData, accessToken } = response?.data || {};
 
-      if (response?.status === 200 && userData && session) {
-        const tokenValue = 'session_active';
-        setToken(tokenValue);
+      if (response?.status === 200 && userData && accessToken) {
+        setToken(accessToken);
         setUser(userData);
-        localStorage.setItem('token', tokenValue);
+        localStorage.setItem('token', accessToken);
         localStorage.setItem('user', JSON.stringify(userData));
         navigate('/dashboard');
         return true;

@@ -1,8 +1,8 @@
 import courseApi from '@/apis/courses/courseAPI';
 import moduleApi from '@/apis/modules/moduleAPI';
-import { CourseCard } from '@/components/courses/CourseCard'; // You will create this
-import CreateCourseModal from '@/components/courses/CreateCourseModal'; // You will create this
-import EditCourseModal from '@/components/courses/EditCourseModal'; // You will create this
+import { CourseCard } from '@/components/courses/CourseCard'; 
+import CreateCourseModal from '@/components/courses/CreateCourseModal'; 
+import EditCourseModal from '@/components/courses/EditCourseModal'; 
 import ViewCourseDialog from '@/components/courses/ViewCourseDialog';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import {
@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 const CoursesPage = () => {
   // State for data
   const [courses, setCourses] = useState([]);
-  const [modules, setModules] = useState([]); // Needed for the create/edit modal
+  const [modules, setModules] = useState([]); 
 
   // State for UI management
   const [loading, setLoading] = useState(true);

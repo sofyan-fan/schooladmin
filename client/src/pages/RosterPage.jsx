@@ -50,22 +50,23 @@ export default function RosterPage() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const rosterData = await rosterApi.get_rosters();
-        // NOTE: This is a placeholder. In a real app, you'd fetch class names.
-        const mappedData = rosterData.map((r) => ({
+        const mappedData = (rosterData || []).map((r) => ({
           ...r,
-          class: r.class.name,
+          className: r.class?.name ?? '',
         }));
         if (mounted) setRosters(mappedData);
       } catch (e) {
         console.error('Failed to load rosters', e);
+        if (mounted) setRosters([]); // Ensure rosters is an array on error
       } finally {
         if (mounted) setLoading(false);
       }
-    })();
+    };
+    fetchData();
     return () => {
       mounted = false;
     };
@@ -73,10 +74,11 @@ export default function RosterPage() {
 
   const handleCreate = async (data) => {
     try {
-      const newRoster = await rosterApi.add_roster(data);
-      // NOTE: Remapping to keep the "class" display consistent.
-      const mappedRoster = { ...newRoster, class: newRoster.class.name };
-      setRosters((prev) => [...prev, mappedRoster]);
+      await rosterApi.add_roster(data);
+      const refreshed = await rosterApi.get_rosters();
+      setRosters(
+        (refreshed || []).map((r) => ({ ...r, className: r.class?.name ?? '' }))
+      );
       setOpenCreate(false);
     } catch (error) {
       console.error('Failed to create roster', error);
@@ -90,14 +92,15 @@ export default function RosterPage() {
 
   const handleUpdate = async (updatedRoster) => {
     try {
-      await rosterApi.edit_roster(updatedRoster);
-      // NOTE: Remapping to keep the "class" display consistent.
-      const mappedRoster = {
-        ...updatedRoster,
-        class: updatedRoster.class.name,
+      const payload = {
+        id: updatedRoster.id,
+        classId: updatedRoster.classId,
+        schedules: updatedRoster.schedules,
       };
-      setRosters((prev) =>
-        prev.map((r) => (r.id === mappedRoster.id ? mappedRoster : r))
+      await rosterApi.edit_roster(payload);
+      const refreshed = await rosterApi.get_rosters();
+      setRosters(
+        (refreshed || []).map((r) => ({ ...r, className: r.class?.name ?? '' }))
       );
       setOpenEdit(false);
     } catch (error) {
@@ -113,7 +116,10 @@ export default function RosterPage() {
   const handleDelete = async (id) => {
     try {
       await rosterApi.delete_roster(id);
-      setRosters((prev) => prev.filter((r) => r.id !== id));
+      const refreshed = await rosterApi.get_rosters();
+      setRosters(
+        (refreshed || []).map((r) => ({ ...r, className: r.class?.name ?? '' }))
+      );
     } catch (error) {
       console.error('Failed to delete roster', error);
     }
@@ -157,7 +163,7 @@ export default function RosterPage() {
         buttonText="Nieuw rooster"
         onAdd={() => setOpenCreate(true)}
       />
-      <Toolbar table={table} filterColumn="class" />
+      <Toolbar table={table} filterColumn="className" />
       <DataTable
         table={table}
         loading={loading}

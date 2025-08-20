@@ -1,6 +1,7 @@
 import cors from 'cors';
 import fs from 'fs';
 import jsonServer from 'json-server';
+import auth from 'json-server-auth';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -22,6 +23,9 @@ const dbFiles = {
   tests: JSON.parse(fs.readFileSync(path.join(mockDir, 'tests.json'))),
   exams: JSON.parse(fs.readFileSync(path.join(mockDir, 'exams.json'))),
   rosters: JSON.parse(fs.readFileSync(path.join(mockDir, 'rosters.json'))),
+  classrooms: JSON.parse(
+    fs.readFileSync(path.join(mockDir, 'classrooms.json'))
+  ),
 };
 
 // Create db.json if it doesn't exist
@@ -29,23 +33,23 @@ if (!fs.existsSync(dbPath)) {
   fs.writeFileSync(dbPath, JSON.stringify(dbFiles));
 }
 
-const server = jsonServer.create();
+const app = jsonServer.create();
 const router = jsonServer.router(dbPath); // Use db.json for the router
 const middlewares = jsonServer.defaults();
 
 // Allow frontend at 5173 and credentials like the real backend
-server.use(
+app.use(
   cors({
     origin: 'http://localhost:5173',
     credentials: true,
   })
 );
 
-server.use(middlewares);
-server.use(jsonServer.bodyParser);
+app.use(middlewares);
+app.use(jsonServer.bodyParser);
 
 // Custom route to combine module and subject details
-server.get('/courses/modules', (req, res) => {
+app.get('/courses/modules', (req, res) => {
   const modules = router.db.get('modules').value();
   const subjects = router.db.get('subjects').value();
 
@@ -66,7 +70,7 @@ server.get('/courses/modules', (req, res) => {
 });
 
 // Custom route to combine course and module details
-server.get('/courses/courses', (req, res) => {
+app.get('/courses/courses', (req, res) => {
   const courses = router.db.get('courses').value();
   const modules = router.db.get('modules').value();
 
@@ -80,13 +84,8 @@ server.get('/courses/courses', (req, res) => {
   res.json(enrichedCourses);
 });
 
-// The rewriter should come after custom routes
-const routes = JSON.parse(fs.readFileSync(path.join(__dirname, 'routes.json')));
-const rewriter = jsonServer.rewriter(routes);
-server.use(rewriter);
-
-// Custom route for enrollment update (needs to be after rewriter to use resource ID)
-server.put('/students/:student_id', (req, res) => {
+// Custom route for enrollment update
+app.put('/students/:student_id', (req, res) => {
   const studentId = Number(req.params.student_id);
   const { enrollment_status } = req.body || {};
   const student = router.db.get('students').find({ id: studentId }).value();
@@ -99,10 +98,18 @@ server.put('/students/:student_id', (req, res) => {
   });
 });
 
-// Fallback to default router for standard CRUD
-server.use(router);
+const routes = JSON.parse(fs.readFileSync(path.join(__dirname, 'routes.json')));
+
+// Bind the router db to the app
+app.db = router.db;
+
+const rules = auth.rewriter(routes);
+
+app.use(rules);
+app.use(auth);
+app.use(router);
 
 const port = 8000;
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Mock API (json-server) running on http://localhost:${port}`);
 });

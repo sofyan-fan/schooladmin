@@ -4,22 +4,48 @@
       "id": 1,
       "name": "Groep A1",
       "teacherId": 1,
-      "courseIds": [1],
-      "studentIds": [1, 2, 3, 4, 5, 6]
-    },
-    {
-      "id": 2,
-      "name": "Groep 8B",
-      "teacherId": 3,
-      "courseIds": [1],
-      "studentIds": [2, 3, 5, 4]
+      "courseIds": [
+        1
+      ],
+      "studentIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
     },
     {
       "name": "Groep 9",
       "teacherId": "2",
-      "courseIds": [1],
-      "studentIds": [3, 4, 5, 7, 6],
+      "courseIds": [
+        1
+      ],
+      "studentIds": [
+        3,
+        4,
+        5,
+        7,
+        6
+      ],
       "id": 3
+    },
+    {
+      "name": "10",
+      "teacherId": 2,
+      "courseIds": [
+        1
+      ],
+      "studentIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "id": 4
     }
   ],
   "courses": [
@@ -28,7 +54,21 @@
       "name": "Basis Programma",
       "description": "Perferendis dicta co en nog meer text voor een basis programma",
       "price": 973,
-      "moduleIds": [1, 3, 4]
+      "moduleIds": [
+        1,
+        3,
+        4
+      ]
+    },
+    {
+      "name": "Nieuw",
+      "description": "fdsafdadfsafsafs",
+      "price": 123,
+      "moduleIds": [
+        1,
+        3
+      ],
+      "id": 2
     }
   ],
   "events": [
@@ -42,6 +82,38 @@
       "event_name": "dsadsa",
       "event_date": "2025-07-31",
       "description": "fdsafdafsafs",
+      "id": 2
+    }
+  ],
+  "rosters": [
+    {
+      "id": 1,
+      "classId": 1,
+      "schedules": [
+        {
+          "day": "Monday",
+          "startTime": "08:00",
+          "endTime": "10:00",
+          "location": "Room 101"
+        },
+        {
+          "day": "Wednesday",
+          "startTime": "09:00",
+          "endTime": "11:00",
+          "location": "Room 102"
+        }
+      ]
+    },
+    {
+      "classId": 4,
+      "schedules": [
+        {
+          "day": "Saturday",
+          "startTime": "20:17",
+          "endTime": "23:17",
+          "location": "Room 101"
+        }
+      ],
       "id": 2
     }
   ],
@@ -159,6 +231,18 @@
           "material": "Dagelijkse leesplannen"
         }
       ]
+    },
+    {
+      "name": "fdafda",
+      "subjects": [
+        {
+          "subjectId": 7,
+          "subjectName": "Tajweed",
+          "level": "Praktijk",
+          "material": "Luister- en oefensessies"
+        }
+      ],
+      "id": 7
     }
   ],
   "students": [
@@ -286,7 +370,11 @@
     {
       "id": 1,
       "name": "Geloofsleer",
-      "levels": ["Beginner", "Middel", "Gevorderd"],
+      "levels": [
+        "Beginner",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "De basis van het geloof",
         "Eenheid van Allah",
@@ -296,7 +384,11 @@
     {
       "id": 2,
       "name": "Fiqh",
-      "levels": ["Inleiding", "Aanbidding", "Dagelijks leven"],
+      "levels": [
+        "Inleiding",
+        "Aanbidding",
+        "Dagelijks leven"
+      ],
       "materials": [
         "Regels van gebed",
         "Zuivering en wassing",
@@ -320,7 +412,11 @@
     {
       "id": 4,
       "name": "Hadith",
-      "levels": ["Basis", "Middel", "Gevorderd"],
+      "levels": [
+        "Basis",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "40 Hadith",
         "Hadith over goed gedrag",
@@ -330,7 +426,11 @@
     {
       "id": 5,
       "name": "Seerah",
-      "levels": ["Vroege leven", "Mekka-periode", "Madinah-periode"],
+      "levels": [
+        "Vroege leven",
+        "Mekka-periode",
+        "Madinah-periode"
+      ],
       "materials": [
         "Verhalen uit het leven van de Profeet",
         "Zijn karakter",
@@ -340,7 +440,11 @@
     {
       "id": 6,
       "name": "Arabisch",
-      "levels": ["Alfabet", "Woorden", "Zinnen en verhalen"],
+      "levels": [
+        "Alfabet",
+        "Woorden",
+        "Zinnen en verhalen"
+      ],
       "materials": [
         "Arabisch leren lezen",
         "Eenvoudige woorden",
@@ -350,7 +454,11 @@
     {
       "id": 7,
       "name": "Tajweed",
-      "levels": ["Basisregels", "Meer regels", "Praktijk"],
+      "levels": [
+        "Basisregels",
+        "Meer regels",
+        "Praktijk"
+      ],
       "materials": [
         "Uitspraken van letters",
         "Regels van recitatie",
@@ -360,7 +468,11 @@
     {
       "id": 8,
       "name": "Grondslagen van Fiqh",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Hoe regels worden gemaakt",
         "Eenvoudige uitleg",
@@ -370,7 +482,11 @@
     {
       "id": 9,
       "name": "Grondslagen van Tafsir",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Hoe de Qur’an wordt uitgelegd",
         "Belangrijkste principes",
@@ -380,7 +496,11 @@
     {
       "id": 10,
       "name": "Hadithwetenschappen",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Hoe Hadith verzameld werden",
         "Betrouwbaarheid",
@@ -390,7 +510,11 @@
     {
       "id": 11,
       "name": "Tazkiyah",
-      "levels": ["Inleiding", "Praktijk", "Verdere verdieping"],
+      "levels": [
+        "Inleiding",
+        "Praktijk",
+        "Verdere verdieping"
+      ],
       "materials": [
         "Verhalen over goede daden",
         "Hoe je jezelf zuivert",
@@ -400,7 +524,11 @@
     {
       "id": 12,
       "name": "Islamitische Geschiedenis",
-      "levels": ["Vroege Islam", "Kaliefen", "Verspreiding van Islam"],
+      "levels": [
+        "Vroege Islam",
+        "Kaliefen",
+        "Verspreiding van Islam"
+      ],
       "materials": [
         "Verhalen van de Sahabah",
         "Belangrijke leiders",
@@ -410,7 +538,11 @@
     {
       "id": 13,
       "name": "Koran uit het hoofd leren",
-      "levels": ["Korte soerahs", "Middelgrote soerahs", "Lange soerahs"],
+      "levels": [
+        "Korte soerahs",
+        "Middelgrote soerahs",
+        "Lange soerahs"
+      ],
       "materials": [
         "Dagelijkse leesplannen",
         "Herhalingsschema’s",
@@ -420,13 +552,25 @@
     {
       "id": 14,
       "name": "Vergelijkende Religies",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
-      "materials": ["Basisverschillen", "Overeenkomsten", "Eenvoudige uitleg"]
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
+      "materials": [
+        "Basisverschillen",
+        "Overeenkomsten",
+        "Eenvoudige uitleg"
+      ]
     },
     {
       "id": 15,
       "name": "Islamitische Ethiek",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Verhalen over goed gedrag",
         "Voorbeelden van de Profeet",
@@ -436,7 +580,11 @@
     {
       "id": 16,
       "name": "Gezinsfiqh",
-      "levels": ["Huwelijk", "Opvoeding", "Gezinsleven"],
+      "levels": [
+        "Huwelijk",
+        "Opvoeding",
+        "Gezinsleven"
+      ],
       "materials": [
         "Regels voor gezin",
         "Tips voor ouders",
@@ -446,7 +594,11 @@
     {
       "id": 17,
       "name": "Da'wah",
-      "levels": ["Inleiding", "Voorbeelden", "Praktijk"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Praktijk"
+      ],
       "materials": [
         "Hoe kennis te delen",
         "Eenvoudige methodes",
@@ -456,7 +608,11 @@
     {
       "id": 18,
       "name": "Islamitische Financiën",
-      "levels": ["Inleiding", "Voorbeelden", "Praktijk"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Praktijk"
+      ],
       "materials": [
         "Wat is halal en haram",
         "Voorbeelden uit het dagelijks leven",
@@ -466,7 +622,11 @@
     {
       "id": 19,
       "name": "Kalligrafie",
-      "levels": ["Beginner", "Middel", "Gevorderd"],
+      "levels": [
+        "Beginner",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "Schrijfopdrachten",
         "Oefenmateriaal",
@@ -476,7 +636,11 @@
     {
       "id": 20,
       "name": "Logica",
-      "levels": ["Inleiding", "Oefeningen", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Oefeningen",
+        "Toepassing"
+      ],
       "materials": [
         "Eenvoudige puzzels",
         "Logisch denken",
@@ -486,7 +650,11 @@
     {
       "id": 21,
       "name": "Manieren van Recitatie",
-      "levels": ["Basis", "Middel", "Gevorderd"],
+      "levels": [
+        "Basis",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "Luistersessies",
         "Praktische oefening",
@@ -552,7 +720,7 @@
     {
       "id": 2,
       "email": "amin@test.com",
-      "password": "amin123",
+      "password": "$2a$12$zTfjsWU0NkAGbf34sA3TEOFdcBx7xTRx1h8h0RoiXRhOwV/HJebuO",
       "role": "admin"
     },
     {
@@ -614,6 +782,36 @@
       "email": "docent2@test.com",
       "password": "docent123456",
       "role": "teacher"
+    },
+    {
+      "email": "amin@test.com",
+      "password": "amin123",
+      "id": 13
+    },
+    {
+      "email": "amin@test.com",
+      "password": "amin123",
+      "id": 14
+    },
+    {
+      "email": "amin@test.com",
+      "password": "amin123",
+      "id": 15
+    },
+    {
+      "email": "amin@test.com",
+      "password": "amin123",
+      "id": 16
+    },
+    {
+      "email": "amin@test.com",
+      "password": "amin123",
+      "id": 17
+    },
+    {
+      "email": "amin@test.com",
+      "password": "amin123",
+      "id": 18
     }
   ]
 }

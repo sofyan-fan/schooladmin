@@ -1,5 +1,7 @@
 {
   "/api/*": "/$1",
+  "/auth/login": "/login",
+  "/auth/register": "/register",
   "/dashboard/event": "/events",
   "/dashboard/event/:id": "/events/:id",
   "/dashboard/roster": "/rosters",
@@ -13,6 +15,7 @@
   "/courses": "/courses",
   "/classes": "/classes",
   "/rosters": "/rosters",
+  "/classrooms": "/classrooms",
   "/tests": "/tests",
   "/exams": "/exams"
 }
