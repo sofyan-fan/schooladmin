@@ -1,7 +1,6 @@
 import moduleApi from '@/apis/modules/moduleAPI';
 import subjectAPI from '@/apis/subjects/subjectAPI';
 import ViewCourseModuleDialog from '@/components/coursemodules/ViewCourseModuleDialog';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import CreateModal from '@/components/modules/CreateModal';
 import EditModal from '@/components/modules/EditModal';
 import { ModuleCard } from '@/components/modules/ModuleCard'; // Note the organized path
@@ -159,7 +158,7 @@ const ModulesPage = () => {
   };
 
   return (
-    <LayoutWrapper>
+    <>
       <div className="container mx-auto ">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
@@ -227,7 +226,7 @@ const ModulesPage = () => {
           </AlertDialogContent>
         </AlertDialog>
       )}
-    </LayoutWrapper>
+    </>
   );
 };
 

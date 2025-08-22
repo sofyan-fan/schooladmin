@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
+import LayoutWrapper from './components/layout/LayoutWrapper';
 import { useAuth } from './hooks/useAuth';
 import AssessmentsPage from './pages/AssessmentsPage';
 import ClassesPage from './pages/ClassesPage';
@@ -33,22 +34,24 @@ const App = () => {
       />
 
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/klassen" element={<ClassesPage />} />
-      <Route path="/rooster" element={<RosterPage />} />
-      <Route path="/toetsen-en-examens" element={<AssessmentsPage />} />
-      <Route path="/leerlingen" element={<StudentsPage />} />
-      <Route path="/docenten" element={<TeachersPage />} />
-      <Route path="/vakken" element={<SubjectsPage />} />
-      <Route path="/modules" element={<ModulesPage />} />
-      <Route path="/lespakketten" element={<CoursesPage />} />
-      <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} />
-      <Route path="/financien" element={<FinancePage />} />
-      <Route path="/instellingen" element={<SettingsPage />} />
       <Route path="/register" element={<RegisterPage />} />
+
       <Route
-        path="/dashboard"
-        element={isAuthenticated ? <DashboardPage /> : <Navigate to="/login" />}
-      />
+        element={isAuthenticated ? <LayoutWrapper /> : <Navigate to="/login" />}
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/klassen" element={<ClassesPage />} />
+        <Route path="/rooster" element={<RosterPage />} />
+        <Route path="/toetsen-en-examens" element={<AssessmentsPage />} />
+        <Route path="/leerlingen" element={<StudentsPage />} />
+        <Route path="/docenten" element={<TeachersPage />} />
+        <Route path="/vakken" element={<SubjectsPage />} />
+        <Route path="/modules" element={<ModulesPage />} />
+        <Route path="/lespakketten" element={<CoursesPage />} />
+        <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} />
+        <Route path="/financien" element={<FinancePage />} />
+        <Route path="/instellingen" element={<SettingsPage />} />
+      </Route>
     </Routes>
   );
 };

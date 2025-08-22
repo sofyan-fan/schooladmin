@@ -4,7 +4,6 @@ import CalendarView from '../components/dashboard/CalendarView';
 import Members from '../components/dashboard/Members';
 import StatCard from '../components/dashboard/StatCard';
 import YearPlanning from '../components/dashboard/YearPlanning';
-import LayoutWrapper from '../components/layout/LayoutWrapper';
 
 import eventAPI from '../apis/dashboard/eventAPI';
 
@@ -78,7 +77,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <LayoutWrapper>
+    <>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <StatCard
           title=" Studenten"
@@ -111,7 +110,7 @@ const DashboardPage = () => {
           <CalendarView lessons={lessons} />
         </div>
       </div>
-    </LayoutWrapper>
+      </>
   );
 };
 

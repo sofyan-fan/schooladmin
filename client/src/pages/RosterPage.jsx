@@ -1,5 +1,4 @@
 import rosterApi from '@/apis/rosters/rosterAPI';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import CreateRosterModal from '@/components/rosters/CreateRosterModal';
 import EditRosterModal from '@/components/rosters/EditRosterModal';
 import ViewRosterModal from '@/components/rosters/ViewRosterModal';
@@ -155,7 +154,7 @@ export default function RosterPage() {
   });
 
   return (
-    <LayoutWrapper>
+    <>
       <PageHeader
         title="Roosters"
         icon={<CalendarDays className="size-9" />}
@@ -186,6 +185,6 @@ export default function RosterPage() {
         onClose={() => setOpenView(false)}
         roster={selected}
       />
-    </LayoutWrapper>
+    </>
   );
 }

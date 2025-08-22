@@ -3,7 +3,6 @@ import { createColumns } from '@/components/classes/columns';
 import CreateClassModal from '@/components/classes/CreateClassModal';
 import EditClassModal from '@/components/classes/EditClassModal';
 import ViewClassModal from '@/components/classes/ViewClassModal';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
@@ -119,7 +118,7 @@ export default function ClassesPage() {
   });
 
   return (
-    <LayoutWrapper>
+    <>
       <PageHeader
         title="Klassen"
         icon={<Users className="size-9" />}
@@ -151,6 +150,6 @@ export default function ClassesPage() {
         onSave={handleUpdate}
         classData={selected}
       />
-    </LayoutWrapper>
+    </>
   );
 }

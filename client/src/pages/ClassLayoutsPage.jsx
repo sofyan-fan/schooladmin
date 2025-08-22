@@ -8,7 +8,6 @@ import ViewClassModal from '@/components/classes/ViewClassModal';
 import { createColumns as createClassroomColumns } from '@/components/classrooms/columns';
 import CreateClassroomModal from '@/components/classrooms/CreateClassroomModal';
 import EditClassroomModal from '@/components/classrooms/EditClassroomModal';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import { createColumns as createRosterColumns } from '@/components/rosters/columns';
 import CreateRosterModal from '@/components/rosters/CreateRosterModal';
 import EditRosterModal from '@/components/rosters/EditRosterModal';
@@ -359,7 +358,7 @@ const RostersTab = () => {
 
 const ClassLayoutsPage = () => {
   return (
-    <LayoutWrapper>
+    <>
       <PageHeader
         title="Onderwijsindeling"
         icon={<LayoutDashboard className="size-9" />}
@@ -390,7 +389,7 @@ const ClassLayoutsPage = () => {
           <RostersTab />
         </TabsContent>
       </Tabs>
-    </LayoutWrapper>
+    </>
   );
 };
 

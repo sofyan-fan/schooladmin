@@ -1,10 +1,9 @@
 import courseApi from '@/apis/courses/courseAPI';
 import moduleApi from '@/apis/modules/moduleAPI';
-import { CourseCard } from '@/components/courses/CourseCard'; 
-import CreateCourseModal from '@/components/courses/CreateCourseModal'; 
-import EditCourseModal from '@/components/courses/EditCourseModal'; 
+import { CourseCard } from '@/components/courses/CourseCard';
+import CreateCourseModal from '@/components/courses/CreateCourseModal';
+import EditCourseModal from '@/components/courses/EditCourseModal';
 import ViewCourseDialog from '@/components/courses/ViewCourseDialog';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +21,7 @@ import { useEffect, useState } from 'react';
 const CoursesPage = () => {
   // State for data
   const [courses, setCourses] = useState([]);
-  const [modules, setModules] = useState([]); 
+  const [modules, setModules] = useState([]);
 
   // State for UI management
   const [loading, setLoading] = useState(true);
@@ -159,7 +158,7 @@ const CoursesPage = () => {
   };
 
   return (
-    <LayoutWrapper>
+    <>
       <div className="container mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
@@ -237,7 +236,7 @@ const CoursesPage = () => {
           </AlertDialogContent>
         </AlertDialog>
       )}
-    </LayoutWrapper>
+    </>
   );
 };
 

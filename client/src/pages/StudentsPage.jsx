@@ -1,21 +1,20 @@
 import studentAPI from '@/apis/students/studentAPI';
 import ProfileCard from '@/components/general/ProfileCard';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
 import { createColumns } from '@/components/students/columns';
 import StudentViewProfileCard from '@/components/StudentViewProfileCard';
+import { TableCell, TableRow } from '@/components/ui/table';
 import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table'; 
+} from '@tanstack/react-table';
 import { BookOpen, GraduationCap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { TableCell, TableRow } from '@/components/ui/table';
 
 const NoData = (
   <TableRow>
@@ -191,7 +190,7 @@ export default function StudentsPage() {
   });
 
   return (
-    <LayoutWrapper>
+    <>
       <PageHeader
         title="Leerlingen"
         icon={<GraduationCap className="size-9" />}
@@ -221,6 +220,6 @@ export default function StudentsPage() {
         onDelete={handleDelete}
         viewDateOnly={false}
       />
-    </LayoutWrapper>
+    </>
   );
 }

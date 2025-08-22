@@ -1,5 +1,4 @@
 import subjectAPI from '@/apis/subjects/subjectAPI';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
@@ -130,7 +129,7 @@ const SubjectsPage = () => {
   };
 
   return (
-    <LayoutWrapper>
+    <>
       <PageHeader
         title="Vakkenbibliotheek"
         icon={<LibraryBig className="size-9" />}
@@ -192,7 +191,7 @@ const SubjectsPage = () => {
           </AlertDialogContent>
         </AlertDialog>
       )}
-    </LayoutWrapper>
+    </>
   );
 };
 

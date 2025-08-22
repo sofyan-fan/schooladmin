@@ -1,6 +1,5 @@
 import assessmentApi from '@/apis/assessments/assessmentAPI';
 import { createColumns } from '@/components/assessments/columns';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
@@ -149,7 +148,7 @@ export default function AssessmentsPage() {
   );
 
   return (
-    <LayoutWrapper>
+    <>
       <PageHeader
         title="Toetsen & Examens"
         icon={<BookCheck className="size-9" />}
@@ -179,6 +178,6 @@ export default function AssessmentsPage() {
           />
         </TabsContent>
       </Tabs>
-    </LayoutWrapper>
+    </>
   );
 }

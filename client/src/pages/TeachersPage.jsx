@@ -1,11 +1,11 @@
 import teachersAPI from '@/apis/teachers/teachersAPI';
 import ProfileCard from '@/components/general/ProfileCard';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
 import StudentViewProfileCard from '@/components/StudentViewProfileCard';
 import { createColumns } from '@/components/teachers/columns';
+import { TableCell, TableRow } from '@/components/ui/table';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -13,9 +13,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-  import { BookOpen, Presentation } from 'lucide-react';
+import { BookOpen, Presentation } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { TableCell, TableRow } from '@/components/ui/table';
 
 const NoData = (
   <TableRow>
@@ -171,7 +170,7 @@ export default function TeachersPage() {
   });
 
   return (
-    <LayoutWrapper>
+    <>
       <PageHeader
         title="Docenten"
         icon={<Presentation className="size-9" />}
@@ -201,6 +200,6 @@ export default function TeachersPage() {
         onDelete={handleDelete}
         viewDateOnly={false}
       />
-    </LayoutWrapper>
+    </>
   );
 }
