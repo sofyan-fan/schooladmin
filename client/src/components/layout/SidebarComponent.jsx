@@ -51,8 +51,8 @@ const SidebarComponent = () => {
       Icon: LayoutDashboard,
       subItems: [
         { name: 'Klassen', path: 'klassen' },
-        { name: 'Leslokalen', path: 'onderwijsindeling' },
-        { name: 'Roosters', path: 'rooster' },
+        { name: 'Leslokalen', path: 'lokalen' },
+        { name: 'Roosters', path: 'roosters' },
       ],
     },
     { name: 'Vakken', path: 'vakken', Icon: LibraryBig },
@@ -87,7 +87,7 @@ const SidebarComponent = () => {
   }, [isOnderwijsActive]);
 
   return (
-      <Sidebar collapsible="icon" variant="sidebar">
+    <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader>
         <div className="mb-8 flex w-full items-center gap-2 text-2xl font-bold text-text-default">
           <GraduationCap className="size-10" />
@@ -167,7 +167,9 @@ const SidebarComponent = () => {
                   <SidebarMenuButton
                     asChild
                     isActive={activeItemName === item.name}
-                    variant={activeItemName === item.name ? 'collapse' : 'default'}
+                    variant={
+                      activeItemName === item.name ? 'collapse' : 'default'
+                    }
                     tooltip={item.name}
                     onClick={(e) => {
                       e.preventDefault();

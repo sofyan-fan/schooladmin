@@ -1,190 +1,188 @@
-import rosterApi from '@/apis/rosters/rosterAPI';
-import CreateRosterModal from '@/components/rosters/CreateRosterModal';
-import EditRosterModal from '@/components/rosters/EditRosterModal';
-import ViewRosterModal from '@/components/rosters/ViewRosterModal';
-import { createColumns } from '@/components/rosters/columns';
-import PageHeader from '@/components/shared/PageHeader';
-import DataTable from '@/components/shared/Table';
-import Toolbar from '@/components/shared/Toolbar';
-import { TableCell, TableRow } from '@/components/ui/table';
-import {
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { CalendarDays } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { get_classes } from '@/apis/classes/classAPI';
+import { get_classrooms } from '@/apis/classrooms/classroomAPI';
+import rosterAPI from '@/apis/rosters/rosterAPI';
+import { get_teachers } from '@/apis/teachers/teachersAPI';
+import RosterEventModal from '@/components/rosters/RosterEventModal';
+import interactionPlugin from '@fullcalendar/interaction';
+import FullCalendar from '@fullcalendar/react';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import { useCallback, useEffect, useState } from 'react';
 
-const NoData = (
-  <TableRow>
-    <TableCell colSpan={3} className="h-48 text-center">
-      <div className="flex flex-col items-center justify-center space-y-4">
-        <CalendarDays className="size-12 text-gray-400" />
-        <h3 className="text-xl font-semibold">No Rosters Found</h3>
-        <p className="text-muted-foreground">
-          Get started by adding a new roster.
-        </p>
-      </div>
-    </TableCell>
-  </TableRow>
+const SelectionPanel = ({ title, items, selectedId, onSelect }) => (
+  <div className="mb-4">
+    <h3 className="font-semibold mb-2 text-lg">{title}</h3>
+    <ul className="space-y-1">
+      {items.map((item) => (
+        <li
+          key={item.id}
+          className={`cursor-pointer p-2 rounded-md transition-colors ${
+            selectedId === item.id
+              ? 'bg-primary text-primary-foreground'
+              : 'hover:bg-muted'
+          }`}
+          onClick={() => onSelect(item.id)}
+        >
+          {item.name || `${item.first_name} ${item.last_name}`}
+        </li>
+      ))}
+    </ul>
+  </div>
 );
 
 export default function RosterPage() {
-  const [rosters, setRosters] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null);
-  const [openCreate, setOpenCreate] = useState(false);
-  const [openEdit, setOpenEdit] = useState(false);
-  const [openView, setOpenView] = useState(false);
-
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
+  const [events, setEvents] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selection, setSelection] = useState({
+    type: null,
+    id: null,
   });
+
+  const [classLayouts, setClassLayouts] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
+
+  const fetchRosters = useCallback(async () => {
+    if (!selection.type || !selection.id) {
+      setEvents([]);
+      return;
+    }
+    try {
+      const filters = {
+        [`${selection.type}Id`]: selection.id,
+      };
+      const data = await rosterAPI.get_rosters(filters);
+      setEvents(data);
+    } catch (error) {
+      console.error('Failed to fetch rosters:', error);
+    }
+  }, [selection]);
 
   useEffect(() => {
-    let mounted = true;
-    const fetchData = async () => {
-      setLoading(true);
+    fetchRosters();
+  }, [fetchRosters]);
+
+  useEffect(() => {
+    async function fetchData() {
       try {
-        const rosterData = await rosterApi.get_rosters();
-        const mappedData = (rosterData || []).map((r) => ({
-          ...r,
-          className: r.class?.name ?? '',
-        }));
-        if (mounted) setRosters(mappedData);
-      } catch (e) {
-        console.error('Failed to load rosters', e);
-        if (mounted) setRosters([]); // Ensure rosters is an array on error
-      } finally {
-        if (mounted) setLoading(false);
+        const [layouts, teachersData, classroomsData] = await Promise.all([
+          get_classes(),
+          get_teachers(),
+          get_classrooms(),
+        ]);
+        setClassLayouts(layouts || []);
+        setTeachers(teachersData || []);
+        setClassrooms(classroomsData || []);
+      } catch (error) {
+        console.error('Failed to fetch initial data:', error);
       }
-    };
+    }
     fetchData();
-    return () => {
-      mounted = false;
-    };
   }, []);
 
-  const handleCreate = async (data) => {
-    try {
-      await rosterApi.add_roster(data);
-      const refreshed = await rosterApi.get_rosters();
-      setRosters(
-        (refreshed || []).map((r) => ({ ...r, className: r.class?.name ?? '' }))
-      );
-      setOpenCreate(false);
-    } catch (error) {
-      console.error('Failed to create roster', error);
+  const handleSelect = (type, id) => {
+    if (selection.type === type && selection.id === id) {
+      setSelection({ type: null, id: null }); // Deselect if clicking the same item
+    } else {
+      setSelection({ type, id });
     }
   };
 
-  const handleEdit = (record) => {
-    setSelected(record);
-    setOpenEdit(true);
+  const handleDateSelect = (selectInfo) => {
+    setSelectedEvent({
+      start: selectInfo.startStr,
+      end: selectInfo.endStr,
+    });
+    setModalOpen(true);
   };
 
-  const handleUpdate = async (updatedRoster) => {
+  const handleEventClick = (clickInfo) => {
+    const event = events.find((e) => e.id.toString() === clickInfo.event.id);
+    setSelectedEvent(event);
+    setModalOpen(true);
+  };
+
+  const handleModalSubmit = async (eventData) => {
     try {
       const payload = {
-        id: updatedRoster.id,
-        classId: updatedRoster.classId,
-        schedules: updatedRoster.schedules,
+        ...eventData,
+        classLayoutId: parseInt(eventData.classLayoutId, 10),
+        teacherId: parseInt(eventData.teacherId, 10),
+        classroomId: parseInt(eventData.classroomId, 10),
       };
-      await rosterApi.edit_roster(payload);
-      const refreshed = await rosterApi.get_rosters();
-      setRosters(
-        (refreshed || []).map((r) => ({ ...r, className: r.class?.name ?? '' }))
-      );
-      setOpenEdit(false);
+
+      if (payload.id) {
+        await rosterAPI.update_roster(payload.id, payload);
+      } else {
+        await rosterAPI.add_roster(payload);
+      }
+      fetchRosters();
     } catch (error) {
-      console.error('Failed to update roster', error);
+      console.error('Failed to save event:', error);
     }
   };
 
-  const handleView = (record) => {
-    setSelected(record);
-    setOpenView(true);
-  };
-
-  const handleDelete = async (id) => {
+  const handleModalDelete = async (eventId) => {
     try {
-      await rosterApi.delete_roster(id);
-      const refreshed = await rosterApi.get_rosters();
-      setRosters(
-        (refreshed || []).map((r) => ({ ...r, className: r.class?.name ?? '' }))
-      );
+      await rosterAPI.delete_roster(eventId);
+      fetchRosters();
     } catch (error) {
-      console.error('Failed to delete roster', error);
+      console.error('Failed to delete event:', error);
     }
   };
-
-  const columns = useMemo(
-    () =>
-      createColumns({
-        onView: handleView,
-        onEdit: handleEdit,
-        onDelete: handleDelete,
-      }),
-    []
-  );
-
-  const table = useReactTable({
-    data: rosters,
-    columns,
-    state: {
-      sorting,
-      columnVisibility,
-      pagination,
-      columnFilters,
-    },
-    onPaginationChange: setPagination,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
 
   return (
-    <>
-      <PageHeader
-        title="Roosters"
-        icon={<CalendarDays className="size-9" />}
-        description="Beheer hier alle roosters."
-        buttonText="Nieuw rooster"
-        onAdd={() => setOpenCreate(true)}
+    <div className="flex h-full gap-6 p-4">
+      <aside className="w-1/4 max-w-xs p-4 bg-card rounded-lg shadow-sm overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">Selections</h2>
+        <SelectionPanel
+          title="Group"
+          items={classLayouts}
+          selectedId={selection.type === 'classLayout' ? selection.id : null}
+          onSelect={(id) => handleSelect('classLayout', id)}
+        />
+        <SelectionPanel
+          title="Classroom"
+          items={classrooms}
+          selectedId={selection.type === 'classroom' ? selection.id : null}
+          onSelect={(id) => handleSelect('classroom', id)}
+        />
+        <SelectionPanel
+          title="Teacher"
+          items={teachers}
+          selectedId={selection.type === 'teacher' ? selection.id : null}
+          onSelect={(id) => handleSelect('teacher', id)}
+        />
+      </aside>
+
+      <main className="flex-1 bg-card p-4 rounded-lg shadow-sm">
+        <FullCalendar
+          plugins={[interactionPlugin, timeGridPlugin]}
+          initialView="timeGridWeek"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridWeek,timeGridDay',
+          }}
+          events={events}
+          selectable={true}
+          selectMirror={true}
+          dayMaxEvents={true}
+          select={handleDateSelect}
+          eventClick={handleEventClick}
+        />
+      </main>
+
+      <RosterEventModal
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        onSubmit={handleModalSubmit}
+        onDelete={handleModalDelete}
+        event={selectedEvent}
       />
-      <Toolbar table={table} filterColumn="className" />
-      <DataTable
-        table={table}
-        loading={loading}
-        columns={columns}
-        NoDataComponent={NoData}
-      />
-      <CreateRosterModal
-        isOpen={openCreate}
-        onClose={() => setOpenCreate(false)}
-        onRosterCreated={handleCreate}
-      />
-      <EditRosterModal
-        isOpen={openEdit}
-        onClose={() => setOpenEdit(false)}
-        roster={selected}
-        onRosterUpdated={handleUpdate}
-      />
-      <ViewRosterModal
-        isOpen={openView}
-        onClose={() => setOpenView(false)}
-        roster={selected}
-      />
-    </>
+    </div>
   );
 }

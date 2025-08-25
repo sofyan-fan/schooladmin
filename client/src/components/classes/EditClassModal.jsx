@@ -1,3 +1,6 @@
+import courseApi from '@/apis/courses/courseAPI';
+import studentAPI from '@/apis/students/studentAPI';
+import teachersAPI from '@/apis/teachers/teachersAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,9 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { useEffect, useState } from 'react';
 import ClassForm from './ClassForm';
-import courseApi from '@/apis/courses/courseAPI';
-import studentAPI from '@/apis/students/studentAPI';
-import teachersAPI from '@/apis/teachers/teachersAPI';
 
 export default function EditClassModal({
   open,
@@ -21,8 +21,8 @@ export default function EditClassModal({
 }) {
   const [formData, setFormData] = useState({
     name: '',
-    teacherId: '',
-    courseIds: [],
+    mentorId: null,
+    courseId: null,
     studentIds: [],
   });
   const [allTeachers, setAllTeachers] = useState([]);
@@ -36,9 +36,9 @@ export default function EditClassModal({
       setFormData({
         id: classData.id,
         name: classData.name,
-        teacherId: classData.teacherId,
-        courseIds: classData.courseIds || [],
-        studentIds: classData.studentIds || [],
+        mentorId: classData.mentorId,
+        courseId: classData.courseId,
+        studentIds: (classData.students || []).map((s) => s.id),
       });
       setError('');
 
@@ -64,6 +64,12 @@ export default function EditClassModal({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    // event.stopPropagation();
+    const formElement = document.getElementById('class-form');
+    if (formElement && !formElement.reportValidity()) {
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -88,6 +94,7 @@ export default function EditClassModal({
           setFormData={setFormData}
           onSubmit={handleSubmit}
           loading={loading}
+          
           allTeachers={allTeachers}
           allCourses={allCourses}
           allStudents={allStudents}
@@ -104,12 +111,7 @@ export default function EditClassModal({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            form="class-form"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
+          <Button type="button" onClick={handleSubmit} disabled={loading}>
             {loading ? 'Updating...' : 'Update Class'}
           </Button>
         </DialogFooter>

@@ -1,3 +1,6 @@
+import courseApi from '@/apis/courses/courseAPI';
+import studentAPI from '@/apis/students/studentAPI';
+import teachersAPI from '@/apis/teachers/teachersAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,14 +12,11 @@ import {
 } from '@/components/ui/dialog';
 import { useEffect, useState } from 'react';
 import ClassForm from './ClassForm';
-import courseApi from '@/apis/courses/courseAPI';
-import studentAPI from '@/apis/students/studentAPI';
-import teachersAPI from '@/apis/teachers/teachersAPI';
 
 const initialState = {
   name: '',
-  teacherId: '',
-  courseIds: [],
+  mentorId: null,
+  courseId: null,
   studentIds: [],
 };
 
@@ -59,6 +59,10 @@ export default function CreateClassModal({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const formElement = document.getElementById('class-form');
+    if (formElement && !formElement.reportValidity()) {
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -102,12 +106,7 @@ export default function CreateClassModal({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            form="class-form"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
+          <Button type="button" onClick={handleSubmit} disabled={loading}>
             {loading ? 'Creating...' : 'Create Class'}
           </Button>
         </DialogFooter>

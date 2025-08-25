@@ -19,28 +19,30 @@ export default function ViewClassModal({ isOpen, onClose, classData }) {
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div>
-            <h4 className="font-semibold">Teacher</h4>
-            <p>{classData.teacher?.name || 'N/A'}</p>
+            <h4 className="font-semibold">Mentor</h4>
+            <p>
+              {classData.mentor
+                ? `${classData.mentor.first_name} ${classData.mentor.last_name}`
+                : 'N/A'}
+            </p>
           </div>
           <div>
-            <h4 className="font-semibold">Courses</h4>
-            <div className="flex flex-wrap gap-2">
-              {classData.courses?.map((course) => (
-                <Badge key={course.id} variant="secondary">
-                  {course.name}
-                </Badge>
-              )) || <p>No courses assigned.</p>}
-            </div>
+            <h4 className="font-semibold">Course</h4>
+            <p>{classData.course?.name || 'N/A'}</p>
           </div>
           <div>
             <h4 className="font-semibold">Students</h4>
             <div className="flex flex-wrap gap-2">
-              {classData.students?.map((student) => (
-                <Badge
-                  key={student.id}
-                  variant="outline"
-                >{`${student.firstName} ${student.lastName}`}</Badge>
-              )) || <p>No students enrolled.</p>}
+              {classData.students?.length > 0 ? (
+                classData.students.map((student) => (
+                  <Badge
+                    key={student.id}
+                    variant="outline"
+                  >{`${student.first_name} ${student.last_name}`}</Badge>
+                ))
+              ) : (
+                <p>No students enrolled.</p>
+              )}
             </div>
           </div>
         </div>

@@ -54,7 +54,7 @@ const YearPlanningTable = ({
             className="border-b border-neutral-200 hover:bg-neutral-50 text-lg text-neutral-700"
           >
             <TableCell className="font-medium">{item.name}</TableCell>
-            <TableCell> {item.date.split('T')[0]}</TableCell>
+            <TableCell> {item.date?.split('T')[0]}</TableCell>
             {/* <TableCell>{item.time}</TableCell> */}
             <TableCell className="text-right">
               <div className="flex items-center justify-end gap-x-2">

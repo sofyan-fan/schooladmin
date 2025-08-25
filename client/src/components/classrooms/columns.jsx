@@ -36,7 +36,7 @@ export const createColumns = ({ onEdit, onDelete }) => [
         <Button
           variant="ghost"
           className="h-8 w-8 p-0"
-          onClick={() => onDelete(row.original.id)}
+          onClick={() => onDelete(row.original)}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

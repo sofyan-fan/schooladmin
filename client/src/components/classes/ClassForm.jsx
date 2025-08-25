@@ -28,17 +28,8 @@ export default function ClassForm({
     }));
   };
 
-  const handleCourseChange = (courseId) => {
-    setFormData((prev) => ({
-      ...prev,
-      courseIds: prev.courseIds.includes(courseId)
-        ? prev.courseIds.filter((id) => id !== courseId)
-        : [...prev.courseIds, courseId],
-    }));
-  };
-
   return (
-    <form onSubmit={onSubmit} className="space-y-6 pt-2">
+    <form id="class-form" onSubmit={onSubmit} className="space-y-6 pt-2">
       <div className="space-y-2">
         <Label htmlFor="className">Class Name</Label>
         <Input
@@ -50,42 +41,48 @@ export default function ClassForm({
           disabled={loading}
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="teacher">Teacher</Label>
-        <Select
-          value={String(formData.teacherId)}
-          onValueChange={(value) =>
-            setFormData({ ...formData, teacherId: Number(value) })
-          }
-          disabled={loading}
-        >
-          <SelectTrigger id="teacher">
-            <SelectValue placeholder="Select a teacher..." />
-          </SelectTrigger>
-          <SelectContent>
-            {allTeachers.map((teacher) => (
-              <SelectItem key={teacher.id} value={String(teacher.id)}>
-                {`${teacher.first_name} ${teacher.last_name}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label>Courses</Label>
-        <div className="flex flex-wrap gap-2">
-          {allCourses.map((course) => (
-            <Button
-              key={course.id}
-              type="button"
-              variant={
-                formData.courseIds.includes(course.id) ? 'default' : 'outline'
-              }
-              onClick={() => handleCourseChange(course.id)}
-            >
-              {course.name}
-            </Button>
-          ))}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="mentor">Mentor</Label>
+          <Select
+            value={String(formData.mentorId)}
+            onValueChange={(value) =>
+              setFormData({ ...formData, mentorId: Number(value) })
+            }
+            disabled={loading}
+          >
+            <SelectTrigger id="mentor">
+              <SelectValue placeholder="Select a mentor..." />
+            </SelectTrigger>
+            <SelectContent>
+              {allTeachers.map((teacher) => (
+                <SelectItem key={teacher.id} value={String(teacher.id)}>
+                  {`${teacher.first_name} ${teacher.last_name}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="course">Course</Label>
+          <Select
+            value={String(formData.courseId)}
+            onValueChange={(value) =>
+              setFormData({ ...formData, courseId: Number(value) })
+            }
+            disabled={loading}
+          >
+            <SelectTrigger id="course">
+              <SelectValue placeholder="Select a course..." />
+            </SelectTrigger>
+            <SelectContent>
+              {allCourses.map((course) => (
+                <SelectItem key={course.id} value={String(course.id)}>
+                  {course.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="space-y-2">

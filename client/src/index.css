@@ -171,7 +171,75 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+
+  /* FullCalendar Custom Styles */
+  .fc {
+    --fc-border-color: var(--border);
+    --fc-daygrid-event-dot-width: 8px;
+    --fc-list-event-dot-width: 10px;
+    --fc-event-text-color: var(--foreground);
+    --fc-event-bg-color: var(--secondary);
+    --fc-event-border-color: var(--border);
+    --fc-more-link-bg-color: var(--muted);
+    --fc-more-link-text-color: var(--muted-foreground);
+    --fc-today-bg-color: var(--accent);
+    --fc-page-bg-color: var(--background);
+    --fc-day-header-bg-color: var(--card);
+  } 
+
+  .fc .fc-button {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
+    @apply transition-colors duration-200;
+    @apply rounded-md px-4 py-2 text-sm font-medium;
+    border: none;
+  }
+
+  .fc .fc-button-primary {
+    /* This class is used by FC, but we want a unified style */
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    border: none;
+  }
+
+  .fc .fc-button:disabled {
+    @apply bg-muted text-muted-foreground cursor-not-allowed;
+  }
+
+  .fc .fc-button-primary:not(:disabled).fc-button-active,
+  .fc .fc-button-primary:not(:disabled):active {
+    @apply bg-primary/80 ring-2 ring-offset-1 ring-primary-foreground/50;
+  }
+
+  .fc .fc-toolbar-title {
+    @apply text-xl font-bold text-foreground;
+  }
+
+  .fc .fc-col-header-cell-cushion {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  .fc .fc-daygrid-day-number {
+    @apply text-muted-foreground;
+  }
+
+  .fc .fc-event {
+    @apply rounded-md border p-1 shadow-sm;
+    cursor: pointer;
+  }
+
+  .fc .fc-event:hover {
+    @apply shadow-md;
+  }
+
+  .fc-direction-ltr .fc-daygrid-event.fc-event-start,
+  .fc-direction-rtl .fc-daygrid-event.fc-event-end {
+    border-radius: var(--radius-sm);
   }
 }

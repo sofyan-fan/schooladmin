@@ -1,10 +1,13 @@
 import classApi from '@/apis/classes/classAPI';
 import { createColumns } from '@/components/classes/columns';
 import CreateClassModal from '@/components/classes/CreateClassModal';
+import DeleteClassModal from '@/components/classes/DeleteClassModal';
 import EditClassModal from '@/components/classes/EditClassModal';
 import ViewClassModal from '@/components/classes/ViewClassModal';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
+import { toast } from 'sonner';
+
 import Toolbar from '@/components/shared/Toolbar';
 import { TableCell, TableRow } from '@/components/ui/table';
 import {
@@ -38,7 +41,7 @@ export default function ClassesPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openView, setOpenView] = useState(false);
-
+  const [openDelete, setOpenDelete] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -64,18 +67,46 @@ export default function ClassesPage() {
   }, []);
 
   const handleCreate = async (newClass) => {
-    await classApi.add_class(newClass);
-    fetchData();
+    try {
+      const addedClass = await classApi.add_class(newClass);
+      setClasses((prev) => [...prev, addedClass]);
+      toast.success('Class added successfully.');
+    } catch (err) {
+      toast.error(`Failed to add class: ${err.message}`);
+      throw err; // re-throw error so modal can catch it
+    }
   };
 
-  const handleUpdate = async (updatedClass) => {
-    await classApi.edit_class(updatedClass);
-    fetchData();
+  const handleUpdate = async (classData) => {
+    try {
+
+      const updatedClass = await classApi.update_class(classData);
+      setClasses((prev) =>
+        prev.map((c) => (c.id === updatedClass.id ? updatedClass : c))
+      );
+
+      toast.success('Class updated successfully.');
+      setOpenEdit(false);
+    } catch (err) {
+      toast.error(`Failed to update class: ${err.message}`);
+      throw err;
+    }
   };
 
   const handleDelete = async (id) => {
-    await classApi.delete_class(id);
-    fetchData();
+    try {
+      await classApi.delete_class(id);
+      setClasses((prev) => prev.filter((c) => c.id !== id));
+      toast.success('Class deleted successfully.');
+      setOpenDelete(false);
+    } catch (err) {
+      toast.error(`Failed to delete class: ${err.message}`);
+    }
+  };
+
+  const handleDeleteClick = (record) => {
+    setSelected(record);
+    setOpenDelete(true);
   };
 
   const handleView = (record) => {
@@ -93,7 +124,7 @@ export default function ClassesPage() {
       createColumns({
         onView: handleView,
         onEdit: handleEdit,
-        onDelete: handleDelete,
+        onDelete: handleDeleteClick,
       }),
     []
   );
@@ -148,6 +179,12 @@ export default function ClassesPage() {
         open={openEdit}
         onOpenChange={setOpenEdit}
         onSave={handleUpdate}
+        classData={selected}
+      />
+      <DeleteClassModal
+        isOpen={openDelete}
+        onClose={() => setOpenDelete(false)}
+        onDelete={() => handleDelete(selected?.id)}
         classData={selected}
       />
     </>

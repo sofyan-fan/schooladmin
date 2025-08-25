@@ -1,36 +1,33 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/subjects';
-
 export const get_subjects = async () => {
-  const response = await RequestHandler.get(BASE_URL);
-  // console.log('response:', response);
+  const { data } = await RequestHandler.get('/api/subjects');
+  return data;
+};
+
+export const add_subject = async (subjectData) => {
+  const response = await RequestHandler.post('/api/subjects', subjectData);
   return response.data;
 };
 
-export const add_subject = async (subject) => {
-  const response = await RequestHandler.post(BASE_URL, subject);
-  return response.data;
-};
-
-export const delete_subject = async (id) => {
-  const response = await RequestHandler.del(`${BASE_URL}/${id}`);
-  return response.data;
-};
-
-export const edit_subject = async (subject) => {
-  const response = await RequestHandler.put(
-    `${BASE_URL}/${subject.id}`,
-    subject
+export const update_subject = async (subjectData) => {
+  const { data } = await RequestHandler.put(
+    `/api/subjects/${subjectData.id}`,
+    subjectData
   );
-  return response.data;
+  return data;
 };
 
-const subjectApi = {
+export const delete_subject = async (subjectId) => {
+  await RequestHandler.del(`/api/subjects/${subjectId}`);
+  return subjectId;
+};
+
+const subjectAPI = {
   get_subjects,
   add_subject,
+  update_subject,
   delete_subject,
-  edit_subject,
 };
 
-export default subjectApi;
+export default subjectAPI;

@@ -7,6 +7,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
     accessorKey: 'name',
     header: ({ column }) => (
       <Button
+        type="button"
         className="hover:bg-transparent hover:text-primary text-lg"
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -17,24 +18,24 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
     ),
   },
   {
-    accessorKey: 'teacher',
-    header: 'Teacher',
+    accessorKey: 'mentor',
+    header: 'Mentor',
     cell: ({ row }) => {
-      const teacher = row.original.teacher;
-      return teacher ? `${teacher.first_name} ${teacher.last_name}` : 'N/A';
+      const mentor = row.original.mentor;
+      return mentor ? `${mentor.first_name} ${mentor.last_name}` : 'N/A';
     },
   },
   {
     accessorKey: 'students',
     header: 'Students',
-    cell: ({ row }) => row.original.students.length,
+    cell: ({ row }) => row.original.students?.length || 0,
   },
   {
-    accessorKey: 'courses',
-    header: 'Courses',
+    accessorKey: 'course',
+    header: 'Course',
     cell: ({ row }) => {
-      const courses = row.original.courses;
-      return courses.map((course) => course.name).join(', ');
+      const course = row.original.course;
+      return course ? course.name : 'N/A';
     },
   },
   {
@@ -42,6 +43,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
     cell: ({ row }) => (
       <div className="flex items-center space-x-2">
         <Button
+          type="button"
           variant="ghost"
           className="h-8 w-8 p-0"
           onClick={() => onView(row.original)}
@@ -50,6 +52,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           <Eye className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           className="h-8 w-8 p-0"
           onClick={() => onEdit(row.original)}
@@ -58,9 +61,10 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           <Pencil className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           className="h-8 w-8 p-0"
-          onClick={() => onDelete(row.original.id)}
+          onClick={() => onDelete(row.original)}
         >
           <span className="sr-only">Delete</span>
           <Trash2 className="h-4 w-4" />

@@ -1,37 +1,33 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/classes';
-
 export const get_classes = async () => {
-  const response = await RequestHandler.get(
-    `${BASE_URL}?_expand=teacher&_embed=courses&_embed=students`
-  );
-  return response.data;
+  const { data } = await RequestHandler.get('/api/class_layouts');
+  return data;
 };
 
 export const add_class = async (classData) => {
-  const response = await RequestHandler.post(BASE_URL, classData);
+  const response = await RequestHandler.post('/api/class_layouts', classData);
   return response.data;
 };
 
 export const delete_class = async (id) => {
-  const response = await RequestHandler.del(`${BASE_URL}/${id}`);
-  return response.data;
+  await RequestHandler.del(`/api/class_layouts/${id}`);
+  return id;
 };
 
-export const edit_class = async (classData) => {
+export const update_class = async (classData) => {
   const response = await RequestHandler.put(
-    `${BASE_URL}/${classData.id}`,
+    `/api/class_layouts/${classData.id}`,
     classData
   );
   return response.data;
 };
 
-const classApi = {
+const classAPI = {
   get_classes,
   add_class,
   delete_class,
-  edit_class,
+  update_class,
 };
 
-export default classApi;
+export default classAPI;

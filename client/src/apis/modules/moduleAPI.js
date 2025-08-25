@@ -1,32 +1,33 @@
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/modules';
+const moduleAPI = {
+  async get_modules() {
+    const response = await RequestHandler.get('/api/modules');
+    return response.data;
+  },
 
-export const get_modules = async () => {
-  const response = await RequestHandler.get(BASE_URL);
-  return response.data;
+  async get_module_details(moduleId) {
+    const response = await RequestHandler.get(`/api/modules/${moduleId}`);
+    return response.data;
+  },
+
+  async add_module(moduleData) {
+    const response = await RequestHandler.post('/api/modules', moduleData);
+    return response.data;
+  },
+
+  async update_module(moduleData) {
+    const response = await RequestHandler.put(
+      `/api/modules/${moduleData.id}`,
+      moduleData
+    );
+    return response.data;
+  },
+
+  async delete_module(moduleId) {
+    await RequestHandler.del(`/api/modules/${moduleId}`);
+    return moduleId;
+  },
 };
 
-export const add_module = async (module) => {
-  const response = await RequestHandler.post(BASE_URL, module);
-  return response.data;
-};
-
-export const delete_module = async (id) => {
-  const response = await RequestHandler.del(`${BASE_URL}/${id}`);
-  return response.data;
-};
-
-export const edit_module = async (module) => {
-  const response = await RequestHandler.put(`${BASE_URL}/${module.id}`, module);
-  return response.data;
-};
-
-const moduleApi = {
-  get_modules,
-  add_module,
-  delete_module,
-  edit_module,
-};
-
-export default moduleApi;
+export default moduleAPI;

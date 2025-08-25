@@ -1,34 +1,36 @@
-
 import RequestHandler from '../RequestHandler';
 
-const BASE_URL = '/courses'; // The base URL is now /courses
-
-export const get_courses = async () => {
-  const response = await RequestHandler.get(BASE_URL);
-  return response.data;
-};
-
-// This function will now send moduleIds
-export const add_course = async (course) => {
-  const response = await RequestHandler.post(BASE_URL, course);
-  return response.data;
-};
-
-export const delete_course = async (id) => {
-  const response = await RequestHandler.del(`${BASE_URL}/${id}`);
-  return response.data;
-};
-
-export const edit_course = async (course) => {
-  const response = await RequestHandler.put(`${BASE_URL}/${course.id}`, course);
-  return response.data;
-};
-
 const courseApi = {
-  get_courses,
-  add_course,
-  delete_course,
-  edit_course,
+  async get_courses() {
+    const response = await RequestHandler.get('/api/courses');
+    return response.data;
+  },
+
+  async get_course_modules(courseId) {
+    // This endpoint seems to fetch enriched modules, maybe adjust if you have a specific one per course
+    const response = await RequestHandler.get(
+      `/api/courses/${courseId}/modules`
+    );
+    return response.data;
+  },
+
+  async add_course(courseData) {
+    const response = await RequestHandler.post('/api/courses', courseData);
+    return response.data;
+  },
+
+  async update_course(courseData) {
+    const response = await RequestHandler.put(
+      `/api/courses/${courseData.id}`,
+      courseData
+    );
+    return response.data;
+  },
+
+  async delete_course(courseId) {
+    await RequestHandler.del(`/api/courses/${courseId}`);
+    return courseId;
+  },
 };
 
 export default courseApi;

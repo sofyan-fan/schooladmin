@@ -39,7 +39,7 @@ export default function ClassroomForm({ defaultValues, onSave, isEditing }) {
             <FormItem>
               <FormLabel>Naam</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Lokaal 101" {...field} />
+                <Input placeholder="Klaslokaal naam" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -52,7 +52,7 @@ export default function ClassroomForm({ defaultValues, onSave, isEditing }) {
             <FormItem>
               <FormLabel>Max. Studenten</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="e.g., 25" {...field} />
+                <Input type="number" placeholder="Max. studenten" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -1,21 +1,5 @@
 {
   "/api/*": "/$1",
   "/auth/login": "/login",
-  "/auth/register": "/register",
-  "/dashboard/event": "/events",
-  "/dashboard/event/:id": "/events/:id",
-  "/dashboard/roster": "/rosters",
-  "/dashboard/roster/:id": "/rosters/:id",
-  "/users": "/users",
-  "/teachers": "/teachers",
-  "/students": "/students",
-  "/dashboard/events": "/events",
-  "/subjects": "/subjects",
-  "/modules": "/modules",
-  "/courses": "/courses",
-  "/classes": "/classes",
-  "/rosters": "/rosters",
-  "/classrooms": "/classrooms",
-  "/tests": "/tests",
-  "/exams": "/exams"
+  "/auth/register": "/register"
 }
