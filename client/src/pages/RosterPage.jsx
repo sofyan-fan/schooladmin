@@ -1,5 +1,5 @@
 import { get_classes } from '@/apis/classes/classAPI';
-import { get_classrooms } from '@/apis/classrooms/classroomAPI';
+import { getClassrooms } from '@/apis/classrooms/classroomAPI';
 import rosterAPI from '@/apis/rosters/rosterAPI';
 import { get_teachers } from '@/apis/teachers/teachersAPI';
 import RosterEventModal from '@/components/rosters/RosterEventModal';
@@ -68,7 +68,7 @@ export default function RosterPage() {
         const [layouts, teachersData, classroomsData] = await Promise.all([
           get_classes(),
           get_teachers(),
-          get_classrooms(),
+          getClassrooms(),
         ]);
         setClassLayouts(layouts || []);
         setTeachers(teachersData || []);

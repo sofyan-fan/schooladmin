@@ -1,16 +1,16 @@
 import RequestHandler from '../RequestHandler';
 
-export const get_classrooms = async () => {
+export const getClassrooms = async () => {
   const { data } = await RequestHandler.get('/api/classrooms');
   return data;
 };
 
-export const add_classroom = async (classroomData) => {
+export const addClassroom = async (classroomData) => {
   const response = await RequestHandler.post('/api/classrooms', classroomData);
   return response.data;
 };
 
-export const update_classroom = async (classroomData) => {
+export const updateClassroom = async (classroomData) => {
   const { data } = await RequestHandler.put(
     `/api/classrooms/${classroomData.id}`,
     classroomData
@@ -18,16 +18,16 @@ export const update_classroom = async (classroomData) => {
   return data;
 };
 
-export const delete_classroom = async (classroomId) => {
+export const deleteClassroom = async (classroomId) => {
   await RequestHandler.del(`/api/classrooms/${classroomId}`);
   return classroomId;
 };
 
 const classroomAPI = {
-  get_classrooms,
-  add_classroom,
-  update_classroom,
-  delete_classroom,
+  getClassrooms,
+  addClassroom,
+  updateClassroom,
+  deleteClassroom,
 };
 
 export default classroomAPI;

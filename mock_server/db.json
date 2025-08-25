@@ -236,7 +236,11 @@
     {
       "id": 1,
       "name": "Geloofsleer",
-      "levels": ["Beginner", "Middel", "Gevorderd"],
+      "levels": [
+        "Beginner",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "De basis van het geloof",
         "Eenheid van Allah",
@@ -246,7 +250,11 @@
     {
       "id": 2,
       "name": "Fiqh",
-      "levels": ["Inleiding", "Aanbidding", "Dagelijks leven"],
+      "levels": [
+        "Inleiding",
+        "Aanbidding",
+        "Dagelijks leven"
+      ],
       "materials": [
         "Regels van gebed",
         "Zuivering en wassing",
@@ -270,7 +278,11 @@
     {
       "id": 4,
       "name": "Hadith",
-      "levels": ["Basis", "Middel", "Gevorderd"],
+      "levels": [
+        "Basis",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "40 Hadith",
         "Hadith over goed gedrag",
@@ -280,7 +292,11 @@
     {
       "id": 5,
       "name": "Seerah",
-      "levels": ["Vroege leven", "Mekka-periode", "Madinah-periode"],
+      "levels": [
+        "Vroege leven",
+        "Mekka-periode",
+        "Madinah-periode"
+      ],
       "materials": [
         "Verhalen uit het leven van de Profeet",
         "Zijn karakter",
@@ -290,7 +306,11 @@
     {
       "id": 6,
       "name": "Arabisch",
-      "levels": ["Alfabet", "Woorden", "Zinnen en verhalen"],
+      "levels": [
+        "Alfabet",
+        "Woorden",
+        "Zinnen en verhalen"
+      ],
       "materials": [
         "Arabisch leren lezen",
         "Eenvoudige woorden",
@@ -300,7 +320,11 @@
     {
       "id": 7,
       "name": "Tajweed",
-      "levels": ["Basisregels", "Meer regels", "Praktijk"],
+      "levels": [
+        "Basisregels",
+        "Meer regels",
+        "Praktijk"
+      ],
       "materials": [
         "Uitspraken van letters",
         "Regels van recitatie",
@@ -310,7 +334,11 @@
     {
       "id": 8,
       "name": "Grondslagen van Fiqh",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Hoe regels worden gemaakt",
         "Eenvoudige uitleg",
@@ -320,7 +348,11 @@
     {
       "id": 9,
       "name": "Grondslagen van Tafsir",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Hoe de Qur’an wordt uitgelegd",
         "Belangrijkste principes",
@@ -330,7 +362,11 @@
     {
       "id": 10,
       "name": "Hadithwetenschappen",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Hoe Hadith verzameld werden",
         "Betrouwbaarheid",
@@ -340,7 +376,11 @@
     {
       "id": 11,
       "name": "Tazkiyah",
-      "levels": ["Inleiding", "Praktijk", "Verdere verdieping"],
+      "levels": [
+        "Inleiding",
+        "Praktijk",
+        "Verdere verdieping"
+      ],
       "materials": [
         "Verhalen over goede daden",
         "Hoe je jezelf zuivert",
@@ -350,7 +390,11 @@
     {
       "id": 12,
       "name": "Islamitische Geschiedenis",
-      "levels": ["Vroege Islam", "Kaliefen", "Verspreiding van Islam"],
+      "levels": [
+        "Vroege Islam",
+        "Kaliefen",
+        "Verspreiding van Islam"
+      ],
       "materials": [
         "Verhalen van de Sahabah",
         "Belangrijke leiders",
@@ -360,7 +404,11 @@
     {
       "id": 13,
       "name": "Koran uit het hoofd leren",
-      "levels": ["Korte soerahs", "Middelgrote soerahs", "Lange soerahs"],
+      "levels": [
+        "Korte soerahs",
+        "Middelgrote soerahs",
+        "Lange soerahs"
+      ],
       "materials": [
         "Dagelijkse leesplannen",
         "Herhalingsschema’s",
@@ -370,13 +418,25 @@
     {
       "id": 14,
       "name": "Vergelijkende Religies",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
-      "materials": ["Basisverschillen", "Overeenkomsten", "Eenvoudige uitleg"]
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
+      "materials": [
+        "Basisverschillen",
+        "Overeenkomsten",
+        "Eenvoudige uitleg"
+      ]
     },
     {
       "id": 15,
       "name": "Islamitische Ethiek",
-      "levels": ["Inleiding", "Voorbeelden", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Toepassing"
+      ],
       "materials": [
         "Verhalen over goed gedrag",
         "Voorbeelden van de Profeet",
@@ -386,7 +446,11 @@
     {
       "id": 16,
       "name": "Gezinsfiqh",
-      "levels": ["Huwelijk", "Opvoeding", "Gezinsleven"],
+      "levels": [
+        "Huwelijk",
+        "Opvoeding",
+        "Gezinsleven"
+      ],
       "materials": [
         "Regels voor gezin",
         "Tips voor ouders",
@@ -396,7 +460,11 @@
     {
       "id": 17,
       "name": "Da'wah",
-      "levels": ["Inleiding", "Voorbeelden", "Praktijk"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Praktijk"
+      ],
       "materials": [
         "Hoe kennis te delen",
         "Eenvoudige methodes",
@@ -406,7 +474,11 @@
     {
       "id": 18,
       "name": "Islamitische Financiën",
-      "levels": ["Inleiding", "Voorbeelden", "Praktijk"],
+      "levels": [
+        "Inleiding",
+        "Voorbeelden",
+        "Praktijk"
+      ],
       "materials": [
         "Wat is halal en haram",
         "Voorbeelden uit het dagelijks leven",
@@ -416,7 +488,11 @@
     {
       "id": 19,
       "name": "Kalligrafie",
-      "levels": ["Beginner", "Middel", "Gevorderd"],
+      "levels": [
+        "Beginner",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "Schrijfopdrachten",
         "Oefenmateriaal",
@@ -426,7 +502,11 @@
     {
       "id": 20,
       "name": "Logica",
-      "levels": ["Inleiding", "Oefeningen", "Toepassing"],
+      "levels": [
+        "Inleiding",
+        "Oefeningen",
+        "Toepassing"
+      ],
       "materials": [
         "Eenvoudige puzzels",
         "Logisch denken",
@@ -436,7 +516,11 @@
     {
       "id": 21,
       "name": "Manieren van Recitatie",
-      "levels": ["Basis", "Middel", "Gevorderd"],
+      "levels": [
+        "Basis",
+        "Middel",
+        "Gevorderd"
+      ],
       "materials": [
         "Luistersessies",
         "Praktische oefening",
@@ -584,13 +668,20 @@
       "name": "Weekendprogramma Kinderen",
       "price": 250,
       "description": "Een all-inclusive pakket voor weekendlessen, gericht op jonge leerlingen.",
-      "moduleIds": [1, 3]
+      "moduleIds": [
+        1,
+        3
+      ]
     },
     {
       "name": "Nog een lespakket",
       "description": "fdafdafdsafaf",
       "price": 123,
-      "moduleIds": [2, 3, 4],
+      "moduleIds": [
+        2,
+        3,
+        4
+      ],
       "id": 2
     }
   ],
@@ -600,21 +691,43 @@
       "name": "Groep B",
       "mentorId": 1,
       "courseId": 2,
-      "studentIds": [2, 1, 4]
+      "studentIds": [
+        2,
+        1,
+        4
+      ]
     },
     {
-      "name": "fdsaas",
+      "name": "Groep A",
       "mentorId": 1,
       "courseId": 1,
-      "studentIds": [1, 4],
+      "studentIds": [
+        1,
+        4
+      ],
       "id": 2
     },
     {
-      "name": "dsadsadadads",
+      "name": "Groep C",
       "mentorId": 1,
       "courseId": 2,
-      "studentIds": [4, 3, 2],
+      "studentIds": [
+        4,
+        3,
+        2
+      ],
       "id": 3
+    },
+    {
+      "name": "Groep D",
+      "mentorId": 1,
+      "courseId": 2,
+      "studentIds": [
+        2,
+        4,
+        5
+      ],
+      "id": 4
     }
   ],
   "tests": [
@@ -637,19 +750,23 @@
       "maxScore": 100
     }
   ],
-  "rosters": [],
+  "rosters": [
+    {
+      "title": "asdad",
+      "start": "2025-08-25T06:30:00+02:00",
+      "end": "2025-08-25T10:30:00+02:00",
+      "classLayoutId": "2",
+      "teacherId": "1",
+      "classroomId": "4",
+      "id": 1
+    }
+  ],
   "classrooms": [
     {
       "id": 2,
-      "name": "Computerlokaal",
+      "name": "Computerlokaall",
       "max_students": 20,
       "description": "Lokaal uitgerust met 20 computers."
-    },
-    {
-      "id": 3,
-      "name": "Gymzaal",
-      "max_students": 40,
-      "description": "Grote zaal voor sportactiviteiten."
     },
     {
       "name": "121",

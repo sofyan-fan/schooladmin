@@ -1,5 +1,5 @@
 import { get_classes } from '@/apis/classes/classAPI';
-import { get_classrooms } from '@/apis/classrooms/classroomAPI';
+import { getClassrooms } from '@/apis/classrooms/classroomAPI';
 import { get_teachers } from '@/apis/teachers/teachersAPI';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,11 +38,11 @@ const formSchema = z.object({
 });
 
 export default function RosterEventModal({
-  isOpen,
-  onClose,
-  onSubmit,
+  open,
+  onOpenChange,
+  onSave,
   onDelete,
-  event,
+  initialEvent,
 }) {
   const [teachers, setTeachers] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
@@ -59,12 +59,12 @@ export default function RosterEventModal({
   });
 
   useEffect(() => {
-    if (event) {
+    if (initialEvent) {
       form.reset({
-        title: event.title || '',
-        classLayoutId: event.classLayoutId?.toString() || '',
-        teacherId: event.teacherId?.toString() || '',
-        classroomId: event.classroomId?.toString() || '',
+        title: initialEvent.title || '',
+        classLayoutId: initialEvent.classLayoutId?.toString() || '',
+        teacherId: initialEvent.teacherId?.toString() || '',
+        classroomId: initialEvent.classroomId?.toString() || '',
       });
     } else {
       form.reset({
@@ -74,7 +74,7 @@ export default function RosterEventModal({
         classroomId: '',
       });
     }
-  }, [event, form]);
+  }, [initialEvent, form]);
 
   useEffect(() => {
     async function fetchData() {
@@ -82,7 +82,7 @@ export default function RosterEventModal({
         const [teachersData, classroomsData, classLayoutsData] =
           await Promise.all([
             get_teachers(),
-            get_classrooms(),
+            getClassrooms(),
             get_classes(), // Assuming get_classes fetches class_layouts
           ]);
         setTeachers(teachersData || []);
@@ -96,15 +96,17 @@ export default function RosterEventModal({
   }, []);
 
   const handleSubmit = (values) => {
-    onSubmit({ ...event, ...values });
-    onClose();
+    onSave({ ...initialEvent, ...values });
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{event?.id ? 'Edit Event' : 'Create Event'}</DialogTitle>
+          <DialogTitle>
+            {initialEvent?.id ? 'Edit Event' : 'Create Event'}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -216,13 +218,13 @@ export default function RosterEventModal({
             />
             <DialogFooter className="flex justify-between sm:justify-between">
               <div>
-                {event?.id && (
+                {initialEvent?.id && (
                   <Button
                     type="button"
                     variant="destructive"
                     onClick={() => {
-                      onDelete(event.id);
-                      onClose();
+                      onDelete(initialEvent);
+                      onOpenChange(false);
                     }}
                   >
                     Delete
@@ -230,7 +232,11 @@ export default function RosterEventModal({
                 )}
               </div>
               <div className="flex space-x-2">
-                <Button type="button" variant="ghost" onClick={onClose}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit">Save</Button>
