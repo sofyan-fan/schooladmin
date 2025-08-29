@@ -46,6 +46,8 @@ model student {
   absences          absence[]
   payments          tuition_payment[]
   results           result[]
+
+  student_log student_log[]
 }
 
 model teacher {
@@ -323,4 +325,21 @@ model time_registration {
   updated_at   DateTime  @updatedAt
 
   @@index([teacher_id, week_start, week_end])
+}
+
+model student_log {
+  id          Int      @id @default(autoincrement())
+  
+  student     student  @relation(fields: [student_id], references: [id])
+  student_id  Int
+
+  date        DateTime
+  start_log   String
+  end_log     String
+  completed   Boolean  @default(false)
+  comment     String?
+
+  created_at  DateTime @default(now())
+
+  @@index([student_id, date])
 }
