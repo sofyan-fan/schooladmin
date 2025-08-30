@@ -13,7 +13,7 @@ exports.create_classroom = async (req, res) => {
             data: {
                 name,
                 capacity,
-                description
+                 
             },
         });
 
