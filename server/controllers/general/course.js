@@ -5,12 +5,6 @@ exports.get_all_courses = async (req, res) => {
   try {
     const courses = await prisma.courses.findMany({
       include: {
-        subjects: {
-          include: {
-            levels: true,
-            materials: true,
-          },
-        },
         course_module: {
           include: {
             subjects: {
@@ -36,13 +30,7 @@ exports.get_all_courses = async (req, res) => {
 };
 
 exports.create_course = async (req, res) => {
-  const {
-    name,
-    description,
-    price,
-    subject_ids,
-    modules,
-  } = req.body;
+  const { name, description, price, modules } = req.body;
 
   try {
     const course = await prisma.courses.create({
@@ -50,21 +38,20 @@ exports.create_course = async (req, res) => {
         name,
         description,
         price,
-        subjects: {
-          connect: subject_ids.map(id => ({ id })),
-        },
-        course_module: modules ? {
-          create: modules.map(mod => ({
-            name: mod.name,
-            subjects: {
-              create: mod.subjects.map(sub => ({
-                subject_id: sub.subject_id,
-                level: sub.level,
-                material: sub.material,
+        course_module: modules
+          ? {
+              create: modules.map((mod) => ({
+                name: mod.name,
+                subjects: {
+                  create: mod.subjects.map((sub) => ({
+                    subject_id: sub.subject_id,
+                    level: sub.level,
+                    material: sub.material,
+                  })),
+                },
               })),
-            },
-          })),
-        } : undefined,
+            }
+          : undefined,
       },
       include: {
         course_module: {
@@ -88,69 +75,45 @@ exports.create_course = async (req, res) => {
 
 exports.update_course = async (req, res) => {
   const { id } = req.params;
-  const {
-    name,
-    description,
-    price,
-    subject_ids,
-    modules,
-  } = req.body;
+  const { name, description, price, modules } = req.body;
 
   try {
     const existingCourse = await prisma.courses.findUnique({
       where: { id: Number(id) },
-      include: { course_module: true },
     });
 
     if (!existingCourse) {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    // Disconnect all current subjects
-    await prisma.courses.update({
-      where: { id: Number(id)},
-      data: {
-        subjects: {
-          set: [], // disconnect all subjects
-        },
-      },
-    });
-
-    // Delete all course modules (and cascade their subjects)
+    // Delete all modules (and cascade their subjects)
     await prisma.course_module.deleteMany({
       where: { course_id: Number(id) },
     });
 
-    // Update the course with new values
+    // Update base course + recreate modules
     const updatedCourse = await prisma.courses.update({
       where: { id: Number(id) },
       data: {
         name,
         description,
         price,
-        subjects: {
-          connect: subject_ids.map(id => ({ id })), // connect new subjects
-        },
-        course_module: modules ? {
-          create: modules.map(mod => ({
-            name: mod.name,
-            subjects: {
-              create: mod.subjects.map(sub => ({
-                subject_id: sub.subject_id,
-                level: sub.level,
-                material: sub.material,
+        course_module: modules
+          ? {
+              create: modules.map((mod) => ({
+                name: mod.name,
+                subjects: {
+                  create: mod.subjects.map((sub) => ({
+                    subject_id: sub.subject_id,
+                    level: sub.level,
+                    material: sub.material,
+                  })),
+                },
               })),
-            },
-          })),
-        } : undefined,
+            }
+          : undefined,
       },
       include: {
-        subjects: {
-          include: {
-            levels: true,
-            materials: true,
-          },
-        },
         course_module: {
           include: {
             subjects: {
@@ -181,19 +144,18 @@ exports.delete_course = async (req, res) => {
   try {
     const existingCourse = await prisma.courses.findUnique({
       where: { id: Number(id) },
-      include: { course_module: true },
     });
 
     if (!existingCourse) {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    // Delete course modules (and cascade their subjects)
+    // Delete course modules (cascade)
     await prisma.course_module.deleteMany({
       where: { course_id: Number(id) },
     });
 
-    // Delete course
+    // Delete course itself
     await prisma.courses.delete({
       where: { id: Number(id) },
     });
@@ -227,11 +189,7 @@ exports.get_all_modules = async (req, res) => {
 };
 
 exports.create_module = async (req, res) => {
-  const {
-    name,
-    course_id,
-    subjects,
-  } = req.body;
+  const { name, course_id, subjects } = req.body;
 
   try {
     const courseModule = await prisma.course_module.create({
@@ -239,7 +197,7 @@ exports.create_module = async (req, res) => {
         name,
         course_id,
         subjects: {
-          create: subjects.map(sub => ({
+          create: subjects.map((sub) => ({
             subject_id: sub.subject_id,
             level: sub.level,
             material: sub.material,
@@ -268,30 +226,24 @@ exports.update_module = async (req, res) => {
   try {
     const existingModule = await prisma.course_module.findUnique({
       where: { id: Number(id) },
-      include: { subjects: true },
     });
 
     if (!existingModule) {
       return res.status(404).json({ error: 'Module not found' });
     }
 
-    // Disconnect all current subjects
-    await prisma.course_module.update({
-      where: { id: Number(id)},
-      data: {
-        subjects: {
-          set: [], // disconnect all subjects
-        },
-      },
+    // Delete old subjects
+    await prisma.course_module_subject.deleteMany({
+      where: { course_module_id: Number(id) },
     });
 
-    // Update the module with new name and subjects
+    // Update module + add new subjects
     const updatedModule = await prisma.course_module.update({
       where: { id: Number(id) },
       data: {
         name,
         subjects: {
-          create: subjects.map(sub => ({
+          create: subjects.map((sub) => ({
             subject_id: sub.subject_id,
             level: sub.level,
             material: sub.material,
@@ -320,21 +272,20 @@ exports.delete_module = async (req, res) => {
   try {
     const existingModule = await prisma.course_module.findUnique({
       where: { id: Number(id) },
-      include: { subjects: true },
     });
 
     if (!existingModule) {
       return res.status(404).json({ error: 'Module not found' });
     }
 
-    // Delete the module's subjects
+    // Delete module subjects
     await prisma.course_module_subject.deleteMany({
       where: { course_module_id: Number(id) },
     });
 
-    // Delete the course module
+    // Delete module itself
     await prisma.course_module.delete({
-      where: {  id: Number(id) },
+      where: { id: Number(id) },
     });
 
     res.status(200).json({ message: 'Course module deleted successfully' });
