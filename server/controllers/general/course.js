@@ -87,8 +87,8 @@ exports.create_course = async (req, res) => {
 };
 
 exports.update_course = async (req, res) => {
+  const { id } = req.params;
   const {
-    id,
     name,
     description,
     price,
@@ -118,7 +118,7 @@ exports.update_course = async (req, res) => {
 
     // Delete all course modules (and cascade their subjects)
     await prisma.course_module.deleteMany({
-      where: { course_id: id },
+      where: { course_id: Number(id) },
     });
 
     // Update the course with new values
@@ -190,7 +190,7 @@ exports.delete_course = async (req, res) => {
 
     // Delete course modules (and cascade their subjects)
     await prisma.course_module.deleteMany({
-      where: { course_id: id },
+      where: { course_id: Number(id) },
     });
 
     // Delete course
@@ -262,7 +262,8 @@ exports.create_module = async (req, res) => {
 };
 
 exports.update_module = async (req, res) => {
-  const { id, name, subjects } = req.body;
+  const { id } = req.params;
+  const { name, subjects } = req.body;
 
   try {
     const existingModule = await prisma.course_module.findUnique({
@@ -328,7 +329,7 @@ exports.delete_module = async (req, res) => {
 
     // Delete the module's subjects
     await prisma.course_module_subject.deleteMany({
-      where: { course_module_id: id },
+      where: { course_module_id: Number(id) },
     });
 
     // Delete the course module
