@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
   const [name, setName] = useState('');
@@ -38,9 +38,34 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
     }
   }, [open]);
 
-  const selectedSubject = Array.isArray(subjects)
-    ? subjects.find((s) => s.id === Number(selectedSubjectId))
-    : undefined;
+  const selectedSubject = useMemo(() => {
+    if (!Array.isArray(subjects)) return undefined;
+    return subjects.find((s) => String(s.id) === String(selectedSubjectId));
+  }, [subjects, selectedSubjectId]);
+
+  const normalizedLevels = useMemo(() => {
+    const raw = selectedSubject?.levels || [];
+    return raw.map((lvl, idx) => {
+      if (lvl && typeof lvl === 'object') {
+        const id = String(lvl.id ?? idx);
+        const label = String(lvl.level ?? lvl.name ?? lvl.label ?? id);
+        return { id, label };
+      }
+      return { id: String(lvl), label: String(lvl) };
+    });
+  }, [selectedSubject]);
+
+  const normalizedMaterials = useMemo(() => {
+    const raw = selectedSubject?.materials || [];
+    return raw.map((mat, idx) => {
+      if (mat && typeof mat === 'object') {
+        const id = String(mat.id ?? idx);
+        const label = String(mat.material ?? mat.name ?? mat.title ?? id);
+        return { id, label };
+      }
+      return { id: String(mat), label: String(mat) };
+    });
+  }, [selectedSubject]);
 
   const resetComboInputs = () => {
     setSelectedSubjectId('');
@@ -50,13 +75,23 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
 
   const handleAddCombo = () => {
     if (!selectedSubjectId || !selectedLevel || !selectedMaterial) return;
+
+    const levelObj = normalizedLevels.find(
+      (l) => String(l.id) === String(selectedLevel)
+    );
+    const materialObj = normalizedMaterials.find(
+      (m) => String(m.id) === String(selectedMaterial)
+    );
+
     setModuleItems((prev) => [
       ...prev,
       {
         subjectId: Number(selectedSubjectId),
         subjectName: selectedSubject?.name || '',
-        level: selectedLevel,
-        material: selectedMaterial,
+        levelId: levelObj?.id || '',
+        levelLabel: levelObj?.label || '',
+        materialId: materialObj?.id || '',
+        materialLabel: materialObj?.label || '',
       },
     ]);
     resetComboInputs();
@@ -82,14 +117,14 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
       await onSave({
         name: name.trim(),
         subjects: moduleItems.map(
-          ({ subjectId, subjectName, level, material }) => ({
-            subjectId,
-            subjectName,
-            level,
-            material,
+          ({ subjectId, levelLabel, materialLabel }) => ({
+            subject_id: Number(subjectId),
+            level: String(levelLabel),
+            material: String(materialLabel),
           })
         ),
       });
+      onOpenChange(false);
     } catch (err) {
       setError(err.message || 'Kon de module niet opslaan. Probeer opnieuw.');
     } finally {
@@ -155,9 +190,9 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
                   <SelectValue placeholder="Kies niveau..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {(selectedSubject?.levels || []).map((level, index) => (
-                    <SelectItem key={index} value={level}>
-                      {level}
+                  {normalizedLevels.map((lvl) => (
+                    <SelectItem key={lvl.id} value={lvl.id}>
+                      {lvl.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -174,9 +209,9 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
                   <SelectValue placeholder="Kies literatuur..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {(selectedSubject?.materials || []).map((material, index) => (
-                    <SelectItem key={index} value={material}>
-                      {material}
+                  {normalizedMaterials.map((mat) => (
+                    <SelectItem key={mat.id} value={mat.id}>
+                      {mat.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -205,12 +240,13 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
               {moduleItems.length > 0 ? (
                 moduleItems.map((item, i) => (
                   <Badge
-                    key={i}
+                    key={`${item.subjectId}-${item.levelId}-${item.materialId}-${i}`}
                     variant="secondary"
                     className="flex items-center gap-2 py-1.5 px-3 text-sm"
                   >
                     <span>
-                      {item.subjectName} – {item.level} – {item.material}
+                      {item.subjectName} – {item.levelLabel} –{' '}
+                      {item.materialLabel}
                     </span>
                     <button
                       type="button"

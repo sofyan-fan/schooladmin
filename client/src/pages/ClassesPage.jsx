@@ -1,4 +1,4 @@
-import classApi from '@/apis/classes/classAPI';
+import classApi from '@/apis/classAPI';
 import { createColumns } from '@/components/classes/columns';
 import CreateClassModal from '@/components/classes/CreateClassModal';
 import DeleteClassModal from '@/components/classes/DeleteClassModal';

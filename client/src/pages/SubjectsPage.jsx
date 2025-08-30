@@ -1,4 +1,4 @@
-import subjectAPI from '@/apis/subjects/subjectAPI';
+import subjectAPI from '@/apis/subjectAPI';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
@@ -105,11 +105,32 @@ const SubjectsPage = () => {
       .finally(() => setLoading(false));
   };
 
-  const handleSaveSubject = () => {
+  const handleSaveSubject = (subjectToSave) => {
+    const formattedSubject = {
+      ...subjectToSave,
+      levels: subjectToSave.levels.map((l) =>
+        typeof l === 'object' ? l.level : l
+      ),
+      materials: subjectToSave.materials.map((m) =>
+        typeof m === 'object' ? m.material : m
+      ),
+    };
+
+    setSubjects((prevSubjects) => {
+      const subjectExists = prevSubjects.find(
+        (s) => s.id === formattedSubject.id
+      );
+      if (subjectExists) {
+        return prevSubjects.map((s) =>
+          s.id === formattedSubject.id ? formattedSubject : s
+        );
+      }
+      return [...prevSubjects, formattedSubject];
+    });
+
     setIsCreateModalOpen(false);
     setIsEditModalOpen(false);
     setEditingSubject(null);
-    fetchSubjects();
   };
 
   const handleCancelDelete = () => {

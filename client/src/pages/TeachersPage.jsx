@@ -1,4 +1,4 @@
-import teachersAPI from '@/apis/teachers/teachersAPI';
+import teachersAPI from '@/apis/teachersAPI';
 import ProfileCard from '@/components/general/ProfileCard';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
@@ -104,7 +104,10 @@ export default function TeachersPage() {
         (key) => payload[key] === undefined && delete payload[key]
       );
 
-      const response = await teachersAPI.update_teacher(updated.id, payload);
+      const response = await teachersAPI.update_teacher({
+        id: updated.id,
+        ...payload,
+      });
 
       const mapped = {
         id: response.id,

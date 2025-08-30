@@ -34,7 +34,10 @@ export const ModuleCard = ({ module, onEdit, onDelete, onView }) => {
         <div className="flex justify-between items-start gap-4">
           <div>
             {/* Added truncate to the title for safety against very long module names */}
-            <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors truncate" title={name}>
+            <CardTitle
+              className="text-xl font-bold group-hover:text-primary transition-colors truncate"
+              title={name}
+            >
               {name}
             </CardTitle>
             <CardDescription>
@@ -83,15 +86,24 @@ export const ModuleCard = ({ module, onEdit, onDelete, onView }) => {
         <div className="min-h-[4.5rem] flex flex-col justify-center">
           {subjects.length > 0 ? (
             <div className="space-y-3">
-              {displayedSubjects.map((subject) => (
+              {displayedSubjects.map((subject, index) => (
                 <div
-                  key={subject.subjectId}
+                  key={
+                    subject.id ||
+                    `${subject.subject_id}-${subject.level}-${index}`
+                  }
                   className="flex items-center justify-between gap-4"
                 >
-                  <span className="text-sm font-medium text-foreground truncate" title={subject.subjectName}>
-                    {subject.subjectName}
+                  <span
+                    className="text-sm font-medium text-foreground truncate"
+                    title={subject.subject?.name || subject.subjectName}
+                  >
+                    {subject.subject?.name || subject.subjectName}
                   </span>
-                  <Badge variant="outline" className="flex-shrink-0 font-normal">
+                  <Badge
+                    variant="outline"
+                    className="flex-shrink-0 font-normal"
+                  >
                     {subject.level}
                   </Badge>
                 </div>

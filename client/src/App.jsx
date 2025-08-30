@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import LayoutWrapper from './components/layout/LayoutWrapper';
 import { useAuth } from './hooks/useAuth';
+
 import AssessmentsPage from './pages/AssessmentsPage';
 import ClassesPage from './pages/ClassesPage';
 // import ClassLayoutsPage from './pages/ClassLayoutsPage';
@@ -19,9 +20,13 @@ import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
 
+// import { useAuth } from './hooks/useAuth';
+
+// const user_role = useAuth();
+// console.log('user_role', user_role);
+
 const App = () => {
   const { isAuthenticated } = useAuth();
-
   return (
     <Routes>
       <Route

@@ -1,4 +1,4 @@
-import assessmentApi from '@/apis/assessments/assessmentAPI';
+import assessmentApi from '@/apis/assessmentAPI';
 import { createColumns } from '@/components/assessments/columns';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
@@ -81,8 +81,8 @@ export default function AssessmentsPage() {
       setLoading(true);
       try {
         const [testData, examData] = await Promise.all([
-          assessmentApi.get_tests(),
-          assessmentApi.get_exams(),
+          assessmentApi.getTests(),
+          assessmentApi.getExams(),
         ]);
 
         // NOTE: Placeholder for fetching related data

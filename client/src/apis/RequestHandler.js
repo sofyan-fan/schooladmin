@@ -1,5 +1,5 @@
 import RequestType from '../utils/RequestType';
-import connection from './connection/connector';
+import connection from './connector';
 
 const get = async (url, config) => {
   return await handleRequest(RequestType.Get, url, null, config);

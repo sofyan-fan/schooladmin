@@ -71,6 +71,12 @@
       "email": "docent2@test.com",
       "password": "docent123456",
       "role": "teacher"
+    },
+    {
+      "email": "testuser@example.com",
+      "password": "$2a$12$Fp5yqJ74ZbhsynREZm5iQ.z8fi1xTVjnABFIRXZI1zc/SWsDjhg0O",
+      "role": "student",
+      "id": 13
     }
   ],
   "teachers": [
@@ -224,14 +230,7 @@
       "payment_method": "iDEAL"
     }
   ],
-  "events": [
-    {
-      "event_name": "fdsaa",
-      "event_date": "2025-07-30",
-      "description": "fadfa",
-      "id": 1
-    }
-  ],
+  "events": [],
   "subjects": [
     {
       "id": 1,
@@ -683,12 +682,21 @@
         4
       ],
       "id": 2
+    },
+    {
+      "name": "dadad",
+      "description": "dsda",
+      "price": 123,
+      "moduleIds": [
+        4
+      ],
+      "id": 3
     }
   ],
   "class_layouts": [
     {
       "id": 1,
-      "name": "Groep B",
+      "name": "Groep Z",
       "mentorId": 1,
       "courseId": 2,
       "studentIds": [
@@ -703,7 +711,9 @@
       "courseId": 1,
       "studentIds": [
         1,
-        4
+        4,
+        5,
+        6
       ],
       "id": 2
     },
@@ -759,6 +769,56 @@
       "teacherId": "1",
       "classroomId": "4",
       "id": 1
+    },
+    {
+      "classLayoutId": 1,
+      "subjectId": 2,
+      "teacherId": 3,
+      "classroomId": 2,
+      "start": "2025-08-25T06:00:00.000Z",
+      "end": "2025-08-25T13:00:00.000Z",
+      "title": "Fiqh",
+      "id": 2
+    },
+    {
+      "classLayoutId": 2,
+      "subjectId": 2,
+      "teacherId": 3,
+      "classroomId": 4,
+      "start": "2025-08-25T06:30:00.000Z",
+      "end": "2025-08-25T12:00:00.000Z",
+      "title": "Fiqh",
+      "id": 3
+    },
+    {
+      "classLayoutId": 1,
+      "subjectId": 3,
+      "teacherId": 1,
+      "classroomId": 2,
+      "start": "2025-08-27T06:30:00.000Z",
+      "end": "2025-08-27T12:00:00.000Z",
+      "title": "Tafsir",
+      "id": 4
+    },
+    {
+      "classLayoutId": 2,
+      "subjectId": 1,
+      "teacherId": 1,
+      "classroomId": 2,
+      "start": "2025-08-27T06:30:00.000Z",
+      "end": "2025-08-27T12:00:00.000Z",
+      "title": "Geloofsleer",
+      "id": 5
+    },
+    {
+      "classLayoutId": 1,
+      "subjectId": 2,
+      "teacherId": 1,
+      "classroomId": 4,
+      "start": "2025-08-26T06:30:00.000Z",
+      "end": "2025-08-26T12:30:00.000Z",
+      "title": "Fiqh",
+      "id": 6
     }
   ],
   "classrooms": [

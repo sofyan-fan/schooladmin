@@ -1,8 +1,8 @@
-import courseApi from '@/apis/courses/courseAPI';
-import moduleApi from '@/apis/modules/moduleAPI';
+import courseApi from '@/apis/courseAPI';
+import moduleApi from '@/apis/moduleAPI';
 import { CourseCard } from '@/components/courses/CourseCard';
-import CreateCourseModal from '@/components/courses/CreateCourseModal';
-import EditCourseModal from '@/components/courses/EditCourseModal';
+import CreateModal from '@/components/courses/CreateModal';
+import EditModal from '@/components/courses/EditModal';
 import ViewCourseDialog from '@/components/courses/ViewCourseDialog';
 import {
   AlertDialog,
@@ -40,22 +40,28 @@ const CoursesPage = () => {
       setLoading(true);
       setApiError('');
       try {
+        console.log('Starting to fetch courses and modules...');
         // Fetch both courses and the modules needed for the form in parallel
         const [coursesData, modulesData] = await Promise.all([
           courseApi.get_courses(),
           moduleApi.get_modules(),
         ]);
+        // The backend returns modules nested inside courses under the `course_module` key.
+        // We will rename it to `modules` to match the component's expectation.
         const enrichedCourses = coursesData.map((course) => ({
           ...course,
-          modules: course.moduleIds
-            ? course.moduleIds
-                .map((id) => modulesData.find((m) => m.id === id))
-                .filter(Boolean)
-            : [],
+          modules: course.course_module || [],
         }));
         setCourses(enrichedCourses);
         setModules(modulesData);
+        console.log('Fetched courses data:', coursesData);
+        console.log('Fetched modules data:', modulesData);
+        console.log('Type of modulesData:', typeof modulesData);
+        console.log('Is modulesData an array?', Array.isArray(modulesData));
       } catch (e) {
+        console.error('Error fetching data:', e);
+        console.error('Error message:', e.message);
+        console.error('Error response:', e.response);
         setApiError(e.message || 'Kon de gegevens niet laden.');
       } finally {
         setLoading(false);
@@ -66,13 +72,11 @@ const CoursesPage = () => {
 
   const refreshCourses = async () => {
     try {
-      const data = await courseApi.get_courses();
-      // Manually enrich courses with modules, since the mock API doesn't do this by default
-      const enrichedCourses = data.map((course) => ({
+      const coursesData = await courseApi.get_courses();
+      // The backend returns modules nested inside courses under the `course_module` key.
+      const enrichedCourses = coursesData.map((course) => ({
         ...course,
-        modules: course.moduleIds
-          .map((id) => modules.find((m) => m.id === id))
-          .filter(Boolean), // Filter out any unfound modules
+        modules: course.course_module || [],
       }));
       setCourses(enrichedCourses);
     } catch (e) {
@@ -85,7 +89,7 @@ const CoursesPage = () => {
   const handleSaveCourse = async (courseData) => {
     try {
       if (isEditModalOpen) {
-        await courseApi.edit_course({ ...courseData, id: courseToEdit.id });
+        await courseApi.update_course({ ...courseData, id: courseToEdit.id });
       } else {
         await courseApi.add_course(courseData);
       }
@@ -186,14 +190,14 @@ const CoursesPage = () => {
 
       {/* --- Modals & Dialogs --- */}
 
-      <CreateCourseModal
+      <CreateModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
         onSave={handleSaveCourse}
         availableModules={modules}
       />
 
-      <EditCourseModal
+      <EditModal
         open={isEditModalOpen}
         onOpenChange={(isOpen) => {
           if (!isOpen) {

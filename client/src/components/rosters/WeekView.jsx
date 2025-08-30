@@ -12,7 +12,7 @@ export default function WeekView({ onDaySelect }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Select a Day</CardTitle>
+        <CardTitle>Kies een dag</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {weekDays.map((day) => (

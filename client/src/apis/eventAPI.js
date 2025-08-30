@@ -1,22 +1,25 @@
-import RequestHandler from '../RequestHandler';
+import RequestHandler from './RequestHandler';
 
 export const getEvents = async () => {
-  const response = await RequestHandler.get('/api/events');
+  const response = await RequestHandler.get('/dashboard/event');
   return response.data;
 };
 
 export const addEvent = async (event) => {
-  const response = await RequestHandler.post('/api/events', event);
+  const response = await RequestHandler.post('/dashboard/event', event);
   return response.data;
 };
 
 export const updateEvent = async (event) => {
-  const response = await RequestHandler.put(`/api/events/${event.id}`, event);
+  const response = await RequestHandler.put(
+    `/dashboard/event/${event.id}`,
+    event
+  );
   return response.data;
 };
 
 export const deleteEvent = async (id) => {
-  await RequestHandler.del(`/api/events/${id}`);
+  await RequestHandler.del(`/dashboard/event/${id}`);
   return id;
 };
 

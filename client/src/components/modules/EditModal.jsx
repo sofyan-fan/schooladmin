@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function EditModal({
   open,
@@ -30,28 +30,92 @@ export default function EditModal({
   const [name, setName] = useState('');
   const [moduleItems, setModuleItems] = useState([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState('');
-  const [selectedMaterial, setSelectedMaterial] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState(''); // stores levelId (string)
+  const [selectedMaterial, setSelectedMaterial] = useState(''); // stores materialId (string)
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Huidige subject op basis van selectie
+  const selectedSubject = useMemo(() => {
+    if (!Array.isArray(subjects)) return undefined;
+    return subjects.find((s) => String(s.id) === String(selectedSubjectId));
+  }, [subjects, selectedSubjectId]);
+
+  // Normaliseer levels en materials van het geselecteerde subject
+  const normalizedLevels = useMemo(() => {
+    const raw = selectedSubject?.levels || [];
+    return raw.map((lvl, idx) => {
+      if (lvl && typeof lvl === 'object') {
+        // Handle Prisma structure: { id, level, subject_id }
+        const id = String(lvl.id ?? idx);
+        const label = String(lvl.level ?? lvl.name ?? lvl.label ?? id);
+        return { id, label };
+      }
+      return { id: String(lvl), label: String(lvl) };
+    });
+  }, [selectedSubject]);
+
+  const normalizedMaterials = useMemo(() => {
+    const raw = selectedSubject?.materials || [];
+    return raw.map((mat, idx) => {
+      if (mat && typeof mat === 'object') {
+        // Handle Prisma structure: { id, material, subject_id }
+        const id = String(mat.id ?? idx);
+        const label = String(mat.material ?? mat.name ?? mat.title ?? id);
+        return { id, label };
+      }
+      return { id: String(mat), label: String(mat) };
+    });
+  }, [selectedSubject]);
+
   useEffect(() => {
     if (open && module) {
-      setName(module.name);
+      setName(module.name ?? '');
+      // Prefill en normaliseren van bestaande items
       setModuleItems(
-        (module.subjects || []).map((s) => ({
-          subjectId: s.subjectId,
-          subjectName: s.subjectName,
-          level: s.level,
-          material: s.material,
-        }))
+        (module.subjects || []).map((s) => {
+          const subjId =
+            s.subjectId ?? s.subject_id ?? s.subject?.id ?? s.id ?? '';
+          const subjName = s.subjectName ?? s.subject?.name ?? s.name ?? '';
+
+          const lvl = s.level ?? s.levelObj;
+          const mat = s.material ?? s.materialObj;
+
+          const levelId =
+            typeof lvl === 'object' && lvl !== null ? lvl.id ?? '' : '';
+          const levelLabel =
+            typeof lvl === 'object' && lvl !== null
+              ? lvl.level ?? lvl.name ?? ''
+              : typeof lvl !== 'undefined' && lvl !== null
+              ? String(lvl)
+              : '';
+
+          const materialId =
+            typeof mat === 'object' && mat !== null ? mat.id ?? '' : '';
+          const materialLabel =
+            typeof mat === 'object' && mat !== null
+              ? mat.name ?? mat.title ?? mat.material ?? ''
+              : typeof mat !== 'undefined' && mat !== null
+              ? String(mat)
+              : '';
+
+          return {
+            subjectId: Number(subjId),
+            subjectName: subjName,
+            levelId: levelId ? String(levelId) : '',
+            levelLabel: levelLabel || '',
+            materialId: materialId ? String(materialId) : '',
+            materialLabel: materialLabel || '',
+          };
+        })
       );
+      // Reset combinator inputs bij openen
+      setSelectedSubjectId('');
+      setSelectedLevel('');
+      setSelectedMaterial('');
+      setError('');
     }
   }, [module, open]);
-
-  const selectedSubject = Array.isArray(subjects)
-    ? subjects.find((s) => s.id === Number(selectedSubjectId))
-    : undefined;
 
   const resetComboInputs = () => {
     setSelectedSubjectId('');
@@ -61,15 +125,26 @@ export default function EditModal({
 
   const handleAddCombo = () => {
     if (!selectedSubjectId || !selectedLevel || !selectedMaterial) return;
+
+    const levelObj = normalizedLevels.find(
+      (l) => String(l.id) === String(selectedLevel)
+    );
+    const materialObj = normalizedMaterials.find(
+      (m) => String(m.id) === String(selectedMaterial)
+    );
+
     setModuleItems((prev) => [
       ...prev,
       {
         subjectId: Number(selectedSubjectId),
         subjectName: selectedSubject?.name || '',
-        level: selectedLevel,
-        material: selectedMaterial,
+        levelId: levelObj?.id || '',
+        levelLabel: levelObj?.label || '',
+        materialId: materialObj?.id || '',
+        materialLabel: materialObj?.label || '',
       },
     ]);
+
     resetComboInputs();
   };
 
@@ -79,6 +154,7 @@ export default function EditModal({
   const handleSave = async (event) => {
     event.preventDefault();
     setError('');
+
     if (!name.trim()) {
       setError('Geef de module een naam.');
       return;
@@ -90,20 +166,34 @@ export default function EditModal({
 
     setLoading(true);
     try {
+      // Stuur zowel id's als labels mee; level/material ook als plain string voor backwards-compat
       await onSave({
+        id: module.id, // Include the module ID
         name: name.trim(),
         subjects: moduleItems.map(
-          ({ subjectId, subjectName, level, material }) => ({
+          ({
             subjectId,
             subjectName,
-            level,
-            material,
+            levelId,
+            levelLabel,
+            materialId,
+            materialLabel,
+          }) => ({
+            subject_id: subjectId, // FIX: Mapped to snake_case for the API
+            subjectName,
+            levelId,
+            level: levelLabel, // handig voor API’s die een string verwachtten
+            materialId,
+            material: materialLabel, // idem
+            levelLabel,
+            materialLabel,
           })
         ),
       });
+      onOpenChange(false);
     } catch (err) {
       setError(
-        err.message || 'Kon de wijzigingen niet opslaan. Probeer opnieuw.'
+        err?.message || 'Kon de wijzigingen niet opslaan. Probeer opnieuw.'
       );
     } finally {
       setLoading(false);
@@ -114,12 +204,14 @@ export default function EditModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Module Bewerken</DialogTitle>
+          <DialogTitle>Module bewerken</DialogTitle>
           <DialogDescription>
             Bewerk de gegevens van deze curriculum module.
           </DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSave} className="space-y-6 pt-2">
+          {/* Module naam */}
           <div className="space-y-2">
             <Label htmlFor="moduleName">Module naam</Label>
             <Input
@@ -132,7 +224,9 @@ export default function EditModal({
             />
           </div>
 
+          {/* Combinator: Subject / Level / Material */}
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+            {/* Subject */}
             <div className="space-y-2">
               <Label htmlFor="subject">Vak</Label>
               <Select
@@ -156,6 +250,8 @@ export default function EditModal({
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Level */}
             <div className="space-y-2">
               <Label htmlFor="level">Niveau</Label>
               <Select
@@ -167,14 +263,16 @@ export default function EditModal({
                   <SelectValue placeholder="Kies niveau..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {(selectedSubject?.levels || []).map((level, index) => (
-                    <SelectItem key={index} value={level}>
-                      {level}
+                  {normalizedLevels.map((lvl) => (
+                    <SelectItem key={lvl.id} value={lvl.id}>
+                      {lvl.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Material */}
             <div className="space-y-2">
               <Label htmlFor="material">Literatuur</Label>
               <Select
@@ -186,14 +284,16 @@ export default function EditModal({
                   <SelectValue placeholder="Kies literatuur..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {(selectedSubject?.materials || []).map((material, index) => (
-                    <SelectItem key={index} value={material}>
-                      {material}
+                  {normalizedMaterials.map((mat) => (
+                    <SelectItem key={mat.id} value={mat.id}>
+                      {mat.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Add */}
             <Button
               type="button"
               onClick={handleAddCombo}
@@ -211,18 +311,21 @@ export default function EditModal({
             </Button>
           </div>
 
+          {/* Geselecteerde combinaties */}
           <div className="space-y-2">
             <Label>Toegevoegde vakken</Label>
             <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-muted/50">
               {moduleItems.length > 0 ? (
                 moduleItems.map((item, i) => (
                   <Badge
-                    key={i}
+                    key={`${item.subjectId}-${item.levelId}-${item.materialId}-${i}`}
                     variant="secondary"
                     className="flex items-center gap-2 py-1.5 px-3 text-sm"
                   >
                     <span>
-                      {item.subjectName} – {item.level} – {item.material}
+                      {String(item.subjectName || '')} –{' '}
+                      {String(item.levelLabel || '')} –{' '}
+                      {String(item.materialLabel || '')}
                     </span>
                     <button
                       type="button"
@@ -242,10 +345,12 @@ export default function EditModal({
             </div>
           </div>
 
+          {/* Error */}
           {error && (
             <p className="text-sm font-medium text-destructive">{error}</p>
           )}
 
+          {/* Footer */}
           <DialogFooter className="pt-4">
             <Button
               type="button"
@@ -256,7 +361,7 @@ export default function EditModal({
               Annuleren
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Opslaan...' : 'Wijzigingen Opslaan'}
+              {loading ? 'Opslaan...' : 'Wijzigingen opslaan'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,23 +1,26 @@
-import RequestHandler from '../RequestHandler';
+import RequestHandler from './RequestHandler';
 
 export const get_classes = async () => {
-  const { data } = await RequestHandler.get('/api/class_layouts');
+  const { data } = await RequestHandler.get('/general/class_layouts');
   return data;
 };
 
 export const add_class = async (classData) => {
-  const response = await RequestHandler.post('/api/class_layouts', classData);
+  const response = await RequestHandler.post(
+    '/general/class_layouts',
+    classData
+  );
   return response.data;
 };
 
 export const delete_class = async (id) => {
-  await RequestHandler.del(`/api/class_layouts/${id}`);
+  await RequestHandler.del(`/general/class_layouts/${id}`);
   return id;
 };
 
 export const update_class = async (classData) => {
   const response = await RequestHandler.put(
-    `/api/class_layouts/${classData.id}`,
+    `/general/class_layouts/${classData.id}`,
     classData
   );
   return response.data;

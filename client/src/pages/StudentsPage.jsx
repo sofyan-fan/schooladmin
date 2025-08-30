@@ -1,4 +1,4 @@
-import studentAPI from '@/apis/students/studentAPI';
+import studentAPI from '@/apis/studentAPI';
 import ProfileCard from '@/components/general/ProfileCard';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';

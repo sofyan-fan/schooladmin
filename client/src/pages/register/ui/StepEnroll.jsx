@@ -1,4 +1,4 @@
-import courseApi from '@/apis/courses/courseAPI';
+import courseApi from '@/apis/courseAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

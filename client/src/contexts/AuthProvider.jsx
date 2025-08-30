@@ -28,12 +28,15 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
       });
-      const { user: userData, accessToken } = response?.data || {};
+      const { user: userData, session } = response?.data || {};
 
-      if (response?.status === 200 && userData && accessToken) {
-        setToken(accessToken);
+      if (response?.status === 200 && userData && session) {
+        // Assuming the session object contains the necessary token or session ID
+        // If the server uses session cookies, this might be all that's needed
+        const token = session.cookie; // Or whatever uniquely identifies the session
+        setToken(token);
         setUser(userData);
-        localStorage.setItem('token', accessToken);
+        localStorage.setItem('token', token); // Storing session identifier
         localStorage.setItem('user', JSON.stringify(userData));
         navigate('/dashboard');
         return true;

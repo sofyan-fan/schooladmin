@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { useState } from 'react';
-import eventAPI from '../../apis/dashboard/eventAPI';
+  import eventAPI from '../../apis/eventAPI';
 import AddEventDialog from './year-planning/AddEventDialog';
 import DeleteEventDialog from './year-planning/DeleteEventDialog';
 import EditEventDialog from './year-planning/EditEventDialog';
@@ -21,6 +21,7 @@ const YearPlanning = ({ items, setItems }) => {
     time: '',
     description: '',
   });
+  
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const exportToExcel = async () => {

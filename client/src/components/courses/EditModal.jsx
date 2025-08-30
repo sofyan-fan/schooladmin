@@ -32,7 +32,8 @@ export default function EditCourseModal({
       setName(course.name || '');
       setDescription(course.description || '');
       setPrice(course.price || '');
-      setSelectedModuleIds(new Set(course.moduleIds || []));
+      // Initialize the selected IDs from the course's modules array
+      setSelectedModuleIds(new Set(course.modules?.map((m) => m.id) || []));
     }
   }, [course, open]);
 

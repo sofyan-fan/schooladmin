@@ -1,7 +1,7 @@
-import { get_classes } from '@/apis/classes/classAPI';
-import { getClassrooms } from '@/apis/classrooms/classroomAPI';
-import rosterAPI from '@/apis/rosters/rosterAPI';
-import { get_teachers } from '@/apis/teachers/teachersAPI';
+import { get_classes } from '@/apis/classAPI';
+import { getClassrooms } from '@/apis/classroomAPI';
+import rosterAPI from '@/apis/rosterAPI';
+import { get_teachers } from '@/apis/teachersAPI';
 import RosterEventModal from '@/components/rosters/RosterEventModal';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
@@ -122,9 +122,9 @@ export default function RosterPage() {
     }
   };
 
-  const handleModalDelete = async (eventId) => {
+  const handleModalDelete = async (eventToDelete) => {
     try {
-      await rosterAPI.delete_roster(eventId);
+      await rosterAPI.delete_roster(eventToDelete.id);
       fetchRosters();
     } catch (error) {
       console.error('Failed to delete event:', error);

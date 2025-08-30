@@ -1,3 +1,4 @@
+import subjectAPI from '@/apis/subjectAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,7 +11,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import subjectAPI from '../../apis/subjects/subjectAPI';
 
 function Tag({ children, onRemove }) {
   return (
@@ -94,7 +94,7 @@ export default function EditModal({ open, onOpenChange, onSave, subject }) {
         materials,
       };
 
-      const savedSubject = await subjectAPI.edit_subject({
+      const savedSubject = await subjectAPI.update_subject({
         ...subjectData,
         id: subject.id,
       });
@@ -158,8 +158,11 @@ export default function EditModal({ open, onOpenChange, onSave, subject }) {
             </div>
             <div className="flex flex-wrap mt-2 min-h-[30px]">
               {levels.map((level, i) => (
-                <Tag key={level + i} onRemove={() => removeLevel(i)}>
-                  {level}
+                <Tag
+                  key={`${level.level || level}-${i}`}
+                  onRemove={() => removeLevel(i)}
+                >
+                  {level.level || level}
                 </Tag>
               ))}
             </div>
@@ -189,8 +192,11 @@ export default function EditModal({ open, onOpenChange, onSave, subject }) {
             </div>
             <div className="flex flex-wrap mt-2 min-h-[30px]">
               {materials.map((material, i) => (
-                <Tag key={material + i} onRemove={() => removeMaterial(i)}>
-                  {material}
+                <Tag
+                  key={`${material.material || material}-${i}`}
+                  onRemove={() => removeMaterial(i)}
+                >
+                  {material.material || material}
                 </Tag>
               ))}
             </div>

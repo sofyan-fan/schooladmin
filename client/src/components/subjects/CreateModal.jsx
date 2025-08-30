@@ -1,3 +1,4 @@
+import subjectAPI from '@/apis/subjectAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,7 +11,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import subjectAPI from '../../apis/subjects/subjectAPI';
 
 function Tag({ children, onRemove }) {
   return (
@@ -89,7 +89,6 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
       };
 
       const savedSubject = await subjectAPI.add_subject(subjectData);
-
       if (onSave) {
         onSave(savedSubject);
       }

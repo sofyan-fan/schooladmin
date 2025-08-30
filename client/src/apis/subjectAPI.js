@@ -1,25 +1,25 @@
-import RequestHandler from '../RequestHandler';
+import RequestHandler from './RequestHandler';
 
 export const get_subjects = async () => {
-  const { data } = await RequestHandler.get('/api/subjects');
+  const { data } = await RequestHandler.get('/subjects/subjects');
   return data;
 };
 
 export const add_subject = async (subjectData) => {
-  const response = await RequestHandler.post('/api/subjects', subjectData);
+  const response = await RequestHandler.post('/subjects/subjects', subjectData);
   return response.data;
 };
 
 export const update_subject = async (subjectData) => {
   const { data } = await RequestHandler.put(
-    `/api/subjects/${subjectData.id}`,
+    `/subjects/subjects/${subjectData.id}`,
     subjectData
   );
   return data;
 };
 
 export const delete_subject = async (subjectId) => {
-  await RequestHandler.del(`/api/subjects/${subjectId}`);
+  await RequestHandler.del(`/subjects/subjects/${subjectId}`);
   return subjectId;
 };
 

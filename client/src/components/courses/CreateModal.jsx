@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useEffect, useState } from 'react';
 
-export default function CreateCourseModal({
+export default function CreateModal({
   open,
   onOpenChange,
   onSave,
@@ -26,12 +26,14 @@ export default function CreateCourseModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Reset form when modal opens
   useEffect(() => {
     if (open) {
       setName('');
       setDescription('');
       setPrice('');
       setSelectedModuleIds(new Set());
+      setError('');
     }
   }, [open]);
 
@@ -66,7 +68,7 @@ export default function CreateCourseModal({
         price: parseFloat(price),
         moduleIds: Array.from(selectedModuleIds),
       });
-      onOpenChange(false);
+      onOpenChange(false); // Close modal on success
     } catch (err) {
       setError(err.message || 'Kon het lespakket niet opslaan.');
     } finally {
@@ -80,8 +82,8 @@ export default function CreateCourseModal({
         <DialogHeader>
           <DialogTitle>Nieuw Lespakket Toevoegen</DialogTitle>
           <DialogDescription>
-            Creëer een nieuw lespakket door de details in te vullen en de
-            bijbehorende modules te selecteren.
+            Creëer een nieuw lespakket door een naam, prijs en de bijbehorende
+            modules te selecteren.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-6 pt-2">

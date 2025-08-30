@@ -1,8 +1,9 @@
-import classAPI from '@/apis/classes/classAPI';
-import classroomAPI from '@/apis/classrooms/classroomAPI';
-import courseAPI from '@/apis/courses/courseAPI';
-import subjectAPI from '@/apis/subjects/subjectAPI';
-import teachersAPI from '@/apis/teachers/teachersAPI';
+import classAPI from '@/apis/classAPI';
+import classroomAPI from '@/apis/classroomAPI';
+import courseAPI from '@/apis/courseAPI';
+import rosterAPI from '@/apis/rosterAPI';
+import subjectAPI from '@/apis/subjectAPI';
+import teachersAPI from '@/apis/teachersAPI';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,13 +40,19 @@ export default function DailySchedule({
   useEffect(() => {
     async function fetchData() {
       try {
-        const [classesData, teachersData, classroomsData, subjectsData] =
-          await Promise.all([
-            classAPI.get_classes(),
-            teachersAPI.get_teachers(),
-            classroomAPI.getClassrooms(),
-            subjectAPI.get_subjects(),
-          ]);
+        const [
+          classesData,
+          teachersData,
+          classroomsData,
+          subjectsData,
+          rostersData,
+        ] = await Promise.all([
+          classAPI.get_classes(),
+          teachersAPI.get_teachers(),
+          classroomAPI.getClassrooms(),
+          subjectAPI.get_subjects(),
+          rosterAPI.get_rosters(),
+        ]);
 
         const populatedClasses = await Promise.all(
           (classesData || []).map(async (c) => {
@@ -60,12 +67,29 @@ export default function DailySchedule({
         setTeachers(teachersData || []);
         setClassrooms(classroomsData || []);
         setSubjects(subjectsData || []);
+
+        const scheduleFromRosters = {};
+        rostersData.forEach((roster) => {
+          if (!scheduleFromRosters[roster.classLayoutId]) {
+            scheduleFromRosters[roster.classLayoutId] = {};
+          }
+          scheduleFromRosters[roster.classLayoutId][roster.id] = {
+            id: roster.id,
+            classId: roster.classLayoutId,
+            subject: subjectsData.find((s) => s.id === roster.subjectId),
+            teacher: teachersData.find((t) => t.id === roster.teacherId),
+            classroom: classroomsData.find((c) => c.id === roster.classroomId),
+            start: roster.start,
+            end: roster.end,
+          };
+        });
+        onScheduleChange(scheduleFromRosters);
       } catch (error) {
         console.error('Failed to fetch schedule data', error);
       }
     }
     fetchData();
-  }, []);
+  }, [onScheduleChange]);
 
   const eventsForClass = (classId) => {
     const classSchedule = schedule[classId] || {};
@@ -130,19 +154,62 @@ export default function DailySchedule({
     return null;
   };
 
-  const handleSaveLesson = (updatedLesson) => {
-    const lessonId =
-      updatedLesson.id || `${updatedLesson.classId}-${updatedLesson.start}`;
-    const newLessonData = { ...updatedLesson, id: lessonId };
+  const proceedWithSave = async (lessonToSave) => {
+    const isNew = !lessonToSave.id;
 
-    const conflict = checkForConflict(newLessonData);
+    const payload = {
+      id: isNew ? undefined : lessonToSave.id,
+      classLayoutId: lessonToSave.classId,
+      subjectId: lessonToSave.subject.id,
+      teacherId: lessonToSave.teacher.id,
+      classroomId: lessonToSave.classroom.id,
+      start: lessonToSave.start,
+      end: lessonToSave.end,
+      title: lessonToSave.subject.name,
+    };
 
-    if (conflict) {
-      setConflict({ ...conflict, lesson: newLessonData });
+    if (isNew) {
+      const newRoster = await rosterAPI.add_roster(payload);
+      saveLesson({ ...lessonToSave, id: newRoster.id });
     } else {
-      saveLesson(newLessonData);
+      await rosterAPI.update_roster(payload);
+      saveLesson(lessonToSave);
     }
     setEditingLesson(null);
+    setConflict(null);
+  };
+
+  const handleSaveLesson = async (updatedLesson) => {
+    const existingConflict = checkForConflict(updatedLesson);
+    if (existingConflict) {
+      setConflict({ ...existingConflict, lesson: updatedLesson });
+      return;
+    }
+    await proceedWithSave(updatedLesson);
+  };
+
+  const handleDeleteLesson = async (lessonId) => {
+    try {
+      await rosterAPI.delete_roster(lessonId);
+      onScheduleChange((prev) => {
+        const newSchedule = { ...prev };
+        for (const classId in newSchedule) {
+          if (newSchedule[classId][lessonId]) {
+            delete newSchedule[classId][lessonId];
+            if (Object.keys(newSchedule[classId]).length === 0) {
+              delete newSchedule[classId];
+            }
+            break;
+          }
+        }
+        return newSchedule;
+      });
+      toast.success('Lesson has been deleted.');
+      setEditingLesson(null); // Close the modal
+    } catch (error) {
+      console.error('Failed to delete lesson', error);
+      toast.error('Failed to delete lesson.');
+    }
   };
 
   const handleSelect = (selectionInfo, classId) => {
@@ -156,6 +223,27 @@ export default function DailySchedule({
 
   const handleEventClick = (clickInfo) => {
     setEditingLesson(clickInfo.event.extendedProps.lesson);
+  };
+
+  const renderEventContent = (eventInfo) => {
+    const { lesson } = eventInfo.event.extendedProps;
+    if (!lesson) return null;
+
+    const teacherName =
+      lesson.teacher && lesson.teacher.first_name
+        ? `${lesson.teacher.first_name} ${
+            lesson.teacher.last_name || ''
+          }`.trim()
+        : '';
+    const classroomName = lesson.classroom?.name || '';
+
+    return (
+      <div className="p-1 overflow-hidden text-xs h-full">
+        <div className="font-semibold">{lesson.subject.name}</div>
+        {teacherName && <div>{teacherName}</div>}
+        {classroomName && <div className="italic">{classroomName}</div>}
+      </div>
+    );
   };
 
   return (
@@ -184,6 +272,7 @@ export default function DailySchedule({
                 select={(info) => handleSelect(info, c.id)}
                 eventClick={handleEventClick}
                 events={eventsForClass(c.id)}
+                eventContent={renderEventContent}
                 slotMinTime="08:00:00"
                 slotMaxTime="18:00:00"
               />
@@ -196,6 +285,7 @@ export default function DailySchedule({
           isOpen={!!editingLesson}
           onClose={() => setEditingLesson(null)}
           onSave={handleSaveLesson}
+          onDelete={handleDeleteLesson}
           lesson={editingLesson}
           teachers={teachers}
           classrooms={classrooms}
@@ -216,7 +306,9 @@ export default function DailySchedule({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => saveLesson(conflict.lesson)}>
+              <AlertDialogAction
+                onClick={() => proceedWithSave(conflict.lesson)}
+              >
                 Confirm
               </AlertDialogAction>
             </AlertDialogFooter>

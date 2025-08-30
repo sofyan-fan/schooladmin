@@ -1,4 +1,4 @@
-import classApi from '@/apis/classes/classAPI';
+import classApi from '@/apis/classAPI';
 import { Button } from '@/components/ui/button';
 import {
   Form,

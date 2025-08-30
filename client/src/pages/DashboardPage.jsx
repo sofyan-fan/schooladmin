@@ -5,7 +5,7 @@ import Members from '../components/dashboard/Members';
 import StatCard from '../components/dashboard/StatCard';
 import YearPlanning from '../components/dashboard/YearPlanning';
 
-import eventAPI from '../apis/dashboard/eventAPI';
+import eventAPI from '@/apis/eventAPI';
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);

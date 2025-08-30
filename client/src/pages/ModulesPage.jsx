@@ -1,5 +1,5 @@
-import moduleApi from '@/apis/modules/moduleAPI';
-import subjectAPI from '@/apis/subjects/subjectAPI';
+import moduleApi from '@/apis/moduleAPI';
+import subjectAPI from '@/apis/subjectAPI';
 import ViewCourseModuleDialog from '@/components/coursemodules/ViewCourseModuleDialog';
 import CreateModal from '@/components/modules/CreateModal';
 import EditModal from '@/components/modules/EditModal';
@@ -17,6 +17,30 @@ import {
 import { Button } from '@/components/ui/button';
 import { Component, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+const normalizeSubjects = (list) => {
+  if (!Array.isArray(list)) return [];
+  return list.map((s) => ({
+    ...s,
+    levels: (s.levels || []).map((lvl, i) => {
+      if (lvl && typeof lvl === 'object') {
+        // Handle Prisma structure: { id, level, subject_id }
+        const id = String(lvl.id ?? i);
+        const label = String(lvl.level ?? lvl.name ?? lvl.label ?? id);
+        return { id, label };
+      }
+      return { id: String(lvl), label: String(lvl) };
+    }),
+    materials: (s.materials || []).map((mat, i) => {
+      if (mat && typeof mat === 'object') {
+        // Handle Prisma structure: { id, material, subject_id }
+        const id = String(mat.id ?? i);
+        const label = String(mat.material ?? mat.name ?? mat.title ?? id);
+        return { id, label };
+      }
+      return { id: String(mat), label: String(mat) };
+    }),
+  }));
+};
 
 const ModulesPage = () => {
   // State for data, loading, and errors
@@ -60,8 +84,13 @@ const ModulesPage = () => {
           moduleApi.get_modules(),
           subjectAPI.get_subjects(),
         ]);
-        setModules(enrichModulesWithSubjectNames(modulesData, subjectsData));
-        setSubjects(subjectsData);
+
+        const normalizedSubjects = normalizeSubjects(subjectsData);
+
+        setModules(
+          enrichModulesWithSubjectNames(modulesData, normalizedSubjects)
+        );
+        setSubjects(normalizedSubjects);
       } catch (e) {
         setApiError(e.message || 'Kon de gegevens niet laden.');
       } finally {
@@ -74,7 +103,7 @@ const ModulesPage = () => {
   const refreshModules = async () => {
     try {
       const data = await moduleApi.get_modules();
-      setModules(enrichModulesWithSubjectNames(data, subjects));
+      setModules(enrichModulesWithSubjectNames(data, subjects)); // subjects already normalized
     } catch (e) {
       setApiError(e.message || 'Kon de modules niet vernieuwen.');
     }
@@ -94,7 +123,7 @@ const ModulesPage = () => {
 
   const handleEditModule = async (moduleData) => {
     try {
-      await moduleApi.edit_module({ ...moduleData, id: moduleToEdit.id });
+      await moduleApi.update_module({ ...moduleData, id: moduleToEdit.id });
       await refreshModules();
       setModuleToEdit(null);
     } catch (e) {

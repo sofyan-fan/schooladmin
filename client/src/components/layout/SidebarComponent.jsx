@@ -12,7 +12,6 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
@@ -31,9 +30,15 @@ import {
   Presentation,
   Settings,
 } from 'lucide-react';
+
 import { useLayoutEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
+
+import { useAuth } from '@/hooks/useAuth';
+
+// const user_role = useAuth();
+// console.log('user_role', user_role);
 
 const SidebarComponent = () => {
   const { logout } = useAuth();

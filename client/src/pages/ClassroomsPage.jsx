@@ -1,3 +1,4 @@
+import classroomAPI from '@/apis/classroomAPI';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -8,7 +9,6 @@ import {
 import { Building } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import classroomAPI from '../apis/classrooms/classroomAPI';
 
 import { createColumns } from '@/components/classrooms/columns';
 import CreateClassroomModal from '@/components/classrooms/CreateClassroomModal';

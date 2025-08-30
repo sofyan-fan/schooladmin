@@ -46,6 +46,8 @@ model student {
   absences absence[]
   payments tuition_payment[]
   results  result[]
+
+  student_log student_log[]
 }
 
 model teacher {
@@ -228,11 +230,16 @@ model courses {
   tuition_payments tuition_payment[]
   subjects         subject[]         @relation("course_subjects")
   class_layout     class_layout[]
+  course_module    course_module[]
 }
 
 model course_module {
-  id       Int                     @id @default(autoincrement())
-  name     String
+  id   Int    @id @default(autoincrement())
+  name String
+
+  course    courses @relation(fields: [course_id], references: [id])
+  course_id Int
+
   subjects course_module_subject[]
 }
 
@@ -257,11 +264,11 @@ model subject {
   levels    subject_level[]
   materials subject_material[]
 
-  tests          test[]
-  exams          exam[]
-  roster         roster[]
-  courses        courses[]               @relation("course_subjects")
-  moduleSubjects course_module_subject[]
+  tests           test[]
+  exams           exam[]
+  roster          roster[]
+  courses         courses[]               @relation("course_subjects")
+  module_subjects course_module_subject[]
 }
 
 model subject_level {
@@ -318,4 +325,21 @@ model time_registration {
   updated_at DateTime @updatedAt
 
   @@index([teacher_id, week_start, week_end])
+}
+
+model student_log {
+  id Int @id @default(autoincrement())
+
+  student    student @relation(fields: [student_id], references: [id])
+  student_id Int
+
+  date      DateTime
+  start_log String
+  end_log   String
+  completed Boolean  @default(false)
+  comment   String?
+
+  created_at DateTime @default(now())
+
+  @@index([student_id, date])
 }

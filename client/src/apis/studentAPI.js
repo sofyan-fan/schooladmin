@@ -1,25 +1,25 @@
-import RequestHandler from '../RequestHandler';
+import RequestHandler from './RequestHandler';
 
 export const get_students = async () => {
-  const { data } = await RequestHandler.get('/api/students');
+  const { data } = await RequestHandler.get('/general/students');
   return data;
 };
 
 export const add_student = async (studentData) => {
-  const response = await RequestHandler.post('/api/students', studentData);
+  const response = await RequestHandler.post('/general/student', studentData);
   return response.data;
 };
 
 export const update_student = async (studentData) => {
   const { data } = await RequestHandler.put(
-    `/api/students/${studentData.id}`,
+    `/general/student/${studentData.id}`,
     studentData
   );
   return data;
 };
 
 export const delete_student = async (studentId) => {
-  await RequestHandler.del(`/api/students/${studentId}`);
+  await RequestHandler.del(`/general/student/${studentId}`);
   return studentId;
 };
 

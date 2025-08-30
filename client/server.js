@@ -1,7 +1,7 @@
 import cors from 'cors';
 import fs from 'fs';
 import jsonServer from 'json-server';
-import auth from 'json-server-auth';
+// import auth from 'json-server-auth';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -230,10 +230,10 @@ const routes = JSON.parse(fs.readFileSync(path.join(__dirname, 'routes.json')));
 // Bind the router db to the app
 app.db = router.db;
 
-const rules = auth.rewriter(routes);
+const rules = jsonServer.rewriter(routes);
 
 app.use(rules);
-app.use(auth);
+// app.use(auth);
 app.use(router);
 
 const port = 8000;

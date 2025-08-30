@@ -1,6 +1,6 @@
-import { get_classes } from '@/apis/classes/classAPI';
-import { getClassrooms } from '@/apis/classrooms/classroomAPI';
-import { get_teachers } from '@/apis/teachers/teachersAPI';
+import { get_classes } from '@/apis/classAPI';
+import { getClassrooms } from '@/apis/classroomAPI';
+import { get_teachers } from '@/apis/teachersAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

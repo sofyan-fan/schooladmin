@@ -1,6 +1,6 @@
-import classApi from '@/apis/classes/classAPI';
-import classroomApi from '@/apis/classrooms/classroomAPI';
-import rosterApi from '@/apis/rosters/rosterAPI';
+import classApi from '@/apis/classAPI';
+import classroomApi from '@/apis/classroomAPI';
+import rosterApi from '@/apis/rosterAPI';
 import { createColumns as createClassColumns } from '@/components/classes/columns';
 import CreateClassModal from '@/components/classes/CreateClassModal';
 import EditClassModal from '@/components/classes/EditClassModal';
@@ -62,7 +62,7 @@ const ClassroomsTab = () => {
   };
 
   const handleUpdate = async (updatedClassroom) => {
-    await classroomApi.edit_classroom(updatedClassroom);
+    await classroomApi.update_classroom(updatedClassroom);
     fetchData();
   };
 
@@ -280,7 +280,7 @@ const RostersTab = () => {
       classId: updatedRoster.classId,
       schedules: updatedRoster.schedules,
     };
-    await rosterApi.edit_roster(payload);
+    await rosterApi.update_roster(payload);
     fetchData();
     setOpenEdit(false);
   };

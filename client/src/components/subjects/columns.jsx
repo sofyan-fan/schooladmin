@@ -28,7 +28,7 @@ export const getColumns = (onEdit, onDelete) => [
     accessorKey: 'levels',
     header: 'Levels',
     cell: ({ row }) => {
-      const levels = row.original.levels;
+      const levels = row.original.levels.map((l) => l.level);
       return <TruncatedListCell items={levels} />;
     },
     size: 250,
@@ -38,7 +38,7 @@ export const getColumns = (onEdit, onDelete) => [
     accessorKey: 'materials',
     header: 'Materials',
     cell: ({ row }) => {
-      const materials = row.original.materials;
+      const materials = row.original.materials.map((m) => m.material);
       return <TruncatedListCell items={materials} />;
     },
     size: 250,

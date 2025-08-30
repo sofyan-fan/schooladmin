@@ -1,6 +1,6 @@
-import courseApi from '@/apis/courses/courseAPI';
-import studentAPI from '@/apis/students/studentAPI';
-import teachersAPI from '@/apis/teachers/teachersAPI';
+import courseApi from '@/apis/courseAPI';
+import studentAPI from '@/apis/studentAPI';
+import teachersAPI from '@/apis/teachersAPI';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -94,7 +94,6 @@ export default function EditClassModal({
           setFormData={setFormData}
           onSubmit={handleSubmit}
           loading={loading}
-          
           allTeachers={allTeachers}
           allCourses={allCourses}
           allStudents={allStudents}
