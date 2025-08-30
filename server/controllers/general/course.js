@@ -98,7 +98,7 @@ exports.update_course = async (req, res) => {
 
   try {
     const existingCourse = await prisma.courses.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: { course_module: true },
     });
 
@@ -108,7 +108,7 @@ exports.update_course = async (req, res) => {
 
     // Disconnect all current subjects
     await prisma.courses.update({
-      where: { id },
+      where: { id: Number(id)},
       data: {
         subjects: {
           set: [], // disconnect all subjects
@@ -123,7 +123,7 @@ exports.update_course = async (req, res) => {
 
     // Update the course with new values
     const updatedCourse = await prisma.courses.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         name,
         description,
@@ -180,7 +180,7 @@ exports.delete_course = async (req, res) => {
 
   try {
     const existingCourse = await prisma.courses.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: { course_module: true },
     });
 
@@ -195,7 +195,7 @@ exports.delete_course = async (req, res) => {
 
     // Delete course
     await prisma.courses.delete({
-      where: { id },
+      where: { id: Number(id) },
     });
 
     res.status(200).json({ message: 'Course deleted successfully' });
@@ -267,7 +267,7 @@ exports.update_module = async (req, res) => {
 
   try {
     const existingModule = await prisma.course_module.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: { subjects: true },
     });
 
@@ -277,7 +277,7 @@ exports.update_module = async (req, res) => {
 
     // Disconnect all current subjects
     await prisma.course_module.update({
-      where: { id },
+      where: { id: Number(id)},
       data: {
         subjects: {
           set: [], // disconnect all subjects
@@ -287,7 +287,7 @@ exports.update_module = async (req, res) => {
 
     // Update the module with new name and subjects
     const updatedModule = await prisma.course_module.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         name,
         subjects: {
@@ -319,7 +319,7 @@ exports.delete_module = async (req, res) => {
 
   try {
     const existingModule = await prisma.course_module.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: { subjects: true },
     });
 
@@ -334,7 +334,7 @@ exports.delete_module = async (req, res) => {
 
     // Delete the course module
     await prisma.course_module.delete({
-      where: { id },
+      where: {  id: Number(id) },
     });
 
     res.status(200).json({ message: 'Course module deleted successfully' });
