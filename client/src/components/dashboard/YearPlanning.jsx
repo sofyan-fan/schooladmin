@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import eventAPI from '../../apis/eventAPI';
 import AddEventDialog from './year-planning/AddEventDialog';
 import DeleteEventDialog from './year-planning/DeleteEventDialog';
@@ -18,7 +19,8 @@ const YearPlanning = ({ items, setItems }) => {
   const [newItem, setNewItem] = useState({
     name: '',
     date: '',
-    time: '',
+    startTime: '',
+    endTime: '',
     description: '',
   });
 
@@ -66,13 +68,23 @@ const YearPlanning = ({ items, setItems }) => {
     saveAs(blob, 'jaarplanning.xlsx');
   };
 
-  const handleConfirmExport = () => {
-    exportToExcel();
-    setIsExportDialogOpen(false);
+  const handleConfirmExport = async () => {
+    try {
+      await exportToExcel();
+      toast.success('Jaarplanning succesvol geëxporteerd naar Excel!');
+      setIsExportDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to export:', error);
+      toast.error('Kon de jaarplanning niet exporteren. Probeer het opnieuw.');
+    }
   };
 
   const handleEditClick = (item) => {
-    setEditedItem({ ...item });
+    setEditedItem({
+      ...item,
+      startTime: item.start_time || '',
+      endTime: item.end_time || '',
+    });
     setIsEditDialogOpen(true);
   };
 
@@ -98,6 +110,8 @@ const YearPlanning = ({ items, setItems }) => {
         event_name: editedItem.name,
         event_date: editedItem.date,
         description: editedItem.description,
+        start_time: editedItem.startTime || '',
+        end_time: editedItem.endTime || '',
       };
       const updatedEvent = await eventAPI.update_event(eventData);
       setItems((prevItems) =>
@@ -105,9 +119,11 @@ const YearPlanning = ({ items, setItems }) => {
           item.id === updatedEvent.id ? { ...item, ...updatedEvent } : item
         )
       );
+      toast.success(`"${editedItem.name}" is bijgewerkt!`);
       handleEditDialogClose();
     } catch (error) {
       console.error('Failed to save changes:', error);
+      toast.error('Kon de activiteit niet bijwerken. Probeer het opnieuw.');
     }
   };
 
@@ -128,8 +144,10 @@ const YearPlanning = ({ items, setItems }) => {
       setItems((prevItems) =>
         prevItems.filter((item) => item.id !== itemToDelete.id)
       );
+      toast.success(`"${itemToDelete.name}" is verwijderd!`);
     } catch (error) {
       console.error('Failed to delete item:', error);
+      toast.error('Kon de activiteit niet verwijderen. Probeer het opnieuw.');
     } finally {
       handleDeleteDialogClose();
     }
@@ -137,7 +155,13 @@ const YearPlanning = ({ items, setItems }) => {
 
   const handleAddDialogClose = () => {
     setIsAddDialogOpen(false);
-    setNewItem({ name: '', date: '', time: '', description: '' });
+    setNewItem({
+      name: '',
+      date: '',
+      startTime: '',
+      endTime: '',
+      description: '',
+    });
   };
 
   const handleSaveNewItem = async (event) => {
@@ -147,17 +171,27 @@ const YearPlanning = ({ items, setItems }) => {
         event_name: newItem.name,
         event_date: newItem.date,
         description: newItem.description,
+        start_time: newItem.startTime || '',
+        end_time: newItem.endTime || '',
       };
       const newEventData = await eventAPI.add_event(eventData);
       setItems((prevItems) => [...prevItems, newEventData]);
+      toast.success(`"${newItem.name}" is toegevoegd aan de jaarplanning!`);
       handleAddDialogClose();
     } catch (error) {
       console.error('Failed to add item:', error);
+      toast.error('Kon de activiteit niet toevoegen. Probeer het opnieuw.');
     }
   };
 
   const newEvent = () => {
-    setNewItem({ name: '', date: '', time: '', description: '' });
+    setNewItem({
+      name: '',
+      date: '',
+      startTime: '',
+      endTime: '',
+      description: '',
+    });
     setIsAddDialogOpen(true);
   };
 

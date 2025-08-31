@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { DatePicker } from '@/components/ui/date-picker';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ const EditEventDialog = ({
   if (!isOpen) return null;
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Activiteit bewerken</DialogTitle>
           <DialogDescription>
@@ -30,28 +30,28 @@ const EditEventDialog = ({
             bent.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Activiteit
-            </Label>
+        <div className="space-y-6 py-4">
+          {/* Activity Name Field - Full Width */}
+          <div className="space-y-2">
             <Input
               id="name"
               name="name"
               value={editedItem.name}
               onChange={onInputChange}
-              className="col-span-3"
+              placeholder="Naam van activiteit"
+              className="w-full"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">
-              Datum
-            </Label>
-            <div className="col-span-3">
-              <DatePicker
-                id="date"
-                value={editedItem.date ? new Date(editedItem.date) : undefined}
-                onChange={(date) => {
+
+          {/* Date & Time Section */}
+          <div className="space-y-3">
+            {/* <Label className="text-sm font-medium">Datum & Tijd</Label> */}
+            <div>
+              <DateTimePicker
+                date={editedItem.date ? new Date(editedItem.date) : undefined}
+                startTime={editedItem.startTime || ''}
+                endTime={editedItem.endTime || ''}
+                onDateChange={(date) => {
                   const event = {
                     target: {
                       name: 'date',
@@ -60,14 +60,33 @@ const EditEventDialog = ({
                   };
                   onInputChange(event);
                 }}
-                placeholder="Selecteer datum"
+                onStartTimeChange={(time) => {
+                  const event = {
+                    target: {
+                      name: 'startTime',
+                      value: time,
+                    },
+                  };
+                  onInputChange(event);
+                }}
+                onEndTimeChange={(time) => {
+                  const event = {
+                    target: {
+                      name: 'endTime',
+                      value: time,
+                    },
+                  };
+                  onInputChange(event);
+                }}
                 fromYear={new Date().getFullYear() - 1}
                 toYear={new Date().getFullYear() + 5}
               />
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">
+
+          {/* Description Field - Full Width */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium">
               Beschrijving
             </Label>
             <Textarea
@@ -75,9 +94,9 @@ const EditEventDialog = ({
               name="description"
               value={editedItem.description}
               onChange={onInputChange}
-              className="col-span-3"
               rows={3}
-              placeholder="Voeg een beschrijving toe..."
+              placeholder="Voer hier een beschrijving in..."
+              className="w-full"
             />
           </div>
         </div>

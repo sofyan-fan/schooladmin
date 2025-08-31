@@ -54,19 +54,31 @@ export const getColumns = (onEdit, onDelete) => [
     displayName: 'Datum',
   },
   {
-    accessorKey: 'description',
-    header: 'Beschrijving',
+    accessorKey: 'start_time',
+    header: 'Tijd',
     cell: ({ row }) => {
-      const description = row.getValue('description');
+      const startTime = row.original.start_time;
+      const endTime = row.original.end_time;
+
+      if (!startTime && !endTime) {
+        return <div className="text-muted-foreground text-sm">Geen tijd</div>;
+      }
+
+      const timeDisplay =
+        startTime && endTime
+          ? `${startTime} - ${endTime}`
+          : startTime || endTime;
+
       return (
-        <div className="max-w-[200px] truncate" title={description || ''}>
-          {description || 'Geen beschrijving'}
+        <div className="font-medium text-sm" title={timeDisplay}>
+          {timeDisplay}
         </div>
       );
     },
-    size: 250,
-    displayName: 'Beschrijving',
+    size: 120,
+    displayName: 'Tijd',
   },
+
   {
     id: 'actions',
     header: 'Acties',

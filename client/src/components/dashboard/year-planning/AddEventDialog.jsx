@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { DatePicker } from '@/components/ui/date-picker';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ const AddEventDialog = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px]">
         <form onSubmit={onSave}>
           <DialogHeader>
             <DialogTitle>Nieuwe activiteit toevoegen</DialogTitle>
@@ -29,28 +29,28 @@ const AddEventDialog = ({
               Vul de gegevens voor de nieuwe activiteit in.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Activiteit
-              </Label>
+          <div className="space-y-6 py-4">
+            {/* Activity Name Field - Full Width */}
+            <div className="space-y-2">
               <Input
                 id="name"
                 name="name"
                 value={newItem.name}
                 onChange={onNewItemChange}
-                className="col-span-3"
+                placeholder="Naam van activiteit"
+                className="w-full"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">
-                Datum
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  id="date"
-                  value={newItem.date ? new Date(newItem.date) : undefined}
-                  onChange={(date) => {
+
+            {/* Date & Time Section */}
+            <div className="space-y-3">
+              {/* <Label className="text-sm font-medium">Datum & Tijd</Label> */}
+              <div>
+                <DateTimePicker
+                  date={newItem.date ? new Date(newItem.date) : undefined}
+                  startTime={newItem.startTime || ''}
+                  endTime={newItem.endTime || ''}
+                  onDateChange={(date) => {
                     const event = {
                       target: {
                         name: 'date',
@@ -59,14 +59,33 @@ const AddEventDialog = ({
                     };
                     onNewItemChange(event);
                   }}
-                  placeholder="Selecteer datum"
+                  onStartTimeChange={(time) => {
+                    const event = {
+                      target: {
+                        name: 'startTime',
+                        value: time,
+                      },
+                    };
+                    onNewItemChange(event);
+                  }}
+                  onEndTimeChange={(time) => {
+                    const event = {
+                      target: {
+                        name: 'endTime',
+                        value: time,
+                      },
+                    };
+                    onNewItemChange(event);
+                  }}
                   fromYear={new Date().getFullYear() - 1}
                   toYear={new Date().getFullYear() + 5}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
+
+            {/* Description Field - Full Width */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-medium">
                 Beschrijving
               </Label>
               <Textarea
@@ -74,9 +93,9 @@ const AddEventDialog = ({
                 name="description"
                 value={newItem.description}
                 onChange={onNewItemChange}
-                className="col-span-3"
                 rows={3}
-                placeholder="Voeg een beschrijving toe..."
+                placeholder="Voer hier een beschrijving in..."
+                className="w-full"
               />
             </div>
           </div>

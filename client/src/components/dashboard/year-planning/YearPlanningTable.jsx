@@ -1,4 +1,3 @@
-import DataTable from '@/components/shared/Table';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import {
@@ -11,6 +10,8 @@ import {
 import { Calendar, FileDown, Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import { getColumns } from './columns';
+import SearchBar from './SearchBar';
+import YearPlanningDataTable from './YearPlanningDataTable';
 
 const NoData = (
   <TableRow>
@@ -48,34 +49,38 @@ const YearPlanningTable = ({
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: 5,
       },
     },
   });
 
   return (
     <div className="space-y-4">
-      {/* Toolbar with Add and Export buttons */}
+      {/* Toolbar with Search and Action buttons */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-primary text-white hover:bg-primary/90"
-            onClick={onAddClick}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Activiteit toevoegen
-          </Button>
-          <Button variant="outline" size="sm" onClick={onExportClick}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Exporteren
-          </Button>
+        {/* Search/Filter Toolbar */}
+        <div className="flex items-center w-full justify-between space-x-4">
+          <SearchBar table={table} filterColumn="name" />
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-primary text-white hover:bg-primary/90 text-base"
+              onClick={onAddClick}
+            >
+              <Plus className="size-[1.5rem] mr-2" />
+              Toevoegen
+            </Button>
+            <Button variant="outline" size="sm" onClick={onExportClick} className="hover:text-white text-base">
+              <FileDown className="size-[1.5rem] mr-2" />
+              Exporteren
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* DataTable */}
-      <DataTable
+      <YearPlanningDataTable
         table={table}
         loading={loading}
         columns={columns}
