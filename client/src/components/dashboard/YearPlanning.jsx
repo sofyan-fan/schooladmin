@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import eventAPI from '../../apis/eventAPI';
+import exportScheduleToPDF from '../../utils/exportScheduleToPDF';
 import AddEventDialog from './year-planning/AddEventDialog';
 import DeleteEventDialog from './year-planning/DeleteEventDialog';
 import EditEventDialog from './year-planning/EditEventDialog';
@@ -252,14 +253,70 @@ const YearPlanning = ({ items, setItems }) => {
     saveAs(blob, fileName);
   };
 
-  const handleConfirmExport = async () => {
+  const handleExportExcel = async () => {
     try {
       await exportToExcel();
       toast.success('Jaarplanning succesvol geëxporteerd naar Excel!');
-      setIsExportDialogOpen(false);
     } catch (error) {
-      console.error('Failed to export:', error);
-      toast.error('Kon de jaarplanning niet exporteren. Probeer het opnieuw.');
+      console.error('Failed to export to Excel:', error);
+      toast.error(
+        'Kon de jaarplanning niet exporteren naar Excel. Probeer het opnieuw.'
+      );
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      // Prepare columns for PDF export
+      const columns = [
+        {
+          header: 'Activiteit',
+          accessorKey: 'name',
+          displayName: 'Activiteit',
+        },
+        {
+          header: 'Datum',
+          accessorKey: 'date',
+          displayName: 'Datum',
+        },
+        {
+          header: 'Tijd',
+          accessorKey: 'start_time',
+          displayName: 'Tijd',
+        },
+        {
+          header: 'Beschrijving',
+          accessorKey: 'description',
+          displayName: 'Beschrijving',
+        },
+      ];
+
+      // Sort items by date for better organization
+      const sortedItems = [...items].sort((a, b) => {
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return new Date(a.date) - new Date(b.date);
+      });
+
+      // Export to PDF
+      exportScheduleToPDF({
+        columns,
+        rows: sortedItems,
+        options: {
+          title: 'Jaarplanning Overzicht',
+          fileName: `jaarplanning_${
+            new Date().toISOString().split('T')[0]
+          }.pdf`,
+        },
+      });
+
+      toast.success('Jaarplanning succesvol geëxporteerd naar PDF!');
+    } catch (error) {
+      console.error('Failed to export to PDF:', error);
+      toast.error(
+        'Kon de jaarplanning niet exporteren naar PDF. Probeer het opnieuw.'
+      );
     }
   };
 
@@ -408,7 +465,8 @@ const YearPlanning = ({ items, setItems }) => {
       <ExportDialog
         isOpen={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
-        onConfirm={handleConfirmExport}
+        onExportExcel={handleExportExcel}
+        onExportPDF={handleExportPDF}
       />
       <AddEventDialog
         isOpen={isAddDialogOpen}

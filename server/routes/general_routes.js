@@ -32,7 +32,7 @@ const {
   update_time_registration,
   approve_time_registration,
   get_teacher_time_registrations,
-  get_all_time_registrations
+  get_all_time_registrations,
 } = require('../controllers/general/time_registration');
 
 const {
@@ -40,8 +40,18 @@ const {
   get_classrooms,
   get_classroom,
   update_classroom,
-  delete_classroom
-} = require('../controllers/general/classroom'); // ✅ new controller
+  delete_classroom,
+} = require('../controllers/general/classroom');
+
+const {
+  create_class_layout,
+  get_class_layouts,
+  get_class_layout,
+  update_class_layout,
+  delete_class_layout,
+  add_students_to_class,
+  assign_mentor,
+} = require('../controllers/general/class_layout');
 
 // ==============================
 // Students routes
@@ -85,7 +95,10 @@ router.delete('/absences/:id', delete_absence);
 router.post('/time-registrations', create_time_registration);
 router.put('/time-registrations/:id', update_time_registration);
 router.put('/time-registrations/:id/approve', approve_time_registration);
-router.get('/time-registrations/teacher/:teacher_id', get_teacher_time_registrations);
+router.get(
+  '/time-registrations/teacher/:teacher_id',
+  get_teacher_time_registrations
+);
 router.get('/time-registrations', get_all_time_registrations);
 
 // ==============================
@@ -96,5 +109,16 @@ router.get('/classrooms', get_classrooms);
 router.get('/classrooms/:id', get_classroom);
 router.put('/classrooms/:id', update_classroom);
 router.delete('/classrooms/:id', delete_classroom);
+
+// ==============================
+// Class Layouts routes
+// ==============================
+router.post('/class_layouts', create_class_layout);
+router.get('/class_layouts', get_class_layouts);
+router.get('/class_layouts/:id', get_class_layout);
+router.put('/class_layouts/:id', update_class_layout);
+router.delete('/class_layouts/:id', delete_class_layout);
+router.post('/class_layouts/:class_id/students', add_students_to_class);
+router.put('/class_layouts/:class_id/mentor', assign_mentor);
 
 module.exports = router;

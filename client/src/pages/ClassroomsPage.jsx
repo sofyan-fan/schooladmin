@@ -71,7 +71,18 @@ const ClassroomsPage = () => {
       setClassrooms((prev) => [...prev, created]);
       toast.success('Classroom created successfully.');
     } catch (e) {
-      toast.error(e.message || 'Kon het lokaal niet aanmaken.');
+      // Check if it's a duplicate name error
+      if (e.response?.data?.error?.includes('already exists')) {
+        toast.error(
+          'Een lokaal met deze naam bestaat al. Kies een andere naam.'
+        );
+      } else {
+        toast.error(
+          e.response?.data?.error ||
+            e.message ||
+            'Kon het lokaal niet aanmaken.'
+        );
+      }
       throw e;
     }
   };
@@ -85,7 +96,18 @@ const ClassroomsPage = () => {
       toast.success('Classroom updated successfully.');
       setOpenEdit(false);
     } catch (e) {
-      toast.error(e.message || 'Kon het lokaal niet bijwerken.');
+      // Check if it's a duplicate name error
+      if (e.response?.data?.error?.includes('already exists')) {
+        toast.error(
+          'Een lokaal met deze naam bestaat al. Kies een andere naam.'
+        );
+      } else {
+        toast.error(
+          e.response?.data?.error ||
+            e.message ||
+            'Kon het lokaal niet bijwerken.'
+        );
+      }
       throw e;
     }
   };

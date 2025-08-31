@@ -112,7 +112,7 @@ export default function RosterPage() {
       };
 
       if (payload.id) {
-        await rosterAPI.update_roster(payload.id, payload);
+        await rosterAPI.update_roster(payload);
       } else {
         await rosterAPI.add_roster(payload);
       }
@@ -174,14 +174,14 @@ export default function RosterPage() {
       </main>
 
       <RosterEventModal
-        isOpen={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setSelectedEvent(null);
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setSelectedEvent(null);
         }}
-        onSubmit={handleModalSubmit}
+        onSave={handleModalSubmit}
         onDelete={handleModalDelete}
-        event={selectedEvent}
+        initialEvent={selectedEvent}
       />
     </div>
   );

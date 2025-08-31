@@ -13,11 +13,9 @@ const rosterAPI = {
     );
     return response.data;
   },
-  update_roster: async (id, rosterData) => {
-    const response = await RequestHandler.put(
-      `/dashboard/rosters/${id}`,
-      rosterData
-    );
+  update_roster: async (rosterData) => {
+    const { id, ...data } = rosterData;
+    const response = await RequestHandler.put(`/dashboard/rosters/${id}`, data);
     return response.data;
   },
   delete_roster: async (id) => {
