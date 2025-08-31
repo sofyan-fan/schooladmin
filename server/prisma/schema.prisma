@@ -36,7 +36,7 @@ model student {
   enrollment_status Boolean   @default(true)
 
   created_at        DateTime  @default(now())
-  updated_at        DateTime?  @updatedAt
+  updated_at        DateTime? @updatedAt
   
   class_layout      class_layout? @relation(fields: [class_id], references: [id])
   class_id          Int?
@@ -93,10 +93,9 @@ model class_layout {
   course     courses?  @relation(fields: [course_id], references: [id])
 
   students   student[]
-  tests      test[]
-  exams      exam[]
+  assessments assessment[]
   schedules  schedule[]
-  roster roster[]
+  roster     roster[]
 }
 
 model progress {
@@ -126,33 +125,33 @@ model absence {
   student student[]
 }
 
-model test {
-  id           Int         @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
+model assessment {
+  id           Int                   @id @default(autoincrement())
+  type         String                // e.g. "test", "exam", "quiz"
+  class_layout class_layout          @relation(fields: [class_id], references: [id])
   class_id     Int
-  subject      subject      @relation(fields: [subject_id], references: [id])
-  subject_id   Int
-  date         DateTime
-  description  String?
-}
 
-model exam {
-  id           Int         @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
-  class_id     Int
-  subject      subject      @relation(fields: [subject_id], references: [id])
+  subject      course_module_subject @relation(fields: [subject_id], references: [id])
   subject_id   Int
+
+  leverage     Float    @default(1)
   date         DateTime
-  is_central   Boolean
+  is_central   Boolean  @default(false)
+  description  String?
+
+  results      result[]
 }
 
 model result {
-  id          Int      @id @default(autoincrement())
-  student     student  @relation(fields: [student_id], references: [id])
-  student_id  Int
-  subject_id  Int
-  grade       Float
-  date        DateTime
+  id            Int         @id @default(autoincrement())
+  student       student     @relation(fields: [student_id], references: [id])
+  student_id    Int
+
+  assessment    assessment  @relation(fields: [assessment_id], references: [id])
+  assessment_id Int
+
+  grade         Float
+  date          DateTime
 }
 
 model classroom {
@@ -230,7 +229,7 @@ model courses {
   tuition_payments tuition_payment[]
   subjects         subject[]        @relation("course_subjects")
   class_layout     class_layout[]
-  course_module course_module[]
+  course_module    course_module[]
 }
 
 model course_module {
@@ -254,6 +253,8 @@ model course_module_subject {
   level            String
   material         String
 
+  assessments      assessment[]
+
   @@unique([course_module_id, subject_id, level, material])
 }
 
@@ -264,8 +265,6 @@ model subject {
   levels    subject_level[]
   materials subject_material[]
 
-  tests     test[]
-  exams     exam[]
   roster    roster[]
   courses   courses[]            @relation("course_subjects")
   module_subjects course_module_subject[]
@@ -301,11 +300,9 @@ model time_registration {
   teacher      teacher   @relation(fields: [teacher_id], references: [id])
   teacher_id   Int
 
-  // Identify the week this record belongs to
-  week_start   DateTime  // e.g., Monday of the week
-  week_end     DateTime  // Sunday of the week
+  week_start   DateTime
+  week_end     DateTime
 
-  // Hours worked for each day
   monday       Float     @default(0)
   tuesday      Float     @default(0)
   wednesday    Float     @default(0)
@@ -316,9 +313,8 @@ model time_registration {
 
   total_hours  Float     @default(0)
 
-  // Approval by admin
   approved     Boolean   @default(false)
-  approved_by  Int?      // admin id
+  approved_by  Int?
   approved_at  DateTime?
 
   created_at   DateTime  @default(now())
