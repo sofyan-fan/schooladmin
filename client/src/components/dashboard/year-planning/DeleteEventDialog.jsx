@@ -21,10 +21,10 @@ const DeleteEventDialog = ({ isOpen, onClose, onConfirm }) => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Annuleren</AlertDialogCancel>
+          <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/90" onClick={onClose}>Annuleren</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Verwijderen
           </AlertDialogAction>
