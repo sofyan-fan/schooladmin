@@ -41,7 +41,15 @@ const {
   get_classroom,
   update_classroom,
   delete_classroom
-} = require('../controllers/general/classroom'); // ✅ new controller
+} = require('../controllers/general/classroom');
+
+const {
+  create_result,
+  get_all_results,
+  get_result_by_id,
+  update_result,
+  delete_result
+} = require('../controllers/general/results.controller');
 
 // ==============================
 // Students routes
@@ -96,5 +104,14 @@ router.get('/classrooms', get_classrooms);
 router.get('/classrooms/:id', get_classroom);
 router.put('/classrooms/:id', update_classroom);
 router.delete('/classrooms/:id', delete_classroom);
+
+// ==============================
+// Results routes
+// ==============================
+router.post('/results', create_result);
+router.get('/results', get_all_results);
+router.get('/results/:id', get_result_by_id);
+router.put('/results/:id', update_result);
+router.delete('/results/:id', delete_result);
 
 module.exports = router;
