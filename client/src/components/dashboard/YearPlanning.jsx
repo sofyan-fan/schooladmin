@@ -30,42 +30,226 @@ const YearPlanning = ({ items, setItems }) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Jaarplanning');
 
-    worksheet.columns = [
-      { header: 'Activiteit', key: 'name', width: 30, size: 24 },
-      { header: 'Datum', key: 'date', width: 20 },
-      { header: 'Tag', key: 'tag', width: 20 },
-    ];
+    // Set up workbook properties
+    workbook.creator = 'School Admin System';
+    workbook.lastModifiedBy = 'School Admin System';
+    workbook.created = new Date();
+    workbook.modified = new Date();
 
-    items.forEach((item) => {
-      worksheet.addRow({
-        name: item.name,
-        date: item.date,
-        time: item.time,
-        tag: item.tag || '',
-      });
-    });
+    // Set up columns first (without headers)
+    worksheet.getColumn(1).width = 18; // Date column
+    worksheet.getColumn(2).width = 25; // Activity column
+    worksheet.getColumn(3).width = 12; // Time column
+    worksheet.getColumn(4).width = 35; // Description column
 
-    worksheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    // Add title row with school branding
+    worksheet.mergeCells('A1:D1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'JAARPLANNING OVERZICHT';
+    titleCell.font = {
+      bold: true,
+      size: 18,
+      color: { argb: 'FF1E3A8A' },
+      name: 'Calibri',
+    };
+    titleCell.alignment = {
+      vertical: 'middle',
+      horizontal: 'center',
+    };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF8F9FA' },
+    };
+
+    // Ensure title row height
+    worksheet.getRow(1).height = 30;
+
+    // Add some spacing
+    worksheet.getRow(2).height = 10;
+
+    // Move headers to row 3
+    const headerRow = worksheet.getRow(3);
+    headerRow.values = ['Datum', 'Activiteit', 'Tijd', 'Beschrijving'];
+    headerRow.height = 25;
+
+    // Style the header row
+    headerRow.eachCell((cell) => {
+      cell.font = {
+        bold: true,
+        color: { argb: 'FFFFFFFF' },
+        size: 12,
+        name: 'Calibri',
+      };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
         fgColor: { argb: 'FF1E3A8A' },
       };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
       cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' },
+        top: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+        left: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+        bottom: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+        right: { style: 'medium', color: { argb: 'FF1E3A8A' } },
       };
     });
+
+    // Sort items by date for better organization
+    const sortedItems = [...items].sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    // Add data rows starting from row 4
+    sortedItems.forEach((item, index) => {
+      const rowIndex = index + 4;
+      const dataRow = worksheet.getRow(rowIndex);
+
+      // Format date properly
+      let formattedDate = '';
+      if (item.date) {
+        try {
+          formattedDate = new Date(item.date).toLocaleDateString('nl-NL', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          });
+        } catch {
+          formattedDate = item.date;
+        }
+      }
+
+      // Format time properly
+      let formattedTime = '';
+      if (item.start_time && item.end_time) {
+        formattedTime = `${item.start_time} - ${item.end_time}`;
+      } else if (item.start_time) {
+        formattedTime = item.start_time;
+      } else if (item.end_time) {
+        formattedTime = `Tot ${item.end_time}`;
+      } else {
+        formattedTime = 'Hele dag';
+      }
+
+      dataRow.values = [
+        formattedDate,
+        item.name || '',
+        formattedTime,
+        item.description || '',
+      ];
+
+      dataRow.height = Math.max(
+        20,
+        Math.ceil((item.description?.length || 0) / 60) * 15
+      );
+
+      // Style data rows with alternating colors
+      const isEvenRow = index % 2 === 0;
+      dataRow.eachCell((cell, colNumber) => {
+        cell.font = {
+          size: 11,
+          name: 'Calibri',
+        };
+
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEvenRow ? 'FFFFFFFF' : 'FFF8F9FA' },
+        };
+
+        cell.alignment = {
+          vertical: 'top',
+          horizontal: 'left',
+          wrapText: true,
+        };
+
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          right: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        };
+
+        // Special formatting for different columns
+        if (colNumber === 2) {
+          // Activity name column (now second column) - make bold
+          cell.font = { ...cell.font, bold: true };
+        }
+      });
+    });
+
+    // Add summary row
+    const summaryRowIndex = sortedItems.length + 5;
+    worksheet.mergeCells(`A${summaryRowIndex}:D${summaryRowIndex}`);
+    const summaryCell = worksheet.getCell(`A${summaryRowIndex}`);
+    summaryCell.value = `Totaal aantal activiteiten: ${sortedItems.length}`;
+    summaryCell.font = {
+      bold: true,
+      size: 12,
+      color: { argb: 'FF1E3A8A' },
+      name: 'Calibri',
+    };
+    summaryCell.alignment = {
+      vertical: 'middle',
+      horizontal: 'center',
+    };
+    summaryCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF0F9FF' },
+    };
+    summaryCell.border = {
+      top: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+      left: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+      bottom: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+      right: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+    };
+
+    // Set print options
+    worksheet.pageSetup = {
+      paperSize: 9, // A4
+      orientation: 'landscape',
+      fitToPage: true,
+      margins: {
+        left: 0.7,
+        right: 0.7,
+        top: 0.75,
+        bottom: 0.75,
+        header: 0.3,
+        footer: 0.3,
+      },
+    };
+
+    // Add header and footer for printing
+    worksheet.headerFooter.oddHeader =
+      '&C&"Calibri,Bold"&14Jaarplanning Overzicht';
+    worksheet.headerFooter.oddFooter = '&L&D &T&R&P van &N';
+
+    // Freeze the header row
+    worksheet.views = [
+      {
+        state: 'frozen',
+        ySplit: 3,
+      },
+    ];
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
-    saveAs(blob, 'jaarplanning.xlsx');
+
+    // Generate filename with current date
+    const fileName = `jaarplanning_${
+      new Date().toISOString().split('T')[0]
+    }.xlsx`;
+    saveAs(blob, fileName);
   };
 
   const handleConfirmExport = async () => {

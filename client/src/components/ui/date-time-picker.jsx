@@ -59,7 +59,7 @@ export function DateTimePicker({
             <Button
               variant="outline"
               id="date-picker"
-              className="w-full justify-start font-normal h-10 px-3"
+              className="w-full hover:bg-transparent hover:border-primary justify-start font-normal h-10 px-3"
             >
               <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
               {selectedDate
