@@ -8,6 +8,7 @@ exports.create_assessment = async (req, res) => {
     try {
         const {
             type,
+            name,
             class_id,
             subject_id,
             leverage,
@@ -19,6 +20,7 @@ exports.create_assessment = async (req, res) => {
         const newAssessment = await prisma.assessment.create({
             data: {
                 type,
+                name,
                 class_id,
                 subject_id,
                 leverage: leverage || 1,
@@ -115,6 +117,7 @@ exports.update_assessment = async (req, res) => {
         } = req.params;
         const {
             type,
+            name,
             class_id,
             subject_id,
             leverage,
@@ -129,6 +132,7 @@ exports.update_assessment = async (req, res) => {
             },
             data: {
                 type,
+                name,
                 class_id,
                 subject_id,
                 leverage,

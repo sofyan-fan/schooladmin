@@ -128,6 +128,7 @@ model absence {
 model assessment {
   id           Int                   @id @default(autoincrement())
   type         String                // e.g. "test", "exam", "quiz"
+  name         String                
   class_layout class_layout          @relation(fields: [class_id], references: [id])
   class_id     Int
 
