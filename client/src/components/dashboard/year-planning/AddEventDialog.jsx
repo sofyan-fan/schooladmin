@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const AddEventDialog = ({
   isOpen,
@@ -44,26 +46,37 @@ const AddEventDialog = ({
               <Label htmlFor="date" className="text-right">
                 Datum
               </Label>
-              <Input
-                type="date"
-                id="date"
-                name="date"
-                value={newItem.date}
-                onChange={onNewItemChange}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  id="date"
+                  value={newItem.date ? new Date(newItem.date) : undefined}
+                  onChange={(date) => {
+                    const event = {
+                      target: {
+                        name: 'date',
+                        value: date ? date.toISOString().split('T')[0] : '',
+                      },
+                    };
+                    onNewItemChange(event);
+                  }}
+                  placeholder="Selecteer datum"
+                  fromYear={new Date().getFullYear() - 1}
+                  toYear={new Date().getFullYear() + 5}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="time" className="text-right">
+              <Label htmlFor="description" className="text-right">
                 Beschrijving
               </Label>
-              <Input
-                type="textarea"
+              <Textarea
                 id="description"
                 name="description"
                 value={newItem.description}
                 onChange={onNewItemChange}
                 className="col-span-3"
+                rows={3}
+                placeholder="Voeg een beschrijving toe..."
               />
             </div>
           </div>

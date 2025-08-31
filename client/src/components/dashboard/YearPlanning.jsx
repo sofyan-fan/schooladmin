@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { useState } from 'react';
-  import eventAPI from '../../apis/eventAPI';
+import eventAPI from '../../apis/eventAPI';
 import AddEventDialog from './year-planning/AddEventDialog';
 import DeleteEventDialog from './year-planning/DeleteEventDialog';
 import EditEventDialog from './year-planning/EditEventDialog';
@@ -21,7 +21,7 @@ const YearPlanning = ({ items, setItems }) => {
     time: '',
     description: '',
   });
-  
+
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const exportToExcel = async () => {
@@ -99,7 +99,7 @@ const YearPlanning = ({ items, setItems }) => {
         event_date: editedItem.date,
         description: editedItem.description,
       };
-      const updatedEvent = await eventAPI.editEvent(eventData);
+      const updatedEvent = await eventAPI.update_event(eventData);
       setItems((prevItems) =>
         prevItems.map((item) =>
           item.id === updatedEvent.id ? { ...item, ...updatedEvent } : item
@@ -124,7 +124,7 @@ const YearPlanning = ({ items, setItems }) => {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     try {
-      await eventAPI.deleteEvent(itemToDelete.id);
+      await eventAPI.delete_event(itemToDelete.id);
       setItems((prevItems) =>
         prevItems.filter((item) => item.id !== itemToDelete.id)
       );
@@ -161,24 +161,19 @@ const YearPlanning = ({ items, setItems }) => {
     setIsAddDialogOpen(true);
   };
 
-  const mappedItems = items.map((item) => ({
-    ...item,
-    name: item.event_name || item.name,
-    date: item.event_date || item.date,
-  }));
+  const mappedItems = items;
 
   return (
     <>
-      <Card className="overflow-hidden rounded-lg border py-0 shadow-sm bg-white">
-        <div className="relative max-h-96 overflow-y-auto">
-          <YearPlanningTable
-            items={mappedItems}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleDeleteClick}
-            onAddClick={newEvent}
-            onExportClick={() => setIsExportDialogOpen(true)}
-          />
-        </div>
+      <Card className="rounded-lg border shadow-sm bg-white p-6">
+        <YearPlanningTable
+          items={mappedItems}
+          onEditClick={handleEditClick}
+          onDeleteClick={handleDeleteClick}
+          onAddClick={newEvent}
+          onExportClick={() => setIsExportDialogOpen(true)}
+          loading={false}
+        />
       </Card>
       <EditEventDialog
         isOpen={isEditDialogOpen}

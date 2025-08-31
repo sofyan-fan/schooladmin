@@ -14,12 +14,8 @@ const moduleAPI = {
   },
 
   async add_module(moduleData) {
-    // Add default course_id since the database requires it
-    const dataWithCourse = {
-      ...moduleData,
-      course_id: 1, // Default course ID
-    };
-    const response = await RequestHandler.post(baseUrl, dataWithCourse);
+    // Don't hardcode course_id - let the server handle it
+    const response = await RequestHandler.post(baseUrl, moduleData);
     return response.data;
   },
 

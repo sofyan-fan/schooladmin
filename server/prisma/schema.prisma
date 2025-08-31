@@ -228,19 +228,27 @@ model courses {
   price       Float
 
   tuition_payments tuition_payment[]
-  subjects         subject[]         @relation("course_subjects")
+  subjects         subject[]                @relation("course_subjects")
   class_layout     class_layout[]
-  course_module    course_module[]
+  course_modules   course_module_relation[]
 }
 
 model course_module {
   id   Int    @id @default(autoincrement())
   name String
 
-  course    courses @relation(fields: [course_id], references: [id])
-  course_id Int
-
   subjects course_module_subject[]
+  courses  course_module_relation[]
+}
+
+model course_module_relation {
+  id        Int           @id @default(autoincrement())
+  course    courses       @relation(fields: [course_id], references: [id])
+  course_id Int
+  module    course_module @relation(fields: [module_id], references: [id])
+  module_id Int
+
+  @@unique([course_id, module_id])
 }
 
 model course_module_subject {

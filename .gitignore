@@ -1,1 +1,10 @@
 node_modules
+
+# Development Tools - Seeding Utility
+dev-tools/
+seeder_files/
+seed.js
+SEEDING.md
+
+# Seeder-related files in server directory
+server/prisma/dynamic-seeder.js

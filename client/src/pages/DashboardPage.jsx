@@ -20,7 +20,7 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const events = await eventAPI.getEvents();
+        const events = await eventAPI.get_events();
         setJaarplanning(events);
       } catch (error) {
         console.error('Error fetching events:', error);

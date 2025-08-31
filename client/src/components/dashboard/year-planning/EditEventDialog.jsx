@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const EditEventDialog = ({
   isOpen,
@@ -45,24 +47,37 @@ const EditEventDialog = ({
             <Label htmlFor="date" className="text-right">
               Datum
             </Label>
-            <Input
-              id="date"
-              name="date"
-              value={editedItem.date}
-              onChange={onInputChange}
-              className="col-span-3"
-            />
+            <div className="col-span-3">
+              <DatePicker
+                id="date"
+                value={editedItem.date ? new Date(editedItem.date) : undefined}
+                onChange={(date) => {
+                  const event = {
+                    target: {
+                      name: 'date',
+                      value: date ? date.toISOString().split('T')[0] : '',
+                    },
+                  };
+                  onInputChange(event);
+                }}
+                placeholder="Selecteer datum"
+                fromYear={new Date().getFullYear() - 1}
+                toYear={new Date().getFullYear() + 5}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">
               Beschrijving
             </Label>
-            <Input
+            <Textarea
               id="description"
               name="description"
               value={editedItem.description}
               onChange={onInputChange}
               className="col-span-3"
+              rows={3}
+              placeholder="Voeg een beschrijving toe..."
             />
           </div>
         </div>

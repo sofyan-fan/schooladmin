@@ -25,6 +25,7 @@ import {
 } from '@tanstack/react-table';
 import { BookOpen, LibraryBig } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const NoData = (
   <TableRow>
@@ -105,27 +106,19 @@ const SubjectsPage = () => {
       .finally(() => setLoading(false));
   };
 
-  const handleSaveSubject = (subjectToSave) => {
-    const formattedSubject = {
-      ...subjectToSave,
-      levels: subjectToSave.levels.map((l) =>
-        typeof l === 'object' ? l.level : l
-      ),
-      materials: subjectToSave.materials.map((m) =>
-        typeof m === 'object' ? m.material : m
-      ),
-    };
-
+  const handleSaveSubject = (savedSubject) => {
     setSubjects((prevSubjects) => {
-      const subjectExists = prevSubjects.find(
-        (s) => s.id === formattedSubject.id
-      );
+      const subjectExists = prevSubjects.find((s) => s.id === savedSubject.id);
       if (subjectExists) {
+        // If subject exists, update it in the array
+        toast.success(`"${savedSubject.name}" is bijgewerkt!`);
         return prevSubjects.map((s) =>
-          s.id === formattedSubject.id ? formattedSubject : s
+          s.id === savedSubject.id ? savedSubject : s
         );
       }
-      return [...prevSubjects, formattedSubject];
+      // If it's a new subject, add it to the array
+      toast.success(`"${savedSubject.name}" is toegevoegd!`);
+      return [...prevSubjects, savedSubject];
     });
 
     setIsCreateModalOpen(false);
@@ -141,8 +134,10 @@ const SubjectsPage = () => {
     if (!deletingSubject) return;
     try {
       await subjectAPI.delete_subject(deletingSubject.id);
+      toast.success(`"${deletingSubject.name}" is verwijderd!`);
       fetchSubjects();
     } catch {
+      toast.error('Kon het vak niet verwijderen. Probeer het opnieuw.');
       setApiError('Failed to delete subject. Please try again.');
     } finally {
       setDeletingSubject(null);

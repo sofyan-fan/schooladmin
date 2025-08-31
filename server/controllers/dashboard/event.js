@@ -1,15 +1,9 @@
 const { prisma } = require('../../prisma/connection');
-const { format } = require('date-fns');
 
 exports.get_events = async (req, res) => {
   try {
     const events = await prisma.events.findMany();
-    const formattedEvents = events.map((event) => ({
-      ...event,
-      event_name: event.name,
-      event_date: event.date,
-    }));
-    res.status(200).json(formattedEvents);
+    res.status(200).json(events);
   } catch (error) {
     console.error('Error fetching events:', error);
     res.status(500).json({
@@ -27,7 +21,6 @@ exports.create_event = async (req, res) => {
         error: 'All fields are required',
       });
     }
-    const formattedEventDate = format(new Date(event_date), 'MM/dd/yyyy');
 
     const newEvent = await prisma.events.create({
       data: {

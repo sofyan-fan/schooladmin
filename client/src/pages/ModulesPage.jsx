@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Component, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 const normalizeSubjects = (list) => {
   if (!Array.isArray(list)) return [];
   return list.map((s) => ({
@@ -114,9 +115,11 @@ const ModulesPage = () => {
   const handleCreateModule = async (moduleData) => {
     try {
       await moduleApi.add_module(moduleData);
+      toast.success(`"${moduleData.name}" is toegevoegd!`);
       await refreshModules();
       setIsCreateModalOpen(false);
     } catch (e) {
+      toast.error(e.message || 'Kon de module niet aanmaken.');
       throw new Error(e.message || 'Kon de module niet aanmaken.');
     }
   };
@@ -124,9 +127,11 @@ const ModulesPage = () => {
   const handleEditModule = async (moduleData) => {
     try {
       await moduleApi.update_module({ ...moduleData, id: moduleToEdit.id });
+      toast.success(`"${moduleData.name}" is bijgewerkt!`);
       await refreshModules();
       setModuleToEdit(null);
     } catch (e) {
+      toast.error(e.message || 'Kon de module niet bijwerken.');
       throw new Error(e.message || 'Kon de module niet bijwerken.');
     }
   };
@@ -135,9 +140,11 @@ const ModulesPage = () => {
     if (!moduleToDelete) return;
     try {
       await moduleApi.delete_module(moduleToDelete.id);
+      toast.success(`"${moduleToDelete.name}" is verwijderd!`);
       await refreshModules();
       setModuleToDelete(null); // Close dialog on success
     } catch (e) {
+      toast.error(e.message || 'Kon de module niet verwijderen.');
       setApiError(e.message || 'Kon de module niet verwijderen.');
     }
   };

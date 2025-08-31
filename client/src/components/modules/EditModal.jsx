@@ -190,6 +190,7 @@ export default function EditModal({
           })
         ),
       });
+      console.log('moduleItems', moduleItems);
       onOpenChange(false);
     } catch (err) {
       setError(

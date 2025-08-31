@@ -6,9 +6,6 @@
   "scripts": {
     "dev": "vite --host --port 5173",
     "build": "vite build",
-    "start:server": "nodemon server.js",
-    "mock": "node client/server.js",
-    "dev:mock": "VITE_USE_JSON_SERVER=true vite --host --port 5173",
     "lint": "eslint .",
     "preview": "vite preview",
     "host": "vite --host"
@@ -41,7 +38,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
@@ -73,15 +69,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
-    "json-server": "^0.17.3",
-    "json-server-auth": "^2.1.0",
-    "nodemon": "^3.1.10",
     "tw-animate-css": "^1.3.5",
     "vite": "^7.0.4"
-  },
-  "nodemonConfig": {
-    "ignore": [
-      "mock/db.json"
-    ]
   }
 }

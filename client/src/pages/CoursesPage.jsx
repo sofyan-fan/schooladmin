@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Layers3, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const CoursesPage = () => {
   // State for data
@@ -90,14 +91,21 @@ const CoursesPage = () => {
     try {
       if (isEditModalOpen) {
         await courseApi.update_course({ ...courseData, id: courseToEdit.id });
+        toast.success(
+            `Lespakket "${courseData.name}" is bijgewerkt!`
+        );
       } else {
         await courseApi.add_course(courseData);
+        toast.success(
+          `Lespakket "${courseData.name}" is toegevoegd!`
+        );
       }
       await refreshCourses();
       setIsCreateModalOpen(false);
       setIsEditModalOpen(false);
       setCourseToEdit(null);
     } catch (e) {
+      toast.error(e.message || 'Kon het lespakket niet opslaan.');
       throw new Error(e.message || 'Kon het lespakket niet opslaan.');
     }
   };
@@ -106,9 +114,13 @@ const CoursesPage = () => {
     if (!courseToDelete) return;
     try {
       await courseApi.delete_course(courseToDelete.id);
+      toast.success(
+        `Lespakket "${courseToDelete.name}" is verwijderd!`
+      );
       await refreshCourses();
       setCourseToDelete(null); // Close dialog on success
     } catch (e) {
+      toast.error(e.message || 'Kon het lespakket niet verwijderen.');
       setApiError(e.message || 'Kon het lespakket niet verwijderen.');
     }
   };

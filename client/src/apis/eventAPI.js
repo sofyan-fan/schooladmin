@@ -1,16 +1,16 @@
 import RequestHandler from './RequestHandler';
 
-export const getEvents = async () => {
+export const get_events = async () => {
   const response = await RequestHandler.get('/dashboard/event');
   return response.data;
 };
 
-export const addEvent = async (event) => {
+export const add_event = async (event) => {
   const response = await RequestHandler.post('/dashboard/event', event);
   return response.data;
 };
 
-export const updateEvent = async (event) => {
+export const update_event = async (event) => {
   const response = await RequestHandler.put(
     `/dashboard/event/${event.id}`,
     event
@@ -18,16 +18,16 @@ export const updateEvent = async (event) => {
   return response.data;
 };
 
-export const deleteEvent = async (id) => {
+export const delete_event = async (id) => {
   await RequestHandler.del(`/dashboard/event/${id}`);
   return id;
 };
 
 const eventAPI = {
-  getEvents,
-  addEvent,
-  updateEvent,
-  deleteEvent,
+  get_events,
+  add_event,
+  update_event,
+  delete_event,
 };
 
 export default eventAPI;
