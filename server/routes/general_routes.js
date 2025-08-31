@@ -49,7 +49,7 @@ const {
   get_result_by_id,
   update_result,
   delete_result
-} = require('../controllers/general/results.controller');
+} = require('../controllers/general/results');
 
 // ==============================
 // Students routes
