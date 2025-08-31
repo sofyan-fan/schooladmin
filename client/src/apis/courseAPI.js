@@ -6,10 +6,11 @@ const courseApi = {
     return response.data.courses || response.data;
   },
 
-  async get_course_by_id(courseId) {
-    const response = await RequestHandler.get(`/courses/courses/${courseId}`);
-    return response.data;
-  },
+  // Note: GET course by ID endpoint not implemented in backend yet
+  // async get_course_by_id(courseId) {
+  //   const response = await RequestHandler.get(`/courses/courses/${courseId}`);
+  //   return response.data;
+  // },
 
   async get_course_modules(courseId) {
     // This endpoint seems to fetch enriched modules, maybe adjust if you have a specific one per course

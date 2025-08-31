@@ -1,6 +1,5 @@
 import classAPI from '@/apis/classAPI';
 import classroomAPI from '@/apis/classroomAPI';
-import courseAPI from '@/apis/courseAPI';
 import rosterAPI from '@/apis/rosterAPI';
 import subjectAPI from '@/apis/subjectAPI';
 import teachersAPI from '@/apis/teachersAPI';
@@ -54,33 +53,56 @@ export default function DailySchedule({
           rosterAPI.get_rosters(),
         ]);
 
-        const populatedClasses = await Promise.all(
-          (classesData || []).map(async (c) => {
-            if (c.course_id) {
-              const course = await courseAPI.get_course_by_id(c.course_id);
-              return { ...c, subjects: course?.subjects || [] };
-            }
-            return { ...c, subjects: [] };
-          })
-        );
-        setClasses(populatedClasses);
+        // Classes don't need course subjects since we fetch subjects separately
+        setClasses(classesData || []);
         setTeachers(teachersData || []);
         setClassrooms(classroomsData || []);
         setSubjects(subjectsData || []);
 
+        // Filter rosters for the current day being viewed
+        const currentDayOfWeek = format(date, 'eeee'); // Get day name like "Monday"
+        const filteredRosters = rostersData.filter((roster) => {
+          // Check if the roster's day_of_week matches the current day
+          return roster.day_of_week === currentDayOfWeek;
+        });
+
+        console.log(
+          `Found ${filteredRosters.length} rosters for ${currentDayOfWeek}`
+        );
         const scheduleFromRosters = {};
-        rostersData.forEach((roster) => {
+        filteredRosters.forEach((roster) => {
           if (!scheduleFromRosters[roster.classLayoutId]) {
             scheduleFromRosters[roster.classLayoutId] = {};
           }
+
+          // Adjust the roster times to the current viewing date
+          const rosterStartTime =
+            roster.start_time ||
+            roster.start?.split('T')[1]?.substring(0, 5) ||
+            '09:00';
+          const rosterEndTime =
+            roster.end_time ||
+            roster.end?.split('T')[1]?.substring(0, 5) ||
+            '10:00';
+
+          // Create dates for the current viewing day with the roster times
+          const [startHour, startMin] = rosterStartTime.split(':').map(Number);
+          const [endHour, endMin] = rosterEndTime.split(':').map(Number);
+
+          const startDate = new Date(date);
+          startDate.setHours(startHour, startMin, 0, 0);
+
+          const endDate = new Date(date);
+          endDate.setHours(endHour, endMin, 0, 0);
+
           scheduleFromRosters[roster.classLayoutId][roster.id] = {
             id: roster.id,
             classId: roster.classLayoutId,
             subject: subjectsData.find((s) => s.id === roster.subjectId),
             teacher: teachersData.find((t) => t.id === roster.teacherId),
             classroom: classroomsData.find((c) => c.id === roster.classroomId),
-            start: roster.start,
-            end: roster.end,
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
           };
         });
         onScheduleChange(scheduleFromRosters);
@@ -89,19 +111,21 @@ export default function DailySchedule({
       }
     }
     fetchData();
-  }, [onScheduleChange]);
+  }, [date, onScheduleChange]);
 
   const eventsForClass = (classId) => {
     const classSchedule = schedule[classId] || {};
-    return Object.values(classSchedule)
+    const events = Object.values(classSchedule)
       .filter((lesson) => lesson && lesson.subject)
       .map((lesson) => ({
-        id: lesson.id,
+        id: lesson.id.toString(),
         title: lesson.subject.name,
         start: lesson.start,
         end: lesson.end,
         extendedProps: { lesson },
       }));
+    console.log(`Events for class ${classId}:`, events);
+    return events;
   };
 
   const saveLesson = (lessonToSave) => {
@@ -168,15 +192,73 @@ export default function DailySchedule({
       title: lessonToSave.subject.name,
     };
 
-    if (isNew) {
-      const newRoster = await rosterAPI.add_roster(payload);
-      saveLesson({ ...lessonToSave, id: newRoster.id });
-    } else {
-      await rosterAPI.update_roster(payload);
-      saveLesson(lessonToSave);
+    try {
+      if (isNew) {
+        const newRoster = await rosterAPI.add_roster(payload);
+        // Use the returned roster data which includes the proper ID
+        saveLesson({
+          ...lessonToSave,
+          id: newRoster.id || newRoster.data?.id || Math.random(),
+        });
+      } else {
+        await rosterAPI.update_roster(payload);
+        saveLesson(lessonToSave);
+      }
+
+      // Re-fetch rosters to ensure we have the latest data
+      const rostersData = await rosterAPI.get_rosters();
+
+      // Filter rosters for the current day being viewed
+      const currentDayOfWeek = format(date, 'eeee'); // Get day name like "Monday"
+      const filteredRosters = rostersData.filter((roster) => {
+        // Check if the roster's day_of_week matches the current day
+        return roster.day_of_week === currentDayOfWeek;
+      });
+
+      const scheduleFromRosters = {};
+      filteredRosters.forEach((roster) => {
+        if (!scheduleFromRosters[roster.classLayoutId]) {
+          scheduleFromRosters[roster.classLayoutId] = {};
+        }
+
+        // Adjust the roster times to the current viewing date
+        const rosterStartTime =
+          roster.start_time ||
+          roster.start?.split('T')[1]?.substring(0, 5) ||
+          '09:00';
+        const rosterEndTime =
+          roster.end_time ||
+          roster.end?.split('T')[1]?.substring(0, 5) ||
+          '10:00';
+
+        // Create dates for the current viewing day with the roster times
+        const [startHour, startMin] = rosterStartTime.split(':').map(Number);
+        const [endHour, endMin] = rosterEndTime.split(':').map(Number);
+
+        const startDate = new Date(date);
+        startDate.setHours(startHour, startMin, 0, 0);
+
+        const endDate = new Date(date);
+        endDate.setHours(endHour, endMin, 0, 0);
+
+        scheduleFromRosters[roster.classLayoutId][roster.id] = {
+          id: roster.id,
+          classId: roster.classLayoutId,
+          subject: subjects.find((s) => s.id === roster.subjectId),
+          teacher: teachers.find((t) => t.id === roster.teacherId),
+          classroom: classrooms.find((c) => c.id === roster.classroomId),
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+        };
+      });
+      onScheduleChange(scheduleFromRosters);
+
+      setEditingLesson(null);
+      setConflict(null);
+    } catch (error) {
+      console.error('Failed to save lesson:', error);
+      toast.error('Failed to save lesson. Please try again.');
     }
-    setEditingLesson(null);
-    setConflict(null);
   };
 
   const handleSaveLesson = async (updatedLesson) => {

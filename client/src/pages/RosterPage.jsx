@@ -43,18 +43,19 @@ export default function RosterPage() {
   const [classrooms, setClassrooms] = useState([]);
 
   const fetchRosters = useCallback(async () => {
-    if (!selection.type || !selection.id) {
-      setEvents([]);
-      return;
-    }
     try {
-      const filters = {
-        [`${selection.type}Id`]: selection.id,
-      };
+      let filters = {};
+      // Only apply filter if a selection is made
+      if (selection.type && selection.id) {
+        filters = {
+          [`${selection.type}Id`]: selection.id,
+        };
+      }
       const data = await rosterAPI.get_rosters(filters);
       setEvents(data);
     } catch (error) {
       console.error('Failed to fetch rosters:', error);
+      setEvents([]);
     }
   }, [selection]);
 
@@ -135,6 +136,18 @@ export default function RosterPage() {
     <div className="flex h-full gap-6 p-4">
       <aside className="w-1/4 max-w-xs p-4 bg-card rounded-lg shadow-sm overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Selections</h2>
+        <div className="mb-4">
+          <button
+            className={`w-full p-2 rounded-md transition-colors ${
+              !selection.type
+                ? 'bg-primary text-primary-foreground'
+                : 'hover:bg-muted'
+            }`}
+            onClick={() => setSelection({ type: null, id: null })}
+          >
+            Show All
+          </button>
+        </div>
         <SelectionPanel
           title="Group"
           items={classLayouts}

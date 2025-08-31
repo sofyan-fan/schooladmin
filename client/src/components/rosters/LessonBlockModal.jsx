@@ -56,9 +56,19 @@ export default function LessonBlockModal({
   if (!isOpen) return null;
 
   const handleSave = () => {
+    if (!subjectId || !teacherId || !classroomId) {
+      alert('Please select a subject, teacher, and classroom');
+      return;
+    }
+
     const subject = subjects.find((s) => s.id.toString() === subjectId);
     const teacher = teachers.find((t) => t.id.toString() === teacherId);
     const classroom = classrooms.find((c) => c.id.toString() === classroomId);
+
+    if (!subject || !teacher || !classroom) {
+      alert('Invalid selection. Please try again.');
+      return;
+    }
 
     onSave({
       ...lesson,
@@ -152,7 +162,10 @@ export default function LessonBlockModal({
             <Button onClick={onClose} variant="ghost">
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!subjectId}>
+            <Button
+              onClick={handleSave}
+              disabled={!subjectId || !teacherId || !classroomId}
+            >
               Save
             </Button>
           </DialogFooter>

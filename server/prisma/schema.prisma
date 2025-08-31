@@ -92,11 +92,28 @@ model class_layout {
   course_id Int?
   course    courses? @relation(fields: [course_id], references: [id])
 
-  students  student[]
-  tests     test[]
-  exams     exam[]
-  schedules schedule[]
-  roster    roster[]
+  students    student[]
+  assessments assessment[]
+  schedules   schedule[]
+  roster      roster[]
+}
+
+model assessment {
+  id           Int          @id @default(autoincrement())
+  type         String // e.g. "test", "exam", "quiz"
+  name         String
+  class_layout class_layout @relation(fields: [class_id], references: [id])
+  class_id     Int
+
+  subject    course_module_subject @relation(fields: [subject_id], references: [id])
+  subject_id Int
+
+  leverage    Float    @default(1)
+  date        DateTime
+  is_central  Boolean  @default(false)
+  description String?
+
+  results result[]
 }
 
 model progress {
@@ -126,33 +143,36 @@ model absence {
   student student[]
 }
 
-model test {
-  id           Int          @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
-  class_id     Int
-  subject      subject      @relation(fields: [subject_id], references: [id])
-  subject_id   Int
-  date         DateTime
-  description  String?
-}
+// model test {
+//   id           Int          @id @default(autoincrement())
+//   class_layout class_layout @relation(fields: [class_id], references: [id])
+//   class_id     Int
+//   subject      subject      @relation(fields: [subject_id], references: [id])
+//   subject_id   Int
+//   date         DateTime
+//   description  String?
+// }
 
-model exam {
-  id           Int          @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
-  class_id     Int
-  subject      subject      @relation(fields: [subject_id], references: [id])
-  subject_id   Int
-  date         DateTime
-  is_central   Boolean
-}
+// model exam {
+//   id           Int          @id @default(autoincrement())
+//   class_layout class_layout @relation(fields: [class_id], references: [id])
+//   class_id     Int
+//   subject      subject      @relation(fields: [subject_id], references: [id])
+//   subject_id   Int
+//   date         DateTime
+//   is_central   Boolean
+// }
 
 model result {
-  id         Int      @id @default(autoincrement())
-  student    student  @relation(fields: [student_id], references: [id])
+  id         Int     @id @default(autoincrement())
+  student    student @relation(fields: [student_id], references: [id])
   student_id Int
-  subject_id Int
-  grade      Float
-  date       DateTime
+
+  assessment    assessment @relation(fields: [assessment_id], references: [id])
+  assessment_id Int
+
+  grade Float
+  date  DateTime
 }
 
 model classroom {
@@ -262,8 +282,24 @@ model course_module_subject {
   level    String
   material String
 
+  assessments assessment[]
+
   @@unique([course_module_id, subject_id, level, material])
 }
+
+// model subject {
+//   id   Int    @id @default(autoincrement())
+//   name String
+
+//   levels    subject_level[]
+//   materials subject_material[]
+
+//   tests           test[]
+//   exams           exam[]
+//   roster          roster[]
+//   courses         courses[]               @relation("course_subjects")
+//   module_subjects course_module_subject[]
+// }
 
 model subject {
   id   Int    @id @default(autoincrement())
@@ -272,8 +308,6 @@ model subject {
   levels    subject_level[]
   materials subject_material[]
 
-  tests           test[]
-  exams           exam[]
   roster          roster[]
   courses         courses[]               @relation("course_subjects")
   module_subjects course_module_subject[]

@@ -28,6 +28,7 @@ import {
   LogOut,
   PanelLeft,
   Presentation,
+  BarChart,
   Settings,
 } from 'lucide-react';
 
@@ -64,6 +65,7 @@ const SidebarComponent = () => {
     { name: 'Modules', path: 'modules', Icon: Component },
     { name: 'Lespakketten', path: 'lespakketten', Icon: Layers },
     { name: 'Toetsen & Examens', path: 'toetsen-en-examens', Icon: BookCheck },
+    { name: 'Resultaten', path: 'resultaten', Icon: BarChart },
     { name: 'Financiën', path: 'financien', Icon: CircleDollarSign },
     { name: 'Instellingen', path: 'instellingen', Icon: Settings },
   ];

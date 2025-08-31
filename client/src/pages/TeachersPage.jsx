@@ -104,10 +104,17 @@ export default function TeachersPage() {
         (key) => payload[key] === undefined && delete payload[key]
       );
 
-      const response = await teachersAPI.update_teacher({
-        id: updated.id,
-        ...payload,
-      });
+      let response;
+      if (updated.id) {
+        // Update existing teacher
+        response = await teachersAPI.update_teacher({
+          id: updated.id,
+          ...payload,
+        });
+      } else {
+        // Create new teacher
+        response = await teachersAPI.add_teacher(payload);
+      }
 
       const mapped = {
         id: response.id,
@@ -121,7 +128,17 @@ export default function TeachersPage() {
         active: response.active ?? false,
       };
 
-      setTeachers((prev) => prev.map((s) => (s.id === mapped.id ? mapped : s)));
+      if (updated.id) {
+        // Update existing teacher in list
+        setTeachers((prev) =>
+          prev.map((s) => (s.id === mapped.id ? mapped : s))
+        );
+      } else {
+        // Add new teacher to list
+        setTeachers((prev) => [...prev, mapped]);
+      }
+
+      setOpenEditProfile(false);
     } catch (e) {
       console.error('Failed to save teacher', e);
     }

@@ -1,8 +1,23 @@
 import assessmentApi from '@/apis/assessmentAPI';
+import classAPI from '@/apis/classAPI';
+import subjectAPI from '@/apis/subjectAPI';
 import { createColumns } from '@/components/assessments/columns';
+import CreateAssessmentModal from '@/components/assessments/CreateAssessmentModal';
+import EditAssessmentModal from '@/components/assessments/EditAssessmentModal';
+import ViewAssessmentModal from '@/components/assessments/ViewAssessmentModal';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -14,15 +29,16 @@ import {
 } from '@tanstack/react-table';
 import { BookCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const NoData = ({ type }) => (
   <TableRow>
     <TableCell colSpan={6} className="h-48 text-center">
       <div className="flex flex-col items-center justify-center space-y-4">
         <BookCheck className="size-12 text-gray-400" />
-        <h3 className="text-xl font-semibold">No {type} Found</h3>
+        <h3 className="text-xl font-semibold">Geen {type} gevonden</h3>
         <p className="text-muted-foreground">
-          Get started by adding a new {type.toLowerCase()}.
+          Voeg een nieuwe {type.toLowerCase()} toe om te beginnen.
         </p>
       </div>
     </TableCell>
@@ -75,57 +91,140 @@ export default function AssessmentsPage() {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const [testData, examData] = await Promise.all([
-          assessmentApi.getTests(),
-          assessmentApi.getExams(),
-        ]);
+  // Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [selectedType, setSelectedType] = useState('test');
+  const [deletingAssessment, setDeletingAssessment] = useState(null);
 
-        // NOTE: Placeholder for fetching related data
-        const mappedTests = testData.map((t) => ({
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [assessmentData, classData, subjectData] = await Promise.all([
+        assessmentApi.getAssessments(),
+        classAPI.get_classes(),
+        subjectAPI.get_subjects(),
+      ]);
+  
+      const testData = assessmentData.tests || [];
+      const examData = assessmentData.exams || [];
+      // Map class and subject names
+      const mappedTests = testData.map((t) => {
+        const cls = classData.find((c) => c.id === t.classId);
+        const subject = subjectData.find((s) => s.id === t.subjectId);
+        return {
           ...t,
-          class: `Class ${t.classId}`,
-          subject: `Subject ${t.subjectId}`,
-        }));
+          class: cls?.name || `Class ${t.classId}`,
+          subject: subject?.name || `Subject ${t.subjectId}`,
+        };
+      });
 
-        const mappedExams = examData.map((e) => ({
+      console.log("testdata", testData);
+
+      const mappedExams = examData.map((e) => {
+        const cls = classData.find((c) => c.id === e.classId);
+        const subject = subjectData.find((s) => s.id === e.subjectId);
+        return {
           ...e,
-          class: `Class ${e.classId}`,
-          subject: `Subject ${e.subjectId}`,
-        }));
+          class: cls?.name || `Class ${e.classId}`,
+          subject: subject?.name || `Subject ${e.subjectId}`,
+        };
+      });
 
-        if (mounted) {
-          setTests(mappedTests);
-          setExams(mappedExams);
-        }
-      } catch (e) {
-        console.error('Failed to load assessments', e);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+      setTests(mappedTests);
+      setExams(mappedExams);
+    } catch (e) {
+      console.error('Failed to load assessments', e);
+      toast.error('Laden van toetsen en examens mislukt');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
+
+  const handleView = (assessment, type) => {
+    setSelectedAssessment(assessment);
+    setSelectedType(type);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEdit = (assessment, type) => {
+    setSelectedAssessment(assessment);
+    setSelectedType(type);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (assessment, type) => {
+    setSelectedAssessment(assessment);
+    setSelectedType(type);
+    setDeletingAssessment(assessment);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingAssessment) return;
+
+    try {
+      if (selectedType === 'test') {
+        await assessmentApi.deleteTest(deletingAssessment.id);
+        setTests((prev) => prev.filter((t) => t.id !== deletingAssessment.id));
+        toast.success(`Toets "${deletingAssessment.name}" is verwijderd`);
+      } else {
+        await assessmentApi.deleteExam(deletingAssessment.id);
+        setExams((prev) => prev.filter((e) => e.id !== deletingAssessment.id));
+        toast.success(`Examen "${deletingAssessment.name}" is verwijderd`);
+      }
+    } catch (error) {
+      console.error('Failed to delete assessment', error);
+      toast.error('Verwijderen mislukt. Probeer het opnieuw.');
+    } finally {
+      setDeletingAssessment(null);
+      setSelectedAssessment(null);
+    }
+  };
+
+  const handleSaveAssessment = (savedAssessment, type) => {
+    if (type === 'test') {
+      setTests((prevTests) => {
+        const exists = prevTests.find((t) => t.id === savedAssessment.id);
+        if (exists) {
+          toast.success(`Toets "${savedAssessment.name}" is bijgewerkt`);
+          return prevTests.map((t) =>
+            t.id === savedAssessment.id ? savedAssessment : t
+          );
+        }
+        toast.success(`Toets "${savedAssessment.name}" is aangemaakt`);
+        return [...prevTests, savedAssessment];
+      });
+    } else {
+      setExams((prevExams) => {
+        const exists = prevExams.find((e) => e.id === savedAssessment.id);
+        if (exists) {
+          toast.success(`Examen "${savedAssessment.name}" is bijgewerkt`);
+          return prevExams.map((e) =>
+            e.id === savedAssessment.id ? savedAssessment : e
+          );
+        }
+        toast.success(`Examen "${savedAssessment.name}" is aangemaakt`);
+        return [...prevExams, savedAssessment];
+      });
+    }
+
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
+    setSelectedAssessment(null);
+  };
 
   const testColumns = useMemo(
     () =>
       createColumns({
-        onView: () => {},
-        onEdit: () => {},
-        onDelete: async (id) => {
-          try {
-            await assessmentApi.delete_test(id);
-            setTests((prev) => prev.filter((t) => t.id !== id));
-          } catch (error) {
-            console.error('Failed to delete test', error);
-          }
-        },
+        onView: (assessment) => handleView(assessment, 'test'),
+        onEdit: (assessment) => handleEdit(assessment, 'test'),
+        onDelete: (assessment) => handleDelete(assessment, 'test'),
       }),
     []
   );
@@ -133,16 +232,9 @@ export default function AssessmentsPage() {
   const examColumns = useMemo(
     () =>
       createColumns({
-        onView: () => {},
-        onEdit: () => {},
-        onDelete: async (id) => {
-          try {
-            await assessmentApi.delete_exam(id);
-            setExams((prev) => prev.filter((e) => e.id !== id));
-          } catch (error) {
-            console.error('Failed to delete exam', error);
-          }
-        },
+        onView: (assessment) => handleView(assessment, 'exam'),
+        onEdit: (assessment) => handleEdit(assessment, 'exam'),
+        onDelete: (assessment) => handleDelete(assessment, 'exam'),
       }),
     []
   );
@@ -154,30 +246,99 @@ export default function AssessmentsPage() {
         icon={<BookCheck className="size-9" />}
         description="Beheer hier alle toetsen en examens."
         buttonText="Nieuwe Toets/Examen"
-        onAdd={() => {}}
+        onAdd={() => setIsCreateModalOpen(true)}
       />
       <Tabs defaultValue="tests">
         <TabsList>
-          <TabsTrigger value="tests">Tests</TabsTrigger>
-          <TabsTrigger value="exams">Exams</TabsTrigger>
+          <TabsTrigger value="tests">Toetsen</TabsTrigger>
+          <TabsTrigger value="exams">Examens</TabsTrigger>
         </TabsList>
         <TabsContent value="tests">
           <AssessmentTable
             data={tests}
             loading={loading}
             columns={testColumns}
-            type="Tests"
+            type="toets"
           />
         </TabsContent>
-        <TabsContent value="exams">
+        <TabsContent value="exams" className="bg-primary text-white">
           <AssessmentTable
             data={exams}
             loading={loading}
             columns={examColumns}
-            type="Exams"
+            type="examen"
           />
         </TabsContent>
       </Tabs>
+
+      {/* Create Modal */}
+      <CreateAssessmentModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSave={handleSaveAssessment}
+      />
+
+      {/* Edit Modal */}
+      <EditAssessmentModal
+        open={isEditModalOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSelectedAssessment(null);
+          }
+          setIsEditModalOpen(isOpen);
+        }}
+        onSave={handleSaveAssessment}
+        assessment={selectedAssessment}
+        type={selectedType}
+      />
+
+      {/* View Modal */}
+      <ViewAssessmentModal
+        open={isViewModalOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSelectedAssessment(null);
+          }
+          setIsViewModalOpen(isOpen);
+        }}
+        assessment={selectedAssessment}
+        type={selectedType}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      {deletingAssessment && (
+        <AlertDialog
+          open={!!deletingAssessment}
+          onOpenChange={() => {
+            setDeletingAssessment(null);
+            setSelectedAssessment(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Deze actie kan niet ongedaan worden gemaakt. Dit verwijdert de
+                {selectedType === 'test' ? ' toets' : ' examen'} "
+                {deletingAssessment.name}" definitief.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() => {
+                  setDeletingAssessment(null);
+                  setSelectedAssessment(null);
+                }}
+              >
+                Annuleren
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmDelete}>
+                Verwijderen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }

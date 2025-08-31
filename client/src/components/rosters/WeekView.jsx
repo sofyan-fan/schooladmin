@@ -20,12 +20,9 @@ export default function WeekView({ onDaySelect }) {
             key={day.toString()}
             onClick={() => onDaySelect(day)}
             variant="outline"
-            className="p-4 flex flex-col items-start h-24"
+            className="p-4 flex flex-col items-center justify-center h-24"
           >
-            <span className="text-2xl font-bold">{format(day, 'dd')}</span>
-            <span className="text-sm text-muted-foreground">
-              {format(day, 'eeee')}
-            </span>
+            <span className="text-lg font-bold">{format(day, 'eeee')}</span>
           </Button>
         ))}
       </CardContent>

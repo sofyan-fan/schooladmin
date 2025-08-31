@@ -15,12 +15,33 @@ const {
 } = require('../controllers/general/user_document');
 
 const {
+  create_test,
+  get_all_tests,
+  get_test_by_id,
+  update_test,
+  delete_test,
+  create_exam,
+  get_all_exams,
+  get_exam_by_id,
+  update_exam,
+  delete_exam,
+} = require('../controllers/general/test_exam');
+
+const {
   create_assessment,
   get_all_assessments,
   get_assessment_by_id,
   update_assessment,
   delete_assessment,
 } = require('../controllers/general/assesment');
+
+const {
+  create_result,
+  get_all_results,
+  get_result_by_id,
+  update_result,
+  delete_result,
+} = require('../controllers/general/result');
 
 const {
   create_absence,
@@ -72,6 +93,24 @@ router.put('/teacher/:id', update_teacher);
 router.delete('/teacher/:id', delete_teacher);
 
 // ==============================
+// Tests routes
+// ==============================
+router.post('/tests', create_test);
+router.get('/tests', get_all_tests);
+router.get('/tests/:id', get_test_by_id);
+router.put('/tests/:id', update_test);
+router.delete('/tests/:id', delete_test);
+
+// ==============================
+// Exams routes
+// ==============================
+router.post('/exams', create_exam);
+router.get('/exams', get_all_exams);
+router.get('/exams/:id', get_exam_by_id);
+router.put('/exams/:id', update_exam);
+router.delete('/exams/:id', delete_exam);
+
+// ==============================
 // Assessments routes
 // ==============================
 router.post('/assessments', create_assessment);
@@ -79,6 +118,15 @@ router.get('/assessments', get_all_assessments);
 router.get('/assessments/:id', get_assessment_by_id);
 router.put('/assessments/:id', update_assessment);
 router.delete('/assessments/:id', delete_assessment);
+
+// ==============================
+// Results routes
+// ==============================
+router.post('/results', create_result);
+router.get('/results', get_all_results);
+router.get('/results/:id', get_result_by_id);
+router.put('/results/:id', update_result);
+router.delete('/results/:id', delete_result);
 
 // ==============================
 // Absences routes

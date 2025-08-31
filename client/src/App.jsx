@@ -19,7 +19,7 @@ import SettingsPage from './pages/SettingsPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
-
+import ResultsPage from './pages/ResultsPage';
 // import { useAuth } from './hooks/useAuth';
 
 // const user_role = useAuth();
@@ -51,6 +51,7 @@ const App = () => {
         <Route path="/rooster" element={<RosterPage />} />
         <Route path="/roosters" element={<RostersPage />} />
         <Route path="/toetsen-en-examens" element={<AssessmentsPage />} />
+        <Route path="/resultaten" element={<ResultsPage />} />
         <Route path="/leerlingen" element={<StudentsPage />} />
         <Route path="/docenten" element={<TeachersPage />} />
         <Route path="/vakken" element={<SubjectsPage />} />
