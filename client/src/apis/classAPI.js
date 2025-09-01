@@ -82,11 +82,17 @@ export const update_class = async (classData) => {
   return updatedClass;
 };
 
+export const get_class = async (id) => {
+  const { data } = await RequestHandler.get(`/general/class_layouts/${id}`);
+  return data;
+};
+
 const classAPI = {
   get_classes,
   add_class,
   delete_class,
   update_class,
+  get_class,
 };
 
 export default classAPI;

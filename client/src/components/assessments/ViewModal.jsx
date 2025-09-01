@@ -10,14 +10,13 @@ import { format, parseISO } from 'date-fns';
 import {
   BookOpen,
   Calendar,
-  Clock,
   GraduationCap,
   Hash,
   Scale,
   Target,
 } from 'lucide-react';
 
-export default function ViewAssessmentModal({
+export default function ViewModal({
   open,
   onOpenChange,
   assessment,
@@ -77,15 +76,6 @@ export default function ViewAssessmentModal({
                 label="Date"
                 value={formatDate(assessment.date)}
               />
-              <InfoRow
-                icon={Clock}
-                label="Duration"
-                value={
-                  assessment.duration
-                    ? `${assessment.duration} minutes`
-                    : 'Not specified'
-                }
-              />
             </div>
           </div>
 
@@ -106,7 +96,7 @@ export default function ViewAssessmentModal({
               <InfoRow
                 icon={Scale}
                 label="Weight"
-                value={assessment.weight || '1.0'}
+                value={assessment.weight || assessment.leverage || '1.0'}
                 className="text-lg"
               />
             </div>

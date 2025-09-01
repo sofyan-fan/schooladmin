@@ -7,7 +7,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import classAPI from '@/apis/classAPI';
-import subjectAPI from '@/apis/subjectAPI';
+import moduleAPI from '@/apis/moduleAPI';
+
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,7 +54,7 @@ const assessmentSchema = z.object({
   is_central: z.boolean().default(false),
 });
 
-export default function CreateAssessmentWizard({ open, onOpenChange, onSave }) {
+export default function CreateModal({ open, onOpenChange, onSave }) {
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
@@ -75,12 +76,26 @@ export default function CreateAssessmentWizard({ open, onOpenChange, onSave }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classData, subjectData] = await Promise.all([
+        const [classData, modulesData] = await Promise.all([
           classAPI.get_classes(),
-          subjectAPI.get_subjects(),
+          moduleAPI.get_modules(),
         ]);
+        console.log('Class Data', classData);
         setClasses(classData);
-        setSubjects(subjectData);
+        console.log('Modules Data', modulesData);
+        // Flatten course_module_subject records from modules
+        const flattenedSubjects = modulesData.flatMap((module) =>
+          module.subjects.map((subject) => ({
+            id: subject.id, // This is the course_module_subject ID
+            name: `${module.name} - ${
+              subject.subject?.name || 'Vak onbekend'
+            } - ${subject.level} - ${subject.material}`,
+            subject: subject.subject,
+            level: subject.level,
+            material: subject.material,
+          }))
+        );
+        setSubjects(flattenedSubjects);
       } catch (error) {
         console.error('Failed to fetch classes or subjects', error);
         // Optionally, show a toast notification
@@ -101,12 +116,14 @@ export default function CreateAssessmentWizard({ open, onOpenChange, onSave }) {
 
   const onSubmit = (data) => {
     // Convert class_id and subject_id to numbers
+
     const payload = {
       ...data,
-      class_id: parseInt(data.class_id, 10),
-      subject_id: parseInt(data.subject_id, 10),
+      class_id: parseInt(data.class_id),
+      subject_id: parseInt(data.subject_id),
     };
     onSave(payload);
+    console.log('Assessment payload', payload);
     onOpenChange(false);
   };
 
@@ -115,13 +132,10 @@ export default function CreateAssessmentWizard({ open, onOpenChange, onSave }) {
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Nieuwe Toets/Examen</DialogTitle>
-          <p className="text-sm text-muted-foreground pt-1">
-            Voer de details in om een nieuwe toets of examen aan te maken.
-          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="py-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Label>Type</Label>
               <Controller
