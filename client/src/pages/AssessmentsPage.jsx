@@ -2,7 +2,8 @@ import assessmentApi from '@/apis/assessmentAPI';
 import classAPI from '@/apis/classAPI';
 import subjectAPI from '@/apis/subjectAPI';
 import { createColumns } from '@/components/assessments/columns';
-import CreateAssessmentModal from '@/components/assessments/CreateAssessmentModal';
+// import CreateAssessmentModal from '@/components/assessments/CreateAssessmentModal';
+import CreateAssessmentWizard from '@/components/assessments/CreateAssessmentWizard';
 import EditAssessmentModal from '@/components/assessments/EditAssessmentModal';
 import ViewAssessmentModal from '@/components/assessments/ViewAssessmentModal';
 import PageHeader from '@/components/shared/PageHeader';
@@ -107,7 +108,7 @@ export default function AssessmentsPage() {
         classAPI.get_classes(),
         subjectAPI.get_subjects(),
       ]);
-  
+
       const testData = assessmentData.tests || [];
       const examData = assessmentData.exams || [];
       // Map class and subject names
@@ -121,7 +122,7 @@ export default function AssessmentsPage() {
         };
       });
 
-      console.log("testdata", testData);
+      console.log('testdata', testData);
 
       const mappedExams = examData.map((e) => {
         const cls = classData.find((c) => c.id === e.classId);
@@ -187,36 +188,27 @@ export default function AssessmentsPage() {
     }
   };
 
-  const handleSaveAssessment = (savedAssessment, type) => {
-    if (type === 'test') {
-      setTests((prevTests) => {
-        const exists = prevTests.find((t) => t.id === savedAssessment.id);
-        if (exists) {
-          toast.success(`Toets "${savedAssessment.name}" is bijgewerkt`);
-          return prevTests.map((t) =>
-            t.id === savedAssessment.id ? savedAssessment : t
-          );
-        }
-        toast.success(`Toets "${savedAssessment.name}" is aangemaakt`);
-        return [...prevTests, savedAssessment];
-      });
-    } else {
-      setExams((prevExams) => {
-        const exists = prevExams.find((e) => e.id === savedAssessment.id);
-        if (exists) {
-          toast.success(`Examen "${savedAssessment.name}" is bijgewerkt`);
-          return prevExams.map((e) =>
-            e.id === savedAssessment.id ? savedAssessment : e
-          );
-        }
-        toast.success(`Examen "${savedAssessment.name}" is aangemaakt`);
-        return [...prevExams, savedAssessment];
-      });
-    }
+  const handleSaveAssessment = async (assessmentData) => {
+    try {
+      const savedAssessment = await assessmentApi.createAssessment(
+        assessmentData
+      );
+      toast.success(
+        `${savedAssessment.type} "${savedAssessment.name}" is aangemaakt`
+      );
 
-    setIsCreateModalOpen(false);
-    setIsEditModalOpen(false);
-    setSelectedAssessment(null);
+      // We need to refetch class/subject to map names
+      // Or we can be smart about it and pass them along from the form
+      // For now, let's just refetch for simplicity.
+      await fetchData();
+    } catch (error) {
+      console.error('Failed to save assessment', error);
+      toast.error('Opslaan mislukt. Probeer het opnieuw.');
+    } finally {
+      setIsCreateModalOpen(false);
+      setIsEditModalOpen(false);
+      setSelectedAssessment(null);
+    }
   };
 
   const testColumns = useMemo(
@@ -271,12 +263,13 @@ export default function AssessmentsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Create Modal */}
-      <CreateAssessmentModal
-        open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-        onSave={handleSaveAssessment}
-      />
+      {isCreateModalOpen && (
+        <CreateAssessmentWizard
+          open={isCreateModalOpen}
+          onOpenChange={setIsCreateModalOpen}
+          onSave={handleSaveAssessment}
+        />
+      )}
 
       {/* Edit Modal */}
       <EditAssessmentModal

@@ -69,8 +69,9 @@ const ModulesPage = () => {
       ...module,
       subjects: (module.subjects || []).map((s) => ({
         ...s,
-        subjectId: s.subjectId, // Ensure subjectId is consistently used
-        subjectName: subjectMap[s.subjectId] || 'Onbekend vak',
+        subjectId: s.subject_id, // Use the correct field name from backend
+        subjectName:
+          s.subject?.name || subjectMap[s.subject_id] || 'Onbekend vak',
       })),
     }));
   };

@@ -1,75 +1,52 @@
 import RequestHandler from './RequestHandler';
 
-const assessmentAPI = {
-  // GET all tests
-  getTests: async () => {
-    const response = await RequestHandler.get('/general/assessments');
-    return response.data || [];
-  },
-  
-  // GET single test
-  getTest: async (id) => {
-    const response = await RequestHandler.get(`/general/assessments/${id}`);
-    return response.data;
-  },
-
-  // CREATE test
-  createTest: async (testData) => {
-    const response = await RequestHandler.post('/general/assessments', testData);
-    return response.data;
-  },
-
-  // UPDATE test
-  updateTest: async (id, testData) => {
-    const response = await RequestHandler.put(`/general/assessments/${id}`, testData);
-    return response.data;
-  },
-
-  // DELETE test
-  deleteTest: async (id) => {
-    await RequestHandler.del(`/general/assessments/${id}`);
-    return id;
-  },
-
-  // GET all exams
-  getExams: async () => {
-    const response = await RequestHandler.get('/general/assessments');
-    return response.data;
-  },
-
-  // GET single exam
-  getExam: async (id) => {
-    const response = await RequestHandler.get(`/general/assessments/${id}`);
-    return response.data;
-  },
-
-  // CREATE exam
-  createExam: async (examData) => {
-    const response = await RequestHandler.post('/general/assessments', examData);
-    return response.data;
-  },
-
-  // UPDATE exam
-  updateExam: async (id, examData) => {
-    const response = await RequestHandler.put(`/general/assessments/${id}`, examData);
-    return response.data;
-  },
-
-  // DELETE exam
-  deleteExam: async (id) => {
-    await RequestHandler.del(`/general/assessments/${id}`);
-    return id;
-  },
-
-  // GET all assessments
+const assessmentApi = {
   getAssessments: async () => {
     const response = await RequestHandler.get('/general/assessments');
     return response.data;
   },
 
-  // Backward compatibility
-  delete_test: async (id) => assessmentAPI.deleteTest(id),
-  delete_exam: async (id) => assessmentAPI.deleteExam(id),
+  getAssessment: async (id) => {
+    const response = await RequestHandler.get(`/general/assessments/${id}`);
+    return response.data;
+  },
+
+  createAssessment: async (assessmentData) => {
+    const response = await RequestHandler.post(
+      '/general/assessments',
+      assessmentData
+    );
+    return response.data;
+  },
+
+  updateAssessment: async (id, assessmentData) => {
+    const response = await RequestHandler.put(
+      `/general/assessments/${id}`,
+      assessmentData
+    );
+    return response.data;
+  },
+
+  deleteAssessment: async (id) => {
+    await RequestHandler.del(`/general/assessments/${id}`);
+    return id;
+  },
+
+  // Backward compatibility + old functions to remove later
+  getTests: () => assessmentApi.getAssessments(),
+  getTest: (id) => assessmentApi.getAssessment(id),
+  createTest: (data) => assessmentApi.createAssessment(data),
+  updateTest: (id, data) => assessmentApi.updateAssessment(id, data),
+  deleteTest: (id) => assessmentApi.deleteAssessment(id),
+
+  getExams: () => assessmentApi.getAssessments(),
+  getExam: (id) => assessmentApi.getAssessment(id),
+  createExam: (data) => assessmentApi.createAssessment(data),
+  updateExam: (id, data) => assessmentApi.updateAssessment(id, data),
+  deleteExam: (id) => assessmentApi.deleteAssessment(id),
+
+  delete_test: (id) => assessmentApi.deleteAssessment(id),
+  delete_exam: (id) => assessmentApi.deleteAssessment(id),
 };
 
-export default assessmentAPI;
+export default assessmentApi;

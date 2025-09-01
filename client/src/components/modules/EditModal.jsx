@@ -71,9 +71,9 @@ export default function EditModal({
   useEffect(() => {
     if (open && module) {
       setName(module.name ?? '');
-      // Prefill en normaliseren van bestaande items
+      // Prefill en normaliseren van bestaande items (enforce single)
       setModuleItems(
-        (module.subjects || []).map((s) => {
+        (module.subjects || []).slice(0, 1).map((s) => {
           const subjId =
             s.subjectId ?? s.subject_id ?? s.subject?.id ?? s.id ?? '';
           const subjName = s.subjectName ?? s.subject?.name ?? s.name ?? '';
@@ -133,8 +133,8 @@ export default function EditModal({
       (m) => String(m.id) === String(selectedMaterial)
     );
 
-    setModuleItems((prev) => [
-      ...prev,
+    // Enforce single subject per module: replace any existing item
+    setModuleItems([
       {
         subjectId: Number(selectedSubjectId),
         subjectName: selectedSubject?.name || '',
@@ -166,29 +166,16 @@ export default function EditModal({
 
     setLoading(true);
     try {
-      // Stuur zowel id's als labels mee; level/material ook als plain string voor backwards-compat
       await onSave({
-        id: module.id, // Include the module ID
+        id: module.id,
         name: name.trim(),
-        subjects: moduleItems.map(
-          ({
-            subjectId,
-            subjectName,
-            levelId,
-            levelLabel,
-            materialId,
-            materialLabel,
-          }) => ({
-            subject_id: subjectId, // FIX: Mapped to snake_case for the API
-            subjectName,
-            levelId,
-            level: levelLabel, // handig voor API’s die een string verwachtten
-            materialId,
-            material: materialLabel, // idem
-            levelLabel,
-            materialLabel,
-          })
-        ),
+        subjects: [
+          {
+            subject_id: Number(moduleItems[0].subjectId),
+            level: String(moduleItems[0].levelLabel),
+            material: String(moduleItems[0].materialLabel),
+          },
+        ],
       });
       console.log('moduleItems', moduleItems);
       onOpenChange(false);

@@ -83,8 +83,8 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
       (m) => String(m.id) === String(selectedMaterial)
     );
 
-    setModuleItems((prev) => [
-      ...prev,
+    // Enforce single subject per module: replace any existing item
+    setModuleItems([
       {
         subjectId: Number(selectedSubjectId),
         subjectName: selectedSubject?.name || '',
@@ -116,13 +116,13 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
     try {
       await onSave({
         name: name.trim(),
-        subjects: moduleItems.map(
-          ({ subjectId, levelLabel, materialLabel }) => ({
-            subject_id: Number(subjectId),
-            level: String(levelLabel),
-            material: String(materialLabel),
-          })
-        ),
+        subjects: [
+          {
+            subject_id: Number(moduleItems[0].subjectId),
+            level: String(moduleItems[0].levelLabel),
+            material: String(moduleItems[0].materialLabel),
+          },
+        ],
       });
       onOpenChange(false);
     } catch (err) {
