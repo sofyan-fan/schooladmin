@@ -4,6 +4,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* html{
+  overflow-y: scroll;
+} */
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -192,7 +196,7 @@
     --fc-today-bg-color: var(--accent);
     --fc-page-bg-color: var(--background);
     --fc-day-header-bg-color: var(--card);
-  } 
+  }
 
   .fc .fc-button {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;

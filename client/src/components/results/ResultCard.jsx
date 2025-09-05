@@ -42,6 +42,7 @@ const ResultCard = ({ result }) => {
             <BookOpen className="h-4 w-4" />
             <span className="font-medium">
               {result.subject?.name || 'Onbekend vak'}
+              {console.log("logged result: ", result)}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -20,6 +20,7 @@ import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
 import ResultsPage from './pages/ResultsPage';
+import TimeRegisterPage from './pages/TimeRegisterPage';
 // import { useAuth } from './hooks/useAuth';
 
 // const user_role = useAuth();
@@ -58,6 +59,7 @@ const App = () => {
         <Route path="/modules" element={<ModulesPage />} />
         <Route path="/lespakketten" element={<CoursesPage />} />
         <Route path="/lokalen" element={<ClassroomsPage />} />
+        <Route path="/tijd-registratie" element={<TimeRegisterPage />} />
         {/* <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} /> */}
         <Route path="/financien" element={<FinancePage />} />
         <Route path="/instellingen" element={<SettingsPage />} />

@@ -51,7 +51,17 @@ export default function EditClassModal({
           ]);
           setAllTeachers(teacherData);
           setAllCourses(courseData);
-          setAllStudents(studentData);
+
+          // Filter to show: unassigned students + students currently in this class
+          const currentClassStudentIds = (classData.students || []).map(
+            (s) => s.id
+          );
+          const availableStudents = studentData.filter(
+            (student) =>
+              !student.class_id || // Unassigned students
+              student.class_id === classData.id // Students currently in this class
+          );
+          setAllStudents(availableStudents);
         } catch (err) {
           setError(
             err.message || 'Failed to load data for the form. Please try again.'

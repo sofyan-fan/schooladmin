@@ -249,7 +249,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                     <SelectContent>
                       {subjects.map((s) => (
                         <SelectItem key={s.id} value={String(s.id)}>
-                          {s.name}
+                          {s.name.split(" - ")[0]}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -7,7 +7,7 @@ const Topbar = () => {
   const { user } = useAuth();
   const { toggleSidebar } = useSidebar();
   return (
-    <header className="bg-primary h-14 flex items-center px-4 w-full text-white">
+    <header className="bg-primary h-14 flex items-center px-4 w-full text-white ">
       <div className="flex items-center gap-2 mr-auto">
         <Button
           variant="ghost"

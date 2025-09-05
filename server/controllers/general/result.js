@@ -8,8 +8,8 @@ exports.create_result = async (req, res) => {
 
     const result = await prisma.result.create({
       data: {
-        student_id,
-        assessment_id,
+        student: { connect: { id: student_id } },
+        assessment: { connect: { id: assessment_id } },
         grade,
         date: new Date(date),
       },

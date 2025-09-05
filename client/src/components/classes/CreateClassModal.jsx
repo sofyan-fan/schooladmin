@@ -46,7 +46,11 @@ export default function CreateClassModal({
           ]);
           setAllTeachers(teacherData);
           setAllCourses(courseData);
-          setAllStudents(studentData);
+          // Filter to only show unassigned students (students without a class_id)
+          const unassignedStudents = studentData.filter(
+            (student) => !student.class_id
+          );
+          setAllStudents(unassignedStudents);
         } catch (err) {
           setError(
             err.message || 'Failed to load data for the form. Please try again.'

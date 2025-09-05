@@ -21,9 +21,15 @@ import {
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-export default function ManageResultsModal({ open, onOpenChange, assessment }) {
+export default function ManageResultsModal({
+  open,
+  onOpenChange,
+  assessment,
+  onResultsSaved,
+}) {
   const [students, setStudents] = useState([]);
   const [results, setResults] = useState({}); // studentId -> result mapping
+  const [originalResults, setOriginalResults] = useState({}); // Track original results for deletion
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -39,7 +45,7 @@ export default function ManageResultsModal({ open, onOpenChange, assessment }) {
         // 2. Fetch all results and filter for the current assessment
         const allResults = await resultAPI.get_results();
         const assessmentResults = allResults.filter(
-          (r) => r.test_id === assessment.id || r.exam_id === assessment.id
+          (r) => r.assessment_id === assessment.id
         );
 
         // 3. Convert array of results to a map for easy lookup
@@ -48,6 +54,7 @@ export default function ManageResultsModal({ open, onOpenChange, assessment }) {
           return acc;
         }, {});
         setResults(resultsMap);
+        setOriginalResults({ ...resultsMap }); // Store original state for comparison
       } catch (error) {
         console.error('Failed to fetch data for results modal', error);
         toast.error('Kon de benodigde gegevens niet ophalen.');
@@ -62,13 +69,12 @@ export default function ManageResultsModal({ open, onOpenChange, assessment }) {
   }, [open, assessment]);
 
   const handleGradeChange = (studentId, grade) => {
-    // Allows clearing the input
+    // Allows clearing the input - this should mark the result for deletion
     if (grade === '') {
       setResults((prevResults) => {
         const newResults = { ...prevResults };
-        if (newResults[studentId]) {
-          delete newResults[studentId].grade; // Or set to null
-        }
+        // If there was an original result, mark it for deletion by removing it entirely
+        delete newResults[studentId];
         return newResults;
       });
       return;
@@ -83,7 +89,8 @@ export default function ManageResultsModal({ open, onOpenChange, assessment }) {
         ...prevResults[studentId],
         grade: newGrade,
         student_id: studentId,
-        [assessment.type === 'Test' ? 'test_id' : 'exam_id']: assessment.id,
+        assessment_id: assessment.id,
+        date: assessment.date || new Date().toISOString(),
       },
     }));
   };
@@ -91,18 +98,38 @@ export default function ManageResultsModal({ open, onOpenChange, assessment }) {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const promises = Object.values(results).map((result) => {
+      const promises = [];
+
+      // 1. Handle creates and updates
+      Object.values(results).forEach((result) => {
         if (result.id) {
           // This result already exists, update it
-          return resultAPI.update_result(result);
+          promises.push(resultAPI.update_result(result));
         } else {
           // This is a new result, create it
-          return resultAPI.add_result(result);
+          promises.push(resultAPI.add_result(result));
+        }
+      });
+
+      // 2. Handle deletions - find results that were in original but not in current
+      Object.keys(originalResults).forEach((studentId) => {
+        const originalResult = originalResults[studentId];
+        const currentResult = results[studentId];
+
+        // If the original result had an ID but is no longer in current results, delete it
+        if (originalResult && originalResult.id && !currentResult) {
+          promises.push(resultAPI.delete_result(originalResult.id));
         }
       });
 
       await Promise.all(promises);
       toast.success('Resultaten succesvol opgeslagen!');
+
+      // Notify parent component that results were saved
+      if (onResultsSaved) {
+        onResultsSaved();
+      }
+
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to save results', error);

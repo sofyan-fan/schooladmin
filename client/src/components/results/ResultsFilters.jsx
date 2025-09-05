@@ -7,175 +7,251 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Filter, Search, X } from 'lucide-react';
-import { useState } from 'react';
+import { X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import ViewToggle from './ViewToggle';
 
-const ResultsFilters = ({ results, onFilteredResults }) => {
+const ResultsFilters = ({
+  view,
+  onViewChange,
+  assessments,
+  results,
+  onFilterChange,
+  classes,
+}) => {
   const [filters, setFilters] = useState({
     search: '',
-    subject: 'all',
     class: 'all',
+    subject: 'all',
+    assessment: 'all',
     gradeRange: 'all',
+    status: 'all',
   });
 
-  // Get unique subjects and classes from results
-  const uniqueSubjects = [
-    ...new Set(results.map((result) => result.subject?.name).filter(Boolean)),
-  ];
-  const uniqueClasses = [
-    ...new Set(
-      results
-        .map((result) => result.student?.class || 'Onbekend')
-        .filter(Boolean)
-    ),
-  ];
+  const uniqueSubjects = useMemo(() => {
+    return [
+      ...new Set(
+        assessments.map((a) => a.subject?.subject?.name).filter(Boolean)
+      ),
+    ];
+  }, [assessments]);
 
-  const applyFilters = (newFilters) => {
-    const filtered = results.filter((result) => {
-      // Search filter (student name or subject)
-      const searchTerm = newFilters.search.toLowerCase();
-      const studentName =
-        `${result.student.first_name} ${result.student.last_name}`.toLowerCase();
-      const subjectName = result.subject?.name?.toLowerCase() || '';
-      const matchesSearch =
-        searchTerm === '' ||
-        studentName.includes(searchTerm) ||
-        subjectName.includes(searchTerm);
+  const uniqueClasses = useMemo(() => {
+    return [...new Set(classes.map((c) => c.name).filter(Boolean))];
+  }, [classes]);
 
-      // Subject filter
-      const matchesSubject =
-        newFilters.subject === 'all' ||
-        result.subject?.name === newFilters.subject;
+  const uniqueAssessments = useMemo(() => {
+    return [...new Set(assessments.map((a) => a.name).filter(Boolean))];
+  }, [assessments]);
 
-      // Class filter
-      const studentClass = result.student?.class || 'Onbekend';
-      const matchesClass =
-        newFilters.class === 'all' || studentClass === newFilters.class;
+  useEffect(() => {
+    let filteredAssessments = assessments;
+    let filteredResults = results;
 
-      // Grade range filter
-      const grade = result.grade;
-      let matchesGrade = true;
-      if (newFilters.gradeRange === 'excellent') matchesGrade = grade >= 8;
-      else if (newFilters.gradeRange === 'good')
-        matchesGrade = grade >= 6.5 && grade < 8;
-      else if (newFilters.gradeRange === 'sufficient')
-        matchesGrade = grade >= 5.5 && grade < 6.5;
-      else if (newFilters.gradeRange === 'insufficient')
-        matchesGrade = grade < 5.5;
+    if (view === 'assessments') {
+      filteredAssessments = assessments.filter((assessment) => {
+        const searchTerm = filters.search.toLowerCase();
+        const matchesSearch =
+          searchTerm === '' ||
+          assessment.name.toLowerCase().includes(searchTerm) ||
+          assessment.subject?.subject?.name.toLowerCase().includes(searchTerm);
+        const matchesClass =
+          filters.class === 'all' ||
+          assessment.class_layout?.name === filters.class;
+        const matchesSubject =
+          filters.subject === 'all' ||
+          assessment.subject?.subject?.name === filters.subject;
+        const gradedStudents = assessment.results?.length || 0;
+        const totalStudents = assessment.class_layout?.student_count || 0;
+        let matchesStatus = true;
+        if (filters.status === 'pending')
+          matchesStatus = gradedStudents < totalStudents && gradedStudents > 0;
+        else if (filters.status === 'not_started')
+          matchesStatus = gradedStudents === 0;
+        else if (filters.status === 'completed')
+          matchesStatus = gradedStudents === totalStudents;
+        return matchesSearch && matchesClass && matchesSubject && matchesStatus;
+      });
+    }
 
-      return matchesSearch && matchesSubject && matchesClass && matchesGrade;
-    });
+    if (view === 'students') {
+      filteredResults = results.filter((result) => {
+        const searchTerm = filters.search.toLowerCase();
+        const studentName =
+          `${result.student.first_name} ${result.student.last_name}`.toLowerCase();
+        const matchesSearch =
+          searchTerm === '' || studentName.includes(searchTerm);
+        const matchesClass =
+          filters.class === 'all' ||
+          result.student.class_layout?.name === filters.class;
+        const matchesAssessment =
+          filters.assessment === 'all' ||
+          result.assessment_name === filters.assessment;
+        const grade = result.grade;
+        let matchesGrade = true;
+        if (filters.gradeRange === 'excellent') matchesGrade = grade >= 8;
+        else if (filters.gradeRange === 'good')
+          matchesGrade = grade >= 6.5 && grade < 8;
+        else if (filters.gradeRange === 'sufficient')
+          matchesGrade = grade >= 5.5 && grade < 6.5;
+        else if (filters.gradeRange === 'insufficient')
+          matchesGrade = grade < 5.5;
+        return (
+          matchesSearch && matchesClass && matchesAssessment && matchesGrade
+        );
+      });
+    }
 
-    onFilteredResults(filtered);
-  };
+    onFilterChange({ filteredAssessments, filteredResults });
+  }, [filters, assessments, results, view, onFilterChange]);
 
   const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    applyFilters(newFilters);
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
-    const clearedFilters = {
+    setFilters({
       search: '',
-      subject: 'all',
       class: 'all',
+      subject: 'all',
+      assessment: 'all',
       gradeRange: 'all',
-    };
-    setFilters(clearedFilters);
-    applyFilters(clearedFilters);
+      status: 'all',
+    });
   };
 
-  const hasActiveFilters =
-    filters.search !== '' ||
-    filters.subject !== 'all' ||
-    filters.class !== 'all' ||
-    filters.gradeRange !== 'all';
+  const hasActiveFilters = Object.values(filters).some(
+    (v) => v !== '' && v !== 'all'
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <Filter className="h-4 w-4" />
-        Filters
-      </div>
+    <div>
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex-grow w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {view === 'assessments' && (
+            <>
+              <Input
+                placeholder="Search assessments..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+              <Select
+                value={filters.class}
+                onValueChange={(v) => handleFilterChange('class', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Classes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {uniqueClasses.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={filters.subject}
+                onValueChange={(v) => handleFilterChange('subject', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Subjects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  {uniqueSubjects.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={filters.status}
+                onValueChange={(v) => handleFilterChange('status', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="not_started">Not Started</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Zoek student of vak..."
-            value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
-            className="pl-10"
-          />
+          {view === 'students' && (
+            <>
+              <Input
+                placeholder="Search student name..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+              <Select
+                value={filters.class}
+                onValueChange={(v) => handleFilterChange('class', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Classes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {uniqueClasses.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={filters.assessment}
+                onValueChange={(v) => handleFilterChange('assessment', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Assessments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Assessments</SelectItem>
+                  {uniqueAssessments.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {a}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={filters.gradeRange}
+                onValueChange={(v) => handleFilterChange('gradeRange', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Grades" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Grades</SelectItem>
+                  <SelectItem value="excellent">Excellent (8.0+)</SelectItem>
+                  <SelectItem value="good">Good (6.5-7.9)</SelectItem>
+                  <SelectItem value="sufficient">
+                    Sufficient (5.5-6.4)
+                  </SelectItem>
+                  <SelectItem value="insufficient">
+                    Insufficient (&lt;5.5)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
-
-        {/* Subject filter */}
-        <Select
-          value={filters.subject}
-          onValueChange={(value) => handleFilterChange('subject', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Alle vakken" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle vakken</SelectItem>
-            {uniqueSubjects.map((subject) => (
-              <SelectItem key={subject} value={subject}>
-                {subject}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Class filter */}
-        <Select
-          value={filters.class}
-          onValueChange={(value) => handleFilterChange('class', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Alle klassen" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle klassen</SelectItem>
-            {uniqueClasses.map((className) => (
-              <SelectItem key={className} value={className}>
-                {className}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Grade range filter */}
-        <Select
-          value={filters.gradeRange}
-          onValueChange={(value) => handleFilterChange('gradeRange', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Alle cijfers" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle cijfers</SelectItem>
-            <SelectItem value="excellent">Uitstekend (8.0+)</SelectItem>
-            <SelectItem value="good">Goed (6.5-7.9)</SelectItem>
-            <SelectItem value="sufficient">Voldoende (5.5-6.4)</SelectItem>
-            <SelectItem value="insufficient">Onvoldoende (&lt;5.5)</SelectItem>
-          </SelectContent>
-        </Select>
+        <ViewToggle view={view} onViewChange={onViewChange} />
       </div>
-
-      {/* Clear filters button */}
       {hasActiveFilters && (
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearFilters}
-            className="text-muted-foreground"
-          >
+        <div className="flex justify-end pt-3">
+          <Button variant="outline" size="sm" onClick={clearFilters}>
             <X className="h-4 w-4 mr-2" />
-            Filters wissen
+            Clear Filters
           </Button>
         </div>
       )}

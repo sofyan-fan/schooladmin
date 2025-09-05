@@ -1,6 +1,7 @@
 import assessmentApi from '@/apis/assessmentAPI';
 import classAPI from '@/apis/classAPI';
 import moduleAPI from '@/apis/moduleAPI';
+import resultAPI from '@/apis/resultAPI';
 import { createColumns } from '@/components/assessments/columns';
 import CreateModal from '@/components/assessments/CreateModal';
 import EditModal from '@/components/assessments/EditModal';
@@ -172,6 +173,20 @@ export default function AssessmentsPage() {
     if (!deletingAssessment) return;
 
     try {
+      // First, delete all results associated with this assessment
+      const allResults = await resultAPI.get_results();
+      const assessmentResults = allResults.filter(
+        (result) => result.assessment_id === deletingAssessment.id
+      );
+
+      // Delete all related results first
+      if (assessmentResults.length > 0) {
+        await Promise.all(
+          assessmentResults.map((result) => resultAPI.delete_result(result.id))
+        );
+      }
+
+      // Then delete the assessment
       if (selectedType === 'test') {
         await assessmentApi.deleteTest(deletingAssessment.id);
         setTests((prev) => prev.filter((t) => t.id !== deletingAssessment.id));

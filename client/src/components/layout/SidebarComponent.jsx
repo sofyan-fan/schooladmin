@@ -16,9 +16,11 @@ import { cn } from '@/lib/utils';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  BarChart,
   BookCheck,
   ChevronDown,
   CircleDollarSign,
+  Clock,
   Component,
   GraduationCap,
   Home,
@@ -28,7 +30,6 @@ import {
   LogOut,
   PanelLeft,
   Presentation,
-  BarChart,
   Settings,
 } from 'lucide-react';
 
@@ -66,6 +67,7 @@ const SidebarComponent = () => {
     { name: 'Lespakketten', path: 'lespakketten', Icon: Layers },
     { name: 'Toetsen & Examens', path: 'toetsen-en-examens', Icon: BookCheck },
     { name: 'Resultaten', path: 'resultaten', Icon: BarChart },
+    { name: 'Tijd Registratie', path: 'tijd-registratie', Icon: Clock },
     { name: 'Financiën', path: 'financien', Icon: CircleDollarSign },
     { name: 'Instellingen', path: 'instellingen', Icon: Settings },
   ];
