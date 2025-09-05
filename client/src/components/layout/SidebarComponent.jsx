@@ -31,6 +31,7 @@ import {
   PanelLeft,
   Presentation,
   Settings,
+  UserCheck,
 } from 'lucide-react';
 
 import { useLayoutEffect, useState } from 'react';
@@ -68,6 +69,7 @@ const SidebarComponent = () => {
     { name: 'Toetsen & Examens', path: 'toetsen-en-examens', Icon: BookCheck },
     { name: 'Resultaten', path: 'resultaten', Icon: BarChart },
     { name: 'Tijd Registratie', path: 'tijd-registratie', Icon: Clock },
+    { name: 'Afwezigheid', path: 'afwezigheid', Icon: UserCheck },
     { name: 'Financiën', path: 'financien', Icon: CircleDollarSign },
     { name: 'Instellingen', path: 'instellingen', Icon: Settings },
   ];

@@ -6,6 +6,7 @@ import { useAuth } from './hooks/useAuth';
 import AssessmentsPage from './pages/AssessmentsPage';
 import ClassesPage from './pages/ClassesPage';
 // import ClassLayoutsPage from './pages/ClassLayoutsPage';
+import AbsencePage from './pages/AbsencePage';
 import ClassroomsPage from './pages/ClassroomsPage';
 import CoursesPage from './pages/CoursesPage';
 import DashboardPage from './pages/DashboardPage';
@@ -13,13 +14,13 @@ import FinancePage from './pages/FinancePage';
 import LoginPage from './pages/LoginPage';
 import ModulesPage from './pages/ModulesPage';
 import RegisterPage from './pages/RegisterPage';
+import ResultsPage from './pages/ResultsPage';
 import RosterPage from './pages/RosterPage';
 import RostersPage from './pages/RostersPage';
 import SettingsPage from './pages/SettingsPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
-import ResultsPage from './pages/ResultsPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
 // import { useAuth } from './hooks/useAuth';
 
@@ -60,6 +61,7 @@ const App = () => {
         <Route path="/lespakketten" element={<CoursesPage />} />
         <Route path="/lokalen" element={<ClassroomsPage />} />
         <Route path="/tijd-registratie" element={<TimeRegisterPage />} />
+        <Route path="/afwezigheid" element={<AbsencePage />} />
         {/* <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} /> */}
         <Route path="/financien" element={<FinancePage />} />
         <Route path="/instellingen" element={<SettingsPage />} />

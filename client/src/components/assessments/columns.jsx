@@ -47,14 +47,14 @@ export const createColumns = ({
     ),
   },
   {
-    accessorKey: 'subject', // contains module name after your mapping change
+    accessorKey: 'subject', // contains subject name and level
     header: ({ column }) => (
       <Button
         variant="ghost"
         className="hover:bg-transparent hover:text-primary text-sm font-medium"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Module
+        Vak
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),

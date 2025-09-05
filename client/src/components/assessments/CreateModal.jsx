@@ -87,9 +87,9 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
         const flattenedSubjects = modulesData.flatMap((module) =>
           module.subjects.map((subject) => ({
             id: subject.id, // This is the course_module_subject ID
-            name: `${module.name} - ${
-              subject.subject?.name || 'Vak onbekend'
-            } - ${subject.level} - ${subject.material}`,
+            name: `${subject.subject?.name || 'Vak onbekend'} - ${
+              subject.level
+            }`,
             subject: subject.subject,
             level: subject.level,
             material: subject.material,
@@ -249,7 +249,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                     <SelectContent>
                       {subjects.map((s) => (
                         <SelectItem key={s.id} value={String(s.id)}>
-                          {s.name.split(" - ")[0]}
+                          {s.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -101,7 +101,7 @@ export default function AssessmentsPage() {
       const flattenedSubjects = modulesData.flatMap((module) =>
         module.subjects.map((subject) => ({
           id: subject.id, // keep the subject relation id
-          name: module.name || 'Module onbekend', // only module name
+          name: `${subject.subject?.name || 'Vak onbekend'} - ${subject.level}`, // subject name and level
         }))
       );
 
