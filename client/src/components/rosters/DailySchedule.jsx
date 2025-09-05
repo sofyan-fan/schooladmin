@@ -28,6 +28,7 @@ export default function DailySchedule({
   onBack,
   schedule,
   onScheduleChange,
+  students,
 }) {
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -241,9 +242,13 @@ export default function DailySchedule({
         const endDate = new Date(date);
         endDate.setHours(endHour, endMin, 0, 0);
 
+        const classLayout = classes.find((c) => c.id === roster.classLayoutId);
+
         scheduleFromRosters[roster.classLayoutId][roster.id] = {
           id: roster.id,
           classId: roster.classLayoutId,
+          class_layout: classLayout,
+          class_id: roster.classLayoutId,
           subject: subjects.find((s) => s.id === roster.subjectId),
           teacher: teachers.find((t) => t.id === roster.teacherId),
           classroom: classrooms.find((c) => c.id === roster.classroomId),
@@ -372,6 +377,8 @@ export default function DailySchedule({
           teachers={teachers}
           classrooms={classrooms}
           subjects={subjects}
+          students={students}
+          classes={classes}
         />
       )}
       {conflict && (

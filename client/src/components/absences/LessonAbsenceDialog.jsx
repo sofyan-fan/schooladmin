@@ -1,5 +1,4 @@
 import { absenceAPI } from '@/apis/timeregisterAPI';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,14 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -25,8 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Edit, Save, UserCheck, Users, UserX, X } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Clock, UserCheck, Users, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LessonAbsenceDialog = ({
@@ -38,12 +34,8 @@ const LessonAbsenceDialog = ({
   getStudentName,
   studentAbsences,
   setStudentAbsences,
-  editingStudents,
-  setEditingStudents,
   setAbsences,
 }) => {
-  const [loading, setLoading] = useState(false);
-
   const formatTime = (time) => {
     return time ? time.slice(0, 5) : '';
   };
@@ -52,40 +44,54 @@ const LessonAbsenceDialog = ({
     return new Date(dateString).toLocaleDateString();
   };
 
-  const handleStudentStatusChange = (studentId, field, value) => {
+  const handleStatusChangeAndSave = async (studentId, newStatus) => {
+    if (!newStatus) return; // Do nothing if a toggle is deselected
+
+    const originalStudentAbsences = JSON.parse(JSON.stringify(studentAbsences));
+    const studentName = getStudentName(studentId);
+
+    // Optimistic UI update
     setStudentAbsences((prev) => ({
       ...prev,
       [studentId]: {
         ...prev[studentId],
-        [field]: value,
+        status: newStatus,
       },
     }));
-  };
 
-  const handleSaveStudentAbsence = async (studentId) => {
-    const studentState = studentAbsences[studentId];
-    setLoading(true);
+    const studentState = originalStudentAbsences[studentId] || {};
 
     try {
-      if (studentState.status === 'absent') {
+      if (newStatus === 'present') {
+        if (studentState.absenceId) {
+          await absenceAPI.deleteAbsence(studentState.absenceId);
+          toast.success(`${studentName} is marked as present.`);
+          setStudentAbsences((prev) => ({
+            ...prev,
+            [studentId]: {
+              ...prev[studentId],
+              absenceId: null,
+              reason: '',
+            },
+          }));
+        }
+      } else {
+        // 'late' or 'absent'
+        const reason = newStatus === 'late' ? 'Te Laat' : 'Afwezig';
         const absenceData = {
           user_id: studentId,
           role: 'student',
           roster_id: selectedRoster.id,
           date: new Date(selectedDate).toISOString(),
-          reason:
-            studentState.reason === 'Andere'
-              ? studentState.custom_reason
-              : studentState.reason,
+          reason,
         };
 
         if (studentState.absenceId) {
-          // Update existing absence
           await absenceAPI.updateAbsence(studentState.absenceId, absenceData);
-          toast.success('Afwezigheid bijgewerkt');
+          toast.success(`Status for ${studentName} updated to: ${reason}`);
         } else {
-          // Create new absence
           const response = await absenceAPI.createAbsence(absenceData);
+          toast.success(`Status for ${studentName} set to: ${reason}`);
           setStudentAbsences((prev) => ({
             ...prev,
             [studentId]: {
@@ -93,63 +99,31 @@ const LessonAbsenceDialog = ({
               absenceId: response.id,
             },
           }));
-          toast.success('Afwezigheid geregistreerd');
         }
-      } else if (studentState.status === 'present' && studentState.absenceId) {
-        // Delete existing absence if student is marked present
-        await absenceAPI.deleteAbsence(studentState.absenceId);
         setStudentAbsences((prev) => ({
           ...prev,
           [studentId]: {
             ...prev[studentId],
-            absenceId: null,
-            reason: '',
-            custom_reason: '',
+            reason: reason,
           },
         }));
-        toast.success('Afwezigheid verwijderd');
       }
 
-      // Remove from editing set
-      setEditingStudents((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(studentId);
-        return newSet;
-      });
-
-      // Refresh absences data
+      // Refresh all absences to stay in sync
       const updatedAbsences = await absenceAPI.getAllAbsences();
       setAbsences(updatedAbsences || []);
     } catch (error) {
-      toast.error('Fout bij opslaan van afwezigheid');
-      console.error('Error saving absence:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error updating absence:', error);
+      toast.error(`Failed to update status for ${studentName}.`);
+      setStudentAbsences(originalStudentAbsences); // Revert on error
     }
-  };
-
-  const toggleEditStudent = (studentId) => {
-    setEditingStudents((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(studentId)) {
-        newSet.delete(studentId);
-      } else {
-        newSet.add(studentId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleClose = () => {
-    onOpenChange(false);
-    setEditingStudents(new Set());
   };
 
   if (!selectedRoster) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} >
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserCheck className="w-5 h-5" />
@@ -178,16 +152,15 @@ const LessonAbsenceDialog = ({
             <Table className="w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Student</TableHead>
+                  <TableHead className="w-2/5">Student</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Reden</TableHead>
-                  <TableHead>Acties</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {getClassStudents(selectedRoster).map((student) => {
-                  const studentState = studentAbsences[student.id] || {};
-                  const isEditing = editingStudents.has(student.id);
+                  const studentState = studentAbsences[student.id] || {
+                    status: 'present',
+                  };
 
                   return (
                     <TableRow key={student.id}>
@@ -195,151 +168,100 @@ const LessonAbsenceDialog = ({
                         {getStudentName(student.id)}
                       </TableCell>
                       <TableCell>
-                        {isEditing ? (
-                          <Select
-                            value={studentState.status || 'present'}
-                            onValueChange={(value) =>
-                              handleStudentStatusChange(
-                                student.id,
-                                'status',
-                                value
-                              )
-                            }
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="present">
-                                <div className="flex items-center gap-2">
-                                  <UserCheck className="w-4 h-4 text-green-600" />
-                                  Aanwezig
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="absent">
-                                <div className="flex items-center gap-2">
-                                  <UserX className="w-4 h-4 text-red-600" />
-                                  Afwezig
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge
-                            variant={
-                              studentState.status === 'absent'
-                                ? 'destructive'
-                                : 'default'
-                            }
-                          >
-                            {studentState.status === 'absent' ? (
-                              <>
-                                <UserX className="w-3 h-3 mr-1" />
-                                Afwezig
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className="w-3 h-3 mr-1" />
-                                Aanwezig
-                              </>
-                            )}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing && studentState.status === 'absent' ? (
-                          <div className="space-y-2">
-                            <Select
-                              value={studentState.reason || ''}
-                              onValueChange={(value) =>
-                                handleStudentStatusChange(
-                                  student.id,
-                                  'reason',
-                                  value
-                                )
-                              }
-                            >
-                              <SelectTrigger className="w-48">
-                                <SelectValue placeholder="Selecteer reden" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Ziek">Ziek</SelectItem>
-                                <SelectItem value="Doktersafspraak">
-                                  Doktersafspraak
-                                </SelectItem>
-                                <SelectItem value="Familieomstandigheden">
-                                  Familieomstandigheden
-                                </SelectItem>
-                                <SelectItem value="Vakantie">
-                                  Vakantie
-                                </SelectItem>
-                                <SelectItem value="Religieuze feestdag">
-                                  Religieuze feestdag
-                                </SelectItem>
-                                <SelectItem value="Schoolactiviteit">
-                                  Schoolactiviteit
-                                </SelectItem>
-                                <SelectItem value="Transport problemen">
-                                  Transport problemen
-                                </SelectItem>
-                                <SelectItem value="Andere">Andere</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            {studentState.reason === 'Andere' && (
-                              <Input
-                                placeholder="Andere reden..."
-                                value={studentState.custom_reason || ''}
-                                onChange={(e) =>
-                                  handleStudentStatusChange(
-                                    student.id,
-                                    'custom_reason',
-                                    e.target.value
-                                  )
-                                }
-                                className="w-48"
-                              />
-                            )}
+                        <TooltipProvider>
+                          <div className="flex gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant={
+                                    studentState.status === 'present'
+                                      ? 'default'
+                                      : 'outline'
+                                  }
+                                  size="icon"
+                                  className={`
+                                    ${
+                                      studentState.status === 'present'
+                                        ? 'bg-green-500 hover:bg-green-600'
+                                        : ''
+                                    }
+                                  `}
+                                  onClick={() =>
+                                    handleStatusChangeAndSave(
+                                      student.id,
+                                      'present'
+                                    )
+                                  }
+                                >
+                                  <UserCheck className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Aanwezig</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant={
+                                    studentState.status === 'late'
+                                      ? 'default'
+                                      : 'outline'
+                                  }
+                                  size="icon"
+                                  className={`
+                                    ${
+                                      studentState.status === 'late'
+                                        ? 'bg-orange-500 hover:bg-orange-600'
+                                        : ''
+                                    }
+                                  `}
+                                  onClick={() =>
+                                    handleStatusChangeAndSave(
+                                      student.id,
+                                      'late'
+                                    )
+                                  }
+                                >
+                                  <Clock className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Te Laat</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant={
+                                    studentState.status === 'absent'
+                                      ? 'default'
+                                      : 'outline'
+                                  }
+                                  size="icon"
+                                  className={`
+                                    ${
+                                      studentState.status === 'absent'
+                                        ? 'bg-red-500 hover:bg-red-600'
+                                        : ''
+                                    }
+                                  `}
+                                  onClick={() =>
+                                    handleStatusChangeAndSave(
+                                      student.id,
+                                      'absent'
+                                    )
+                                  }
+                                >
+                                  <UserX className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Afwezig</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
-                        ) : (
-                          <span className="text-sm">
-                            {studentState.status === 'absent'
-                              ? studentState.reason || 'Geen reden'
-                              : '-'}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {isEditing ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleSaveStudentAbsence(student.id)
-                                }
-                                disabled={loading}
-                              >
-                                <Save className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toggleEditStudent(student.id)}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toggleEditStudent(student.id)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
+                        </TooltipProvider>
                       </TableCell>
                     </TableRow>
                   );
@@ -350,7 +272,7 @@ const LessonAbsenceDialog = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Sluiten
           </Button>
         </DialogFooter>

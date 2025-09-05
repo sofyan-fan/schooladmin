@@ -79,7 +79,7 @@ export const absenceAPI = {
 
   // Delete an absence
   deleteAbsence: async (id) => {
-    const response = await RequestHandler.delete(`${BASE_URL}/absences/${id}`);
+    const response = await RequestHandler.del(`${BASE_URL}/absences/${id}`);
     return response.data;
   },
 };

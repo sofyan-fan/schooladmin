@@ -6,9 +6,24 @@ import DaySection from '@/components/absences/DaySection';
 import EmptyState from '@/components/absences/EmptyState';
 import LessonAbsenceDialog from '@/components/absences/LessonAbsenceDialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useEffect, useState } from 'react';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const AbsencePage = () => {
@@ -21,9 +36,8 @@ const AbsencePage = () => {
   // Dialog states
   const [selectedRoster, setSelectedRoster] = useState(null);
   const [isLessonDialogOpen, setIsLessonDialogOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedClassId, setSelectedClassId] = useState('all');
 
   // Student absence states
   const [studentAbsences, setStudentAbsences] = useState({});
@@ -85,9 +99,19 @@ const AbsencePage = () => {
       (absence) =>
         absence.user_id === studentId &&
         absence.roster_id === rosterId &&
-        new Date(absence.date).toDateString() === new Date(date).toDateString()
+        new Date(absence.date).toDateString() === date.toDateString()
     );
   };
+
+  const uniqueClasses = useMemo(() => {
+    const classMap = new Map();
+    rosters.forEach((roster) => {
+      if (roster.class_layout) {
+        classMap.set(roster.class_layout.id, roster.class_layout.name);
+      }
+    });
+    return Array.from(classMap.entries()).map(([id, name]) => ({ id, name }));
+  }, [rosters]);
 
   const handleLessonClick = (roster) => {
     setSelectedRoster(roster);
@@ -143,16 +167,30 @@ const AbsencePage = () => {
     return grouped;
   };
 
-  const dayOrder = [
-    'Maandag',
-    'Dinsdag',
-    'Woensdag',
-    'Donderdag',
-    'Vrijdag',
-    'Zaterdag',
-    'Zondag',
-  ];
   const groupedRosters = groupRostersByDay();
+
+  const selectedDayName = format(selectedDate, 'EEEE', {
+    /* locale: nl // Add this if you have date-fns dutch locale installed */
+  });
+
+  // Find the Dutch day name for filtering
+  const dayMapping = {
+    Monday: 'Maandag',
+    Tuesday: 'Dinsdag',
+    Wednesday: 'Woensdag',
+    Thursday: 'Donderdag',
+    Friday: 'Vrijdag',
+    Saturday: 'Zaterdag',
+    Sunday: 'Zondag',
+  };
+  const dutchSelectedDay = dayMapping[selectedDayName];
+  let lessonsForSelectedDay = groupedRosters[dutchSelectedDay] || [];
+
+  if (selectedClassId !== 'all') {
+    lessonsForSelectedDay = lessonsForSelectedDay.filter(
+      (roster) => roster.class_layout?.id === parseInt(selectedClassId)
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -172,14 +210,45 @@ const AbsencePage = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Label htmlFor="date">Datum:</Label>
-          <Input
-            id="date"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-auto"
-          />
+          <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select a class" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {uniqueClasses.map((klass) => (
+                <SelectItem key={klass.id} value={String(klass.id)}>
+                  {klass.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={'outline'}
+                className={cn(
+                  'w-[280px] justify-start text-left font-normal',
+                  !selectedDate && 'text-muted-foreground'
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? (
+                  format(selectedDate, 'PPP')
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -187,20 +256,26 @@ const AbsencePage = () => {
         <EmptyState />
       ) : (
         <div className="grid gap-6">
-          {dayOrder.map((day) => {
-            const dayRosters = groupedRosters[day] || [];
-            if (dayRosters.length === 0) return null;
-
-            return (
-              <DaySection
-                key={day}
-                day={day}
-                dayRosters={dayRosters}
-                onLessonClick={handleLessonClick}
-                getTeacherName={getTeacherName}
-              />
-            );
-          })}
+          {lessonsForSelectedDay.length > 0 ? (
+            <DaySection
+              day={dutchSelectedDay}
+              dayRosters={lessonsForSelectedDay}
+              onLessonClick={handleLessonClick}
+              getTeacherName={getTeacherName}
+            />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <CalendarIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">
+                  Geen lessen voor {format(selectedDate, 'PPP')}
+                </h3>
+                <p className="text-muted-foreground">
+                  Er zijn geen lessen geroosterd voor de geselecteerde datum.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
