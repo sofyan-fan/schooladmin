@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import FormText from './FormText';
 import LabelPill from './LabelPill';
 
-function StepPersonal({ control, role, showError = false }) {
+function StepPersonal({ control, role }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -19,14 +19,12 @@ function StepPersonal({ control, role, showError = false }) {
           label="Voornaam"
           placeholder="Voornaam"
           control={control}
-          showError={showError}
         />
         <FormText
           name="lastName"
           label="Achternaam"
           placeholder="Achternaam"
           control={control}
-          showError={showError}
         />
       </div>
 
@@ -44,9 +42,7 @@ function StepPersonal({ control, role, showError = false }) {
                 toYear={new Date().getFullYear() - 4}
                 fromYear={1900}
               />
-              {(fieldState.isTouched || fieldState.isDirty || showError) && (
-                <FormMessage />
-              )}
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -75,9 +71,7 @@ function StepPersonal({ control, role, showError = false }) {
                   </LabelPill>
                 ))}
               </RadioGroup>
-              {(fieldState.isTouched || fieldState.isDirty || showError) && (
-                <FormMessage />
-              )}
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -93,7 +87,6 @@ function StepPersonal({ control, role, showError = false }) {
             label="Adres"
             placeholder="Straat en huisnummer"
             control={control}
-            showError={showError}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormText
@@ -101,23 +94,28 @@ function StepPersonal({ control, role, showError = false }) {
               label="Woonplaats"
               placeholder="Bijv. Rotterdam"
               control={control}
-              showError={showError}
             />
             <FormText
               name="postalCode"
               label="Postcode"
               placeholder="1234 AB"
               control={control}
-              showError={showError}
             />
           </div>
-          <FormText
-            name="phone"
-            label="Telefoonnummer"
-            placeholder="+31 6 12345678"
-            control={control}
-            showError={showError}
-          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormText
+              name="phone"
+              label="Telefoonnummer"
+              placeholder="+31 6 12345678"
+              control={control}
+            />
+            <FormText
+              name="sosnumber"
+              label="SOS-nummer"
+              placeholder="1234567890"
+              control={control}
+            />
+          </div>
         </>
       )}
     </div>
@@ -127,7 +125,6 @@ function StepPersonal({ control, role, showError = false }) {
 StepPersonal.propTypes = {
   control: PropTypes.object.isRequired,
   role: PropTypes.string.isRequired,
-  showError: PropTypes.bool,
 };
 
 export default StepPersonal;

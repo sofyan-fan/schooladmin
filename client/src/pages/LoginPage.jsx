@@ -14,12 +14,12 @@ import { Link } from 'react-router-dom';
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login(username, password);
+    await login(email, password);
   };
 
   return (
@@ -41,8 +41,8 @@ export default function LoginPage() {
                   type="text"
                   placeholder="nassef@gmail.com"
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">

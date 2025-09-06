@@ -130,7 +130,7 @@ export default function StudentViewProfileCard({
             />
             <ProfileDetailItem
               icon={<Package size={16} />}
-              label="Lespakket"
+              label="Module"
               value={displayValue(student.lessonPackage)}
             />
             <ProfileDetailItem

@@ -15,12 +15,33 @@ const {
 } = require('../controllers/general/user_document');
 
 const {
+  create_test,
+  get_all_tests,
+  get_test_by_id,
+  update_test,
+  delete_test,
+  create_exam,
+  get_all_exams,
+  get_exam_by_id,
+  update_exam,
+  delete_exam,
+} = require('../controllers/general/test_exam');
+
+const {
   create_assessment,
   get_all_assessments,
   get_assessment_by_id,
   update_assessment,
   delete_assessment,
 } = require('../controllers/general/assesment');
+
+const {
+  create_result,
+  get_all_results,
+  get_result_by_id,
+  update_result,
+  delete_result,
+} = require('../controllers/general/result');
 
 const {
   create_absence,
@@ -32,7 +53,7 @@ const {
   update_time_registration,
   approve_time_registration,
   get_teacher_time_registrations,
-  get_all_time_registrations
+  get_all_time_registrations,
 } = require('../controllers/general/time_registration');
 
 const {
@@ -40,16 +61,18 @@ const {
   get_classrooms,
   get_classroom,
   update_classroom,
-  delete_classroom
+  delete_classroom,
 } = require('../controllers/general/classroom');
 
 const {
-  create_result,
-  get_all_results,
-  get_result_by_id,
-  update_result,
-  delete_result
-} = require('../controllers/general/results');
+  create_class_layout,
+  get_class_layouts,
+  get_class_layout,
+  update_class_layout,
+  delete_class_layout,
+  add_students_to_class,
+  assign_mentor,
+} = require('../controllers/general/class_layout');
 
 // ==============================
 // Students routes
@@ -70,6 +93,24 @@ router.put('/teacher/:id', update_teacher);
 router.delete('/teacher/:id', delete_teacher);
 
 // ==============================
+// Tests routes
+// ==============================
+router.post('/tests', create_test);
+router.get('/tests', get_all_tests);
+router.get('/tests/:id', get_test_by_id);
+router.put('/tests/:id', update_test);
+router.delete('/tests/:id', delete_test);
+
+// ==============================
+// Exams routes
+// ==============================
+router.post('/exams', create_exam);
+router.get('/exams', get_all_exams);
+router.get('/exams/:id', get_exam_by_id);
+router.put('/exams/:id', update_exam);
+router.delete('/exams/:id', delete_exam);
+
+// ==============================
 // Assessments routes
 // ==============================
 router.post('/assessments', create_assessment);
@@ -77,6 +118,15 @@ router.get('/assessments', get_all_assessments);
 router.get('/assessments/:id', get_assessment_by_id);
 router.put('/assessments/:id', update_assessment);
 router.delete('/assessments/:id', delete_assessment);
+
+// ==============================
+// Results routes
+// ==============================
+router.post('/results', create_result);
+router.get('/results', get_all_results);
+router.get('/results/:id', get_result_by_id);
+router.put('/results/:id', update_result);
+router.delete('/results/:id', delete_result);
 
 // ==============================
 // Absences routes
@@ -93,7 +143,10 @@ router.delete('/absences/:id', delete_absence);
 router.post('/time-registrations', create_time_registration);
 router.put('/time-registrations/:id', update_time_registration);
 router.put('/time-registrations/:id/approve', approve_time_registration);
-router.get('/time-registrations/teacher/:teacher_id', get_teacher_time_registrations);
+router.get(
+  '/time-registrations/teacher/:teacher_id',
+  get_teacher_time_registrations
+);
 router.get('/time-registrations', get_all_time_registrations);
 
 // ==============================
@@ -106,12 +159,14 @@ router.put('/classrooms/:id', update_classroom);
 router.delete('/classrooms/:id', delete_classroom);
 
 // ==============================
-// Results routes
+// Class Layouts routes
 // ==============================
-router.post('/results', create_result);
-router.get('/results', get_all_results);
-router.get('/results/:id', get_result_by_id);
-router.put('/results/:id', update_result);
-router.delete('/results/:id', delete_result);
+router.post('/class_layouts', create_class_layout);
+router.get('/class_layouts', get_class_layouts);
+router.get('/class_layouts/:id', get_class_layout);
+router.put('/class_layouts/:id', update_class_layout);
+router.delete('/class_layouts/:id', delete_class_layout);
+router.post('/class_layouts/:class_id/students', add_students_to_class);
+router.put('/class_layouts/:class_id/mentor', assign_mentor);
 
 module.exports = router;

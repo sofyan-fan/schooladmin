@@ -1,23 +1,49 @@
-import studentAPI from '@/apis/students/studentAPI';
-import ProfileCard from '@/components/general/ProfileCard'; 
-import StudentViewProfileCard from '@/components/StudentViewProfileCard'; 
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DataTable } from '@/components/ui/data-table';
-import { Plus } from 'lucide-react';
+import studentAPI from '@/apis/studentAPI';
+import ProfileCard from '@/components/general/ProfileCard';
+import PageHeader from '@/components/shared/PageHeader';
+import DataTable from '@/components/shared/Table';
+import Toolbar from '@/components/shared/Toolbar';
+import { createColumns } from '@/components/students/columns';
+import StudentViewProfileCard from '@/components/StudentViewProfileCard';
+import { TableCell, TableRow } from '@/components/ui/table';
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { BookOpen, GraduationCap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { createColumns } from './students/columns';
+
+const NoData = (
+  <TableRow>
+    <TableCell colSpan={6} className="h-48 text-center">
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <BookOpen className="size-12 text-gray-400" />
+        <h3 className="text-xl font-semibold">No Students Found</h3>
+        <p className="text-muted-foreground">
+          Get started by adding a new student.
+        </p>
+      </div>
+    </TableCell>
+  </TableRow>
+);
 
 export default function StudentsPage() {
-
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  
-  const [openEditProfile, setOpenEditProfile] = useState(false); 
-  
-  const [openViewProfile, setOpenViewProfile] = useState(false); 
+  const [openEditProfile, setOpenEditProfile] = useState(false);
+  const [openViewProfile, setOpenViewProfile] = useState(false);
+
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -31,6 +57,7 @@ export default function StudentsPage() {
               firstName: s.first_name,
               lastName: s.last_name,
               email: s.parent_email ?? '',
+              parentName: s.parent_name ?? '',
               phone: s.phone ?? '',
               address: s.address ?? '',
               postalCode: s.postal_code ?? '',
@@ -62,83 +89,137 @@ export default function StudentsPage() {
 
   const handleView = (record) => {
     setSelected(record);
-    setOpenViewProfile(true); 
+    setOpenViewProfile(true);
   };
 
-  const handleSave = (updated) => {
-    setStudents((prev) =>
-      prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s))
+  const handleSave = async (updated) => {
+    const apiPayload = {
+      first_name: updated.firstName,
+      last_name: updated.lastName,
+      birth_date: updated.birthDate ? new Date(updated.birthDate) : undefined,
+      gender: updated.gender,
+      address: updated.address,
+      postal_code: updated.postalCode,
+      city: updated.city,
+      phone: updated.phone,
+      parent_name: updated.parentName,
+      parent_email: updated.email,
+      lesson_package: updated.lessonPackage,
+      enrollment_status: updated.status === 'Active',
+    };
+
+    Object.keys(apiPayload).forEach(
+      (key) => apiPayload[key] === undefined && delete apiPayload[key]
     );
-  };
-  
-  const handleDelete = (id) => {
-    if (!id) return;
-    // NOTE: You should add a confirmation dialog here!
-    alert(`Verwijder ${id}`);
-    setStudents((prev) => prev.filter((s) => s.id !== id));
 
-    // Close any open modals for the deleted user
-    if (selected?.id === id) {
-      setOpenEditProfile(false);
-      setOpenViewProfile(false);
+    try {
+      const response = await studentAPI.update_student(updated.id, apiPayload);
+
+      const updatedStudentForState = {
+        id: response.id,
+        firstName: response.first_name,
+        lastName: response.last_name,
+        email: response.parent_email ?? '',
+        parentName: response.parent_name ?? '',
+        phone: response.phone ?? '',
+        address: response.address ?? '',
+        postalCode: response.postal_code ?? '',
+        city: response.city ?? '',
+        birthDate: response.birth_date ?? '',
+        gender: response.gender ?? '',
+        className: response.class_layout?.name ?? '',
+        registrationDate: response.created_at ?? '',
+        lessonPackage: response.lesson_package ?? '',
+        status: response.enrollment_status ? 'Active' : 'Inactive',
+      };
+
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === updatedStudentForState.id
+            ? { ...s, ...updatedStudentForState }
+            : s
+        )
+      );
+      console.log('updatedStudentForState', updatedStudentForState);
+    } catch (error) {
+      console.error('Failed to update student', error);
     }
   };
 
-  // --- COLUMN DEFINITION ---
+  const handleDelete = async (id) => {
+    if (!id) return;
+    try {
+      await studentAPI.delete_student(id);
+      setStudents((prev) => prev.filter((s) => s.id !== id));
+      if (selected?.id === id) {
+        setOpenEditProfile(false);
+        setOpenViewProfile(false);
+      }
+    } catch (error) {
+      console.error('Failed to delete student', error);
+    }
+  };
+
   const columns = useMemo(
-    () => createColumns({ handleView, handleEdit, handleDelete }),
-    []
+    () =>
+      createColumns({
+        onView: handleView,
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      }),
+    [handleView, handleEdit, handleDelete]
   );
 
-  // --- RENDER ---
+  const table = useReactTable({
+    data: students,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      pagination,
+      columnFilters,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
   return (
-    <LayoutWrapper>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Leerlingen
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Beheer hier alle leerlingen.
-            </p>
-          </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe leerling
-          </Button>
-        </div>
+    <>
+      <PageHeader
+        title="Leerlingen"
+        icon={<GraduationCap className="size-9" />}
+        description="Beheer hier alle leerlingen."
+        buttonText="Nieuwe leerling"
+        onAdd={() => {}}
+      />
+      <Toolbar table={table} filterColumn="firstName" />
+      <DataTable
+        table={table}
+        loading={loading}
+        columns={columns}
+        NoDataComponent={NoData}
+      />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Leerlingenoverzicht</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-10">Laden...</div>
-            ) : (
-              <DataTable columns={columns} data={students} />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* RENDER THE NEW VIEW MODAL */}
       <StudentViewProfileCard
         open={openViewProfile}
         onOpenChange={setOpenViewProfile}
         student={selected}
       />
 
-      {/* Your old ProfileCard can now be dedicated to editing */}
       <ProfileCard
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}
         user={selected}
         onSave={handleSave}
         onDelete={handleDelete}
-        viewDateOnly={false} // Assuming this is for an edit form
+        viewDateOnly={false}
       />
-    </LayoutWrapper>
+    </>
   );
 }

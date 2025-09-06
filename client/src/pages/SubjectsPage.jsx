@@ -1,97 +1,213 @@
-import subjectApi from '@/apis/subjects/subjectAPI';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import { Button } from '@/components/ui/button';
+import subjectAPI from '@/apis/subjectAPI';
+import PageHeader from '@/components/shared/PageHeader';
+import DataTable from '@/components/shared/Table';
+import Toolbar from '@/components/shared/Toolbar';
+import CreateModal from '@/components/subjects/CreateModal';
+import EditModal from '@/components/subjects/EditModal';
+import { getColumns } from '@/components/subjects/columns';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import SubjectModal from './../components/subjects/SubjectModal';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { TableCell, TableRow } from '@/components/ui/table';
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { BookOpen, LibraryBig } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+
+const NoData = (
+  <TableRow>
+    <TableCell colSpan={5} className="h-48 text-center">
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <BookOpen className="size-12 text-gray-400" />
+        <h3 className="text-xl font-semibold">No Subjects Found</h3>
+        <p className="text-muted-foreground">
+          Get started by adding a new subject.
+        </p>
+      </div>
+    </TableCell>
+  </TableRow>
+);
 
 const SubjectsPage = () => {
   const [subjects, setSubjects] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState(null);
+  const [deletingSubject, setDeletingSubject] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState('');
 
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const data = useMemo(() => subjects, [subjects]);
+
+  const handleEdit = (subject) => {
+    setEditingSubject(subject);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (subject) => {
+    setDeletingSubject(subject);
+  };
+
+  const columns = useMemo(() => getColumns(handleEdit, handleDelete), []);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      pagination,
+      columnFilters,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
   useEffect(() => {
-    setLoading(true);
-    subjectApi
-      .get_subjects()
-      .then((data) => setSubjects(data))
-      .catch(() => setApiError('Failed to load subjects'))
-      .finally(() => setLoading(false));
+    fetchSubjects();
   }, []);
 
-  const handleSaveSubject = async () => {
+  const fetchSubjects = () => {
     setLoading(true);
+    setApiError('');
+    subjectAPI
+      .get_subjects()
+      .then((data) => setSubjects(data || []))
+      .catch(() =>
+        setApiError('Failed to load subjects. Please try again later.')
+      )
+      .finally(() => setLoading(false));
+  };
+
+  const handleSaveSubject = (savedSubject) => {
+    setSubjects((prevSubjects) => {
+      const subjectExists = prevSubjects.find((s) => s.id === savedSubject.id);
+      if (subjectExists) {
+        // If subject exists, update it in the array
+        toast.success(`"${savedSubject.name}" is bijgewerkt!`);
+        return prevSubjects.map((s) =>
+          s.id === savedSubject.id ? savedSubject : s
+        );
+      }
+      // If it's a new subject, add it to the array
+      toast.success(`"${savedSubject.name}" is toegevoegd!`);
+      return [...prevSubjects, savedSubject];
+    });
+
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
+    setEditingSubject(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeletingSubject(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingSubject) return;
     try {
-      const updated = await subjectApi.get_subjects();
-      setSubjects(updated);
+      await subjectAPI.delete_subject(deletingSubject.id);
+      toast.success(`"${deletingSubject.name}" is verwijderd!`);
+      fetchSubjects();
     } catch {
-      setApiError('Failed to refresh subjects');
+      toast.error('Kon het vak niet verwijderen. Probeer het opnieuw.');
+      setApiError('Failed to delete subject. Please try again.');
     } finally {
-      setLoading(false);
+      setDeletingSubject(null);
     }
   };
 
   return (
-    <LayoutWrapper>
-      <div className="container mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Vakkenbibliotheek</h1>
-          <Button
-            className="cursor-pointer"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Vak Toevoegen
-          </Button>
-          <SubjectModal
-            open={isModalOpen}
-            onOpenChange={setIsModalOpen}
-            onSave={handleSaveSubject}
-          />
+    <>
+      <PageHeader
+        title="Vakkenbibliotheek"
+        icon={<LibraryBig className="size-9" />}
+        description="Beheer hier de vakken, niveaus en lesmaterialen."
+        buttonText="Vak Toevoegen"
+        onAdd={() => setIsCreateModalOpen(true)}
+      />
+      <Toolbar table={table} filterColumn="name" />
+
+      {apiError && (
+        <div className="text-red-500 mb-4 p-4 bg-red-100 rounded-md border border-red-200">
+          {apiError}
         </div>
-        {loading && (
-          <div className="text-gray-500 mb-4">Loading subjects...</div>
-        )}
-        {apiError && <div className="text-red-500 mb-4">{apiError}</div>}
-        <div className="border rounded-sm">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Subject</TableHead>
-                <TableHead>Levels</TableHead>
-                <TableHead>Materials</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {subjects.map((subject) => (
-                <TableRow key={subject.id}>
-                  <TableCell>{subject.name}</TableCell>
-                  <TableCell>
-                    {Array.isArray(subject.levels)
-                      ? subject.levels.join(', ')
-                      : ''}
-                  </TableCell>
-                  <TableCell>
-                    {Array.isArray(subject.materials)
-                      ? subject.materials.join(', ')
-                      : ''}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    </LayoutWrapper>
+      )}
+
+      <DataTable
+        table={table}
+        loading={loading}
+        columns={columns}
+        NoDataComponent={NoData}
+      />
+
+      <CreateModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSave={handleSaveSubject}
+      />
+
+      <EditModal
+        open={isEditModalOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setEditingSubject(null);
+          }
+          setIsEditModalOpen(isOpen);
+        }}
+        onSave={handleSaveSubject}
+        subject={editingSubject}
+      />
+
+      {deletingSubject && (
+        <AlertDialog open={!!deletingSubject} onOpenChange={handleCancelDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the
+                subject.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelDelete}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
   );
 };
 

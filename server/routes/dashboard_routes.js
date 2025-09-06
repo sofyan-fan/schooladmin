@@ -5,6 +5,7 @@ const {
   create_roster,
   get_roster,
   update_roster,
+  delete_roster,
 } = require('../controllers/dashboard/roster');
 
 const {
@@ -22,5 +23,12 @@ router.delete('/event/:id', delete_event);
 router.post('/roster', create_roster);
 router.get('/roster', get_roster);
 router.put('/roster/:id', update_roster);
+router.delete('/roster/:id', delete_roster);
+
+// Support plural endpoints for client compatibility
+router.post('/rosters', create_roster);
+router.get('/rosters', get_roster);
+router.put('/rosters/:id', update_roster);
+router.delete('/rosters/:id', delete_roster);
 
 module.exports = router;

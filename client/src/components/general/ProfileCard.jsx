@@ -27,7 +27,6 @@ function fieldValue(obj, path, fallback = '') {
   );
 }
 
-
 export default function ProfileCard({
   open,
   onOpenChange,
@@ -64,8 +63,7 @@ export default function ProfileCard({
       { name: 'className', label: 'Class / Group' },
       { name: 'registrationDate', label: 'Registration Date', type: 'date' },
       { name: 'lessonPackage', label: 'Lesson Package' },
-      { name: 'paymentActive', label: 'Payment Active', type: 'switch' },
-      { name: 'enrollmentActive', label: 'Enrollment Active', type: 'switch' },
+      { name: 'status', label: 'Status', type: 'switch' },
     ];
 
     const teacherOnly = [
@@ -73,7 +71,7 @@ export default function ProfileCard({
       { name: 'subject', label: 'Subject' },
       { name: 'department', label: 'Department' },
       { name: 'availability', label: 'Availability' },
-      { name: 'active', label: 'Employment Active', type: 'switch' },
+      { name: 'active', label: 'Active', type: 'switch' },
     ];
 
     return {
@@ -203,10 +201,9 @@ export default function ProfileCard({
                       ) : (
                         <Input
                           id={f.name}
-                          type={f.type || 'text'}
-                          value={form[f.name] ?? ''}
+                          type={f.type === 'date' ? 'date' : 'text'}
+                          value={fieldValue(form, f.name)}
                           onChange={(e) => update(f.name, e.target.value)}
-                          placeholder={f.label}
                         />
                       )}
                     </div>

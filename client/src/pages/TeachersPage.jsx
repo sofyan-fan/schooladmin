@@ -1,121 +1,210 @@
-import teachersAPI from '@/apis/teachers/teachersAPI';
-import ProfileCard from '@/components/general/ProfileCard'; 
-import StudentViewProfileCard from '@/components/StudentViewProfileCard'; 
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DataTable } from '@/components/ui/data-table';
-import { Plus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { createColumns } from './students/columns';
+import teachersAPI from '@/apis/teachersAPI';
+import ProfileCard from '@/components/general/ProfileCard';
+import PageHeader from '@/components/shared/PageHeader';
+import DataTable from '@/components/shared/Table';
+import Toolbar from '@/components/shared/Toolbar';
+import StudentViewProfileCard from '@/components/StudentViewProfileCard';
+import { createColumns } from '@/components/teachers/columns';
+import { TableCell, TableRow } from '@/components/ui/table';
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { BookOpen, Presentation } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+const NoData = (
+  <TableRow>
+    <TableCell colSpan={6} className="h-48 text-center">
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <BookOpen className="size-12 text-gray-400" />
+        <h3 className="text-xl font-semibold">No Teachers Found</h3>
+        <p className="text-muted-foreground">
+          Get started by adding a new teacher.
+        </p>
+      </div>
+    </TableCell>
+  </TableRow>
+);
 
 export default function TeachersPage() {
-
-  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  
-  const [openEditProfile, setOpenEditProfile] = useState(false); 
-  
-  const [openViewProfile, setOpenViewProfile] = useState(false); 
+  const [openEditProfile, setOpenEditProfile] = useState(false);
+  const [openViewProfile, setOpenViewProfile] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const response = await teachersAPI.get_teachers();
-        const mapped = Array.isArray(response)
-          ? response.map((s) => ({
-              id: s.id,
-              firstName: s.first_name,
-              lastName: s.last_name,
-              email: s.parent_email ?? '',
-              phone: s.phone ?? '',
-              address: s.address ?? '',
-              postalCode: s.postal_code ?? '',
-              city: s.city ?? '',
-              birthDate: s.birth_date ?? '',
-              gender: s.gender ?? '',
-              className: s.class_layout?.name ?? '',
-              registrationDate: s.created_at ?? '',
-              lessonPackage: s.lesson_package ?? '',
-              status: s.enrollment_status ? 'Active' : 'Inactive',
-            }))
-          : [];
-        if (mounted) setStudents(mapped);
-      } catch (e) {
-        console.error('Failed to load students', e);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const fetchTeachers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await teachersAPI.get_teachers();
+      const mapped = Array.isArray(response)
+        ? response.map((s) => ({
+            id: s.id,
+            firstName: s.first_name,
+            lastName: s.last_name,
+            email: s.email ?? '',
+            phone: s.phone ?? '',
+            address: s.address ?? '',
+            className: s.class_layout?.name ?? '',
+            registrationDate: s.created_at ?? '',
+            active: s.active ?? false,
+          }))
+        : [];
+      setTeachers(mapped);
+    } catch (e) {
+      console.error('Failed to load teachers', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleEdit = (record) => {
+  useEffect(() => {
+    fetchTeachers();
+  }, [fetchTeachers]);
+
+  const handleEdit = useCallback((record) => {
     setSelected(record);
     setOpenEditProfile(true);
-  };
+  }, []);
 
-  const handleView = (record) => {
+  const handleView = useCallback((record) => {
     setSelected(record);
-    setOpenViewProfile(true); 
-  };
+    setOpenViewProfile(true);
+  }, []);
 
-  const handleSave = (updated) => {
-    setStudents((prev) =>
-      prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s))
-    );
-  };
-  
-  const handleDelete = (id) => {
-    if (!id) return;
-    alert(`Verwijder ${id}`);
-    setStudents((prev) => prev.filter((s) => s.id !== id));
+  const handleAddNew = useCallback(() => {
+    setSelected({ role: 'Teacher' });
+    setOpenEditProfile(true);
+  }, []);
 
-    if (selected?.id === id) {
+  const handleSave = async (updated) => {
+    try {
+      const payload = {
+        first_name: updated.firstName,
+        last_name: updated.lastName,
+        email: updated.email,
+        phone: updated.phone,
+        address: updated.address,
+        active: updated.active,
+      };
+
+      Object.keys(payload).forEach(
+        (key) => payload[key] === undefined && delete payload[key]
+      );
+
+      let response;
+      if (updated.id) {
+        // Update existing teacher
+        response = await teachersAPI.update_teacher({
+          id: updated.id,
+          ...payload,
+        });
+      } else {
+        // Create new teacher
+        response = await teachersAPI.add_teacher(payload);
+      }
+
+      const mapped = {
+        id: response.id,
+        firstName: response.first_name,
+        lastName: response.last_name,
+        email: response.email ?? '',
+        phone: response.phone ?? '',
+        address: response.address ?? '',
+        className: response.class_layout?.name ?? '',
+        registrationDate: response.created_at ?? '',
+        active: response.active ?? false,
+      };
+
+      if (updated.id) {
+        // Update existing teacher in list
+        setTeachers((prev) =>
+          prev.map((s) => (s.id === mapped.id ? mapped : s))
+        );
+      } else {
+        // Add new teacher to list
+        setTeachers((prev) => [...prev, mapped]);
+      }
+
       setOpenEditProfile(false);
-      setOpenViewProfile(false);
+    } catch (e) {
+      console.error('Failed to save teacher', e);
     }
   };
 
-  const columns = useMemo(
-    () => createColumns({ handleView, handleEdit, handleDelete }),
-    []
+  const handleDelete = useCallback(
+    async (id) => {
+      if (!id) return;
+      try {
+        await teachersAPI.delete_teacher(id);
+        setTeachers((prev) => prev.filter((t) => t.id !== id));
+        if (selected?.id === id) {
+          setOpenEditProfile(false);
+        }
+      } catch (e) {
+        console.error('Failed to delete teacher', e);
+      }
+    },
+    [selected?.id]
   );
 
-  return (
-    <LayoutWrapper>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Docenten
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Beheer hier alle docenten.
-            </p>
-          </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe docent
-          </Button>
-        </div>
+  const columns = useMemo(
+    () =>
+      createColumns({
+        onView: handleView,
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      }),
+    [handleView, handleEdit, handleDelete]
+  );
 
-        <Card>
-      
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-5">Laden...</div>
-            ) : (
-              <DataTable columns={columns} data={students} />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+  const table = useReactTable({
+    data: teachers,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      pagination,
+      columnFilters,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
+  return (
+    <>
+      <PageHeader
+        title="Docenten"
+        icon={<Presentation className="size-9" />}
+        description="Beheer hier alle docenten."
+        buttonText="Nieuwe docent"
+        onAdd={handleAddNew}
+      />
+      <Toolbar table={table} filterColumn="firstName" />
+      <DataTable
+        table={table}
+        loading={loading}
+        columns={columns}
+        NoDataComponent={NoData}
+      />
 
       <StudentViewProfileCard
         open={openViewProfile}
@@ -126,11 +215,11 @@ export default function TeachersPage() {
       <ProfileCard
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}
-        user={selected}
+        user={{ ...selected, role: 'Teacher' }}
         onSave={handleSave}
         onDelete={handleDelete}
-        viewDateOnly={false} 
+        viewDateOnly={false}
       />
-    </LayoutWrapper>
+    </>
   );
 }
