@@ -12,13 +12,18 @@ const LessonCard = ({ roster, onLessonClick, getTeacherName }) => {
       className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary"
       onClick={() => onLessonClick(roster)}
     >
-      <CardContent className="p-4">
-        <div className="space-y-2">
-          <div className="flex justify-between items-start">
-            <h3 className="font-semibold text-lg">
-              {roster.subject?.name || 'Onbekend Vak'}
-            </h3>
-            <Badge variant="outline">
+      <CardContent className="p-3">
+        <div className="space-y-1">
+          <div className="flex justify-between items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <h3
+                className="font-semibold text-lg truncate"
+                title={roster.subject?.name || 'Onbekend Vak'}
+              >
+                {roster.subject?.name || 'Onbekend Vak'}
+              </h3>
+            </div>
+            <Badge variant="outline" className="flex-shrink-0">
               <Clock className="w-3 h-3 mr-1" />
               {formatTime(roster.start_time)} - {formatTime(roster.end_time)}
             </Badge>
@@ -39,13 +44,13 @@ const LessonCard = ({ roster, onLessonClick, getTeacherName }) => {
             Klas: {roster.class_layout?.name || 'Geen klas'}
           </div>
 
-          <div className="pt-2 border-t">
+          {/* <div className="pt-2 border-t">
             <div className="text-sm">
               <span className="text-muted-foreground">
                 Klik om afwezigheid te beheren
               </span>
             </div>
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

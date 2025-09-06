@@ -1,200 +1,319 @@
 import { get_classes } from '@/apis/classAPI';
 import { getClassrooms } from '@/apis/classroomAPI';
 import rosterAPI from '@/apis/rosterAPI';
+import { get_subjects } from '@/apis/subjectAPI';
 import { get_teachers } from '@/apis/teachersAPI';
-import RosterEventModal from '@/components/rosters/RosterEventModal';
-import interactionPlugin from '@fullcalendar/interaction';
-import FullCalendar from '@fullcalendar/react';
-import timeGridPlugin from '@fullcalendar/timegrid';
+import CreateRosterModal from '@/components/rosters/CreateRosterModal';
+import DeleteRosterDialog from '@/components/rosters/DeleteRosterDialog';
+import EditRosterModal from '@/components/rosters/EditRosterModal';
+import RosterManagementTable from '@/components/rosters/RosterManagementTable';
+import ViewRosterModal from '@/components/rosters/ViewRosterModal';
+import PageHeader from '@/components/shared/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CalendarDays, Filter, Search } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-
-const SelectionPanel = ({ title, items, selectedId, onSelect }) => (
-  <div className="mb-4">
-    <h3 className="font-semibold mb-2 text-lg">{title}</h3>
-    <ul className="space-y-1">
-      {items.map((item) => (
-        <li
-          key={item.id}
-          className={`cursor-pointer p-2 rounded-md transition-colors ${
-            selectedId === item.id
-              ? 'bg-primary text-primary-foreground'
-              : 'hover:bg-muted'
-          }`}
-          onClick={() => onSelect(item.id)}
-        >
-          {item.name || `${item.first_name} ${item.last_name}`}
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+import { toast } from 'sonner';
 
 export default function RosterPage() {
-  const [events, setEvents] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [selection, setSelection] = useState({
-    type: null,
-    id: null,
-  });
-
-  const [classLayouts, setClassLayouts] = useState([]);
+  // Data states
+  const [rosters, setRosters] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Modal states
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedRoster, setSelectedRoster] = useState(null);
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterTeacher, setFilterTeacher] = useState('');
+  const [filterDay, setFilterDay] = useState('');
 
   const fetchRosters = useCallback(async () => {
     try {
-      let filters = {};
-      // Only apply filter if a selection is made
-      if (selection.type && selection.id) {
-        filters = {
-          [`${selection.type}Id`]: selection.id,
-        };
-      }
-      const data = await rosterAPI.get_rosters(filters);
-      setEvents(data);
+      setLoading(true);
+      const data = await rosterAPI.get_rosters();
+      setRosters(data || []);
     } catch (error) {
       console.error('Failed to fetch rosters:', error);
-      setEvents([]);
+      toast.error('Laden van roosters mislukt');
+      setRosters([]);
+    } finally {
+      setLoading(false);
     }
-  }, [selection]);
+  }, []);
 
-  useEffect(() => {
-    fetchRosters();
-  }, [fetchRosters]);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [layouts, teachersData, classroomsData] = await Promise.all([
+  const fetchInitialData = useCallback(async () => {
+    try {
+      const [classesData, subjectsData, teachersData, classroomsData] =
+        await Promise.all([
           get_classes(),
+          get_subjects(),
           get_teachers(),
           getClassrooms(),
         ]);
-        setClassLayouts(layouts || []);
-        setTeachers(teachersData || []);
-        setClassrooms(classroomsData || []);
-      } catch (error) {
-        console.error('Failed to fetch initial data:', error);
-      }
+
+      setClasses(classesData || []);
+      setSubjects(subjectsData || []);
+      setTeachers(teachersData || []);
+      setClassrooms(classroomsData || []);
+    } catch (error) {
+      console.error('Failed to fetch initial data:', error);
+      toast.error('Laden van basisgegevens mislukt');
     }
-    fetchData();
   }, []);
 
-  const handleSelect = (type, id) => {
-    if (selection.type === type && selection.id === id) {
-      setSelection({ type: null, id: null }); // Deselect if clicking the same item
-    } else {
-      setSelection({ type, id });
-    }
-  };
+  useEffect(() => {
+    fetchRosters();
+    fetchInitialData();
+  }, [fetchRosters, fetchInitialData]);
 
-  const handleDateSelect = (selectInfo) => {
-    setSelectedEvent({
-      start: selectInfo.startStr,
-      end: selectInfo.endStr,
-    });
-    setModalOpen(true);
-  };
+  // Filter rosters based on search and filter criteria
+  const filteredRosters = rosters.filter((roster) => {
+    const matchesSearch =
+      !searchTerm ||
+      roster.subject?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      roster.class_layout?.name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      `${roster.teacher?.first_name} ${roster.teacher?.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      roster.classroom?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const handleEventClick = (clickInfo) => {
-    const event = events.find((e) => e.id.toString() === clickInfo.event.id);
-    setSelectedEvent(event);
-    setModalOpen(true);
-  };
+    const matchesClass =
+      !filterClass || roster.class_id?.toString() === filterClass;
+    const matchesTeacher =
+      !filterTeacher || roster.teacher_id?.toString() === filterTeacher;
+    const matchesDay = !filterDay || roster.day_of_week === filterDay;
 
-  const handleModalSubmit = async (eventData) => {
+    return matchesSearch && matchesClass && matchesTeacher && matchesDay;
+  });
+
+  const handleCreate = async (rosterData) => {
     try {
-      const payload = {
-        ...eventData,
-        classLayoutId: parseInt(eventData.classLayoutId, 10),
-        teacherId: parseInt(eventData.teacherId, 10),
-        classroomId: parseInt(eventData.classroomId, 10),
-      };
-
-      if (payload.id) {
-        await rosterAPI.update_roster(payload);
-      } else {
-        await rosterAPI.add_roster(payload);
-      }
+      await rosterAPI.add_roster(rosterData);
+      toast.success('Rooster succesvol toegevoegd');
       fetchRosters();
     } catch (error) {
-      console.error('Failed to save event:', error);
+      console.error('Failed to create roster:', error);
+      toast.error('Toevoegen van rooster mislukt');
     }
   };
 
-  const handleModalDelete = async (eventToDelete) => {
+  const handleEdit = (roster) => {
+    setSelectedRoster(roster);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdate = async (rosterData) => {
     try {
-      await rosterAPI.delete_roster(eventToDelete.id);
+      await rosterAPI.update_roster(rosterData);
+      toast.success('Rooster succesvol bijgewerkt');
       fetchRosters();
     } catch (error) {
-      console.error('Failed to delete event:', error);
+      console.error('Failed to update roster:', error);
+      toast.error('Bijwerken van rooster mislukt');
     }
   };
+
+  const handleView = (roster) => {
+    setSelectedRoster(roster);
+    setViewModalOpen(true);
+  };
+
+  const handleDelete = (roster) => {
+    setSelectedRoster(roster);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async (roster) => {
+    try {
+      await rosterAPI.delete_roster(roster.id);
+      toast.success('Rooster succesvol verwijderd');
+      fetchRosters();
+      setDeleteDialogOpen(false);
+      setSelectedRoster(null);
+    } catch (error) {
+      console.error('Failed to delete roster:', error);
+      toast.error('Verwijderen van rooster mislukt');
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterClass('');
+    setFilterTeacher('');
+    setFilterDay('');
+  };
+
+  const DAYS_OF_WEEK = [
+    { value: 'Monday', label: 'Maandag' },
+    { value: 'Tuesday', label: 'Dinsdag' },
+    { value: 'Wednesday', label: 'Woensdag' },
+    { value: 'Thursday', label: 'Donderdag' },
+    { value: 'Friday', label: 'Vrijdag' },
+    { value: 'Saturday', label: 'Zaterdag' },
+    { value: 'Sunday', label: 'Zondag' },
+  ];
 
   return (
-    <div className="flex h-full gap-6 p-4">
-      <aside className="w-1/4 max-w-xs p-4 bg-card rounded-lg shadow-sm overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Selections</h2>
-        <div className="mb-4">
-          <button
-            className={`w-full p-2 rounded-md transition-colors ${
-              !selection.type
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted'
-            }`}
-            onClick={() => setSelection({ type: null, id: null })}
-          >
-            Show All
-          </button>
-        </div>
-        <SelectionPanel
-          title="Group"
-          items={classLayouts}
-          selectedId={selection.type === 'classLayout' ? selection.id : null}
-          onSelect={(id) => handleSelect('classLayout', id)}
-        />
-        <SelectionPanel
-          title="Classroom"
-          items={classrooms}
-          selectedId={selection.type === 'classroom' ? selection.id : null}
-          onSelect={(id) => handleSelect('classroom', id)}
-        />
-        <SelectionPanel
-          title="Teacher"
-          items={teachers}
-          selectedId={selection.type === 'teacher' ? selection.id : null}
-          onSelect={(id) => handleSelect('teacher', id)}
-        />
-      </aside>
+    <div className="container mx-auto p-6 space-y-6">
+      <PageHeader
+        title="Rooster Beheer"
+        icon={<CalendarDays className="size-9" />}
+        description="Beheer alle rooster items: toevoegen, bewerken en verwijderen."
+        buttonText="Rooster Toevoegen"
+        onAdd={() => setCreateModalOpen(true)}
+      />
 
-      <main className="flex-1 bg-card p-4 rounded-lg shadow-sm">
-        <FullCalendar
-          plugins={[interactionPlugin, timeGridPlugin]}
-          initialView="timeGridWeek"
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'timeGridWeek,timeGridDay',
-          }}
-          events={events}
-          selectable={true}
-          selectMirror={true}
-          dayMaxEvents={true}
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-        />
-      </main>
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Zoeken..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
 
-      <RosterEventModal
-        open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open);
-          if (!open) setSelectedEvent(null);
-        }}
-        onSave={handleModalSubmit}
-        onDelete={handleModalDelete}
-        initialEvent={selectedEvent}
+            <Select value={filterClass} onValueChange={setFilterClass}>
+              <SelectTrigger>
+                <SelectValue placeholder="Alle klassen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Alle klassen</SelectItem>
+                {classes
+                  .filter((cls) => cls.id != null)
+                  .map((cls) => (
+                    <SelectItem key={cls.id} value={cls.id.toString()}>
+                      {cls.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterTeacher} onValueChange={setFilterTeacher}>
+              <SelectTrigger>
+                <SelectValue placeholder="Alle docenten" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Alle docenten</SelectItem>
+                {teachers
+                  .filter((teacher) => teacher.id != null)
+                  .map((teacher) => (
+                    <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                      {teacher.first_name} {teacher.last_name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterDay} onValueChange={setFilterDay}>
+              <SelectTrigger>
+                <SelectValue placeholder="Alle dagen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Alle dagen</SelectItem>
+                {DAYS_OF_WEEK.map((day) => (
+                  <SelectItem key={day.value} value={day.value}>
+                    {day.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" onClick={clearFilters}>
+              Filters Wissen
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Results Summary */}
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">
+          {filteredRosters.length} van {rosters.length} roosters
+        </p>
+      </div>
+
+      {/* Rosters Table */}
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-muted-foreground">Roosters laden...</div>
+            </div>
+          ) : (
+            <RosterManagementTable
+              rosters={filteredRosters}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onView={handleView}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <CreateRosterModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSubmit={handleCreate}
+        classes={classes}
+        subjects={subjects}
+        teachers={teachers}
+        classrooms={classrooms}
+      />
+
+      <EditRosterModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onSubmit={handleUpdate}
+        roster={selectedRoster}
+        classes={classes}
+        subjects={subjects}
+        teachers={teachers}
+        classrooms={classrooms}
+      />
+
+      <ViewRosterModal
+        open={viewModalOpen}
+        onOpenChange={setViewModalOpen}
+        roster={selectedRoster}
+      />
+
+      <DeleteRosterDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        roster={selectedRoster}
       />
     </div>
   );

@@ -300,15 +300,27 @@ exports.update_roster = async (req, res) => {
 exports.delete_roster = async (req, res) => {
   try {
     const { id } = req.params;
+    const rosterId = parseInt(id);
 
-    await prisma.roster.delete({
-      where: {
-        id: parseInt(id),
-      },
+    // Use a transaction to ensure both operations succeed or fail together
+    await prisma.$transaction(async (tx) => {
+      // First, delete all absence records associated with this roster
+      await tx.absence.deleteMany({
+        where: {
+          roster_id: rosterId,
+        },
+      });
+
+      // Then, delete the roster itself
+      await tx.roster.delete({
+        where: {
+          id: rosterId,
+        },
+      });
     });
 
     res.status(200).json({
-      message: 'Roster deleted successfully',
+      message: 'Roster and associated absences deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting roster:', error);

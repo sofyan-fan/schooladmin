@@ -1,34 +1,314 @@
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import RosterForm from './RosterForm';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
-export default function EditRosterModal({
-  isOpen,
-  onClose,
+const formSchema = z.object({
+  class_id: z.string().min(1, 'Klas is verplicht'),
+  subject_id: z.string().min(1, 'Vak is verplicht'),
+  teacher_id: z.string().min(1, 'Docent is verplicht'),
+  classroom_id: z.string().min(1, 'Lokaal is verplicht'),
+  day_of_week: z.string().min(1, 'Dag is verplicht'),
+  start_time: z.string().min(1, 'Starttijd is verplicht'),
+  end_time: z.string().min(1, 'Eindtijd is verplicht'),
+});
+
+const DAYS_OF_WEEK = [
+  { value: 'Monday', label: 'Maandag' },
+  { value: 'Tuesday', label: 'Dinsdag' },
+  { value: 'Wednesday', label: 'Woensdag' },
+  { value: 'Thursday', label: 'Donderdag' },
+  { value: 'Friday', label: 'Vrijdag' },
+  { value: 'Saturday', label: 'Zaterdag' },
+  { value: 'Sunday', label: 'Zondag' },
+];
+
+const EditRosterModal = ({
+  open,
+  onOpenChange,
+  onSubmit,
   roster,
-  onRosterUpdated,
-}) {
+  classes,
+  subjects,
+  teachers,
+  classrooms,
+}) => {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      class_id: '',
+      subject_id: '',
+      teacher_id: '',
+      classroom_id: '',
+      day_of_week: '',
+      start_time: '',
+      end_time: '',
+    },
+  });
+
+  useEffect(() => {
+    if (roster && open) {
+      form.reset({
+        class_id: roster.class_id?.toString() || '',
+        subject_id: roster.subject_id?.toString() || '',
+        teacher_id: roster.teacher_id?.toString() || '',
+        classroom_id: roster.classroom_id?.toString() || '',
+        day_of_week: roster.day_of_week || '',
+        start_time: roster.start_time || '',
+        end_time: roster.end_time || '',
+      });
+    }
+  }, [roster, open, form]);
+
+  const handleSubmit = async (values) => {
+    try {
+      await onSubmit({
+        id: roster.id,
+        ...values,
+        class_id: parseInt(values.class_id),
+        subject_id: parseInt(values.subject_id),
+        teacher_id: parseInt(values.teacher_id),
+        classroom_id: parseInt(values.classroom_id),
+      });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating roster:', error);
+    }
+  };
+
   if (!roster) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Edit Roster</DialogTitle>
+          <DialogTitle>Rooster Bewerken</DialogTitle>
+          <DialogDescription>
+            Pas de rooster details aan en klik op opslaan.
+          </DialogDescription>
         </DialogHeader>
-        <RosterForm
-          defaultValues={roster}
-          onSubmit={async (data) => {
-            await onRosterUpdated({ ...roster, ...data });
-            onClose();
-          }}
-          isEditing
-        />
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="class_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Klas</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer een klas" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {classes
+                          .filter((cls) => cls.id != null)
+                          .map((cls) => (
+                            <SelectItem key={cls.id} value={cls.id.toString()}>
+                              {cls.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="subject_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vak</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer een vak" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {subjects
+                          .filter((subject) => subject.id != null)
+                          .map((subject) => (
+                            <SelectItem
+                              key={subject.id}
+                              value={subject.id.toString()}
+                            >
+                              {subject.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="teacher_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Docent</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer een docent" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {teachers
+                          .filter((teacher) => teacher.id != null)
+                          .map((teacher) => (
+                            <SelectItem
+                              key={teacher.id}
+                              value={teacher.id.toString()}
+                            >
+                              {teacher.first_name} {teacher.last_name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="classroom_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lokaal</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer een lokaal" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {classrooms
+                          .filter((classroom) => classroom.id != null)
+                          .map((classroom) => (
+                            <SelectItem
+                              key={classroom.id}
+                              value={classroom.id.toString()}
+                            >
+                              {classroom.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="day_of_week"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dag van de Week</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecteer een dag" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {DAYS_OF_WEEK.map((day) => (
+                        <SelectItem key={day.value} value={day.value}>
+                          {day.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="start_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Starttijd</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="end_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Eindtijd</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Annuleren
+              </Button>
+              <Button type="submit">Wijzigingen Opslaan</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default EditRosterModal;

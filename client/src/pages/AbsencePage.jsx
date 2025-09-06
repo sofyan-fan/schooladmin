@@ -1,28 +1,17 @@
+import { get_classes } from '@/apis/classAPI';
 import rosterAPI from '@/apis/rosterAPI';
 import { get_students } from '@/apis/studentAPI';
 import { get_teachers } from '@/apis/teachersAPI';
 import { absenceAPI } from '@/apis/timeregisterAPI';
+import ClassSelectionDialog from '@/components/absences/ClassSelectionDialog';
 import DaySection from '@/components/absences/DaySection';
 import EmptyState from '@/components/absences/EmptyState';
 import LessonAbsenceDialog from '@/components/absences/LessonAbsenceDialog';
+import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { addDays, endOfWeek, format, startOfWeek, subDays } from 'date-fns';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,6 +19,7 @@ const AbsencePage = () => {
   const [rosters, setRosters] = useState([]);
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [absences, setAbsences] = useState([]);
   const [, setLoading] = useState(false);
 
@@ -37,7 +27,10 @@ const AbsencePage = () => {
   const [selectedRoster, setSelectedRoster] = useState(null);
   const [isLessonDialogOpen, setIsLessonDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedClassId, setSelectedClassId] = useState('all');
+  const [selectedClassId, setSelectedClassId] = useState(null);
+  const [currentLessonDate, setCurrentLessonDate] = useState(null);
+  const [isClassSelectionDialogOpen, setIsClassSelectionDialogOpen] =
+    useState(false);
 
   // Student absence states
   const [studentAbsences, setStudentAbsences] = useState({});
@@ -50,23 +43,26 @@ const AbsencePage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [rosterData, studentData, teacherData, absenceData] =
+      const [rosterData, studentData, teacherData, classData, absenceData] =
         await Promise.all([
           rosterAPI.get_rosters(),
           get_students(),
           get_teachers(),
+          get_classes(),
           absenceAPI.getAllAbsences(),
         ]);
 
       setRosters(rosterData || []);
       setStudents(studentData || []);
       setTeachers(teacherData || []);
+      setClasses(classData || []);
       setAbsences(absenceData || []);
 
       // Debug logging
       console.log('Loaded rosters:', rosterData);
       console.log('Loaded students:', studentData);
       console.log('Loaded teachers:', teacherData);
+      console.log('Loaded classes:', classData);
     } catch (error) {
       toast.error('Laden van gegevens mislukt');
       console.error('Error fetching data:', error);
@@ -104,16 +100,29 @@ const AbsencePage = () => {
   };
 
   const uniqueClasses = useMemo(() => {
-    const classMap = new Map();
-    rosters.forEach((roster) => {
-      if (roster.class_layout) {
-        classMap.set(roster.class_layout.id, roster.class_layout.name);
-      }
-    });
-    return Array.from(classMap.entries()).map(([id, name]) => ({ id, name }));
-  }, [rosters]);
+    // Return all classes, not just those with rosters
+    return classes.map((cls) => ({
+      id: cls.id,
+      name: cls.name,
+    }));
+  }, [classes]);
 
   const handleLessonClick = (roster) => {
+    // Calculate the actual date of the lesson
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday
+    const dayMapping = {
+      Monday: 0,
+      Tuesday: 1,
+      Wednesday: 2,
+      Thursday: 3,
+      Friday: 4,
+      Saturday: 5,
+      Sunday: 6,
+    };
+    const dayIndex = dayMapping[roster.day_of_week];
+    const lessonDate = addDays(weekStart, dayIndex);
+
+    setCurrentLessonDate(lessonDate);
     setSelectedRoster(roster);
     const classStudents = getClassStudents(roster);
 
@@ -123,7 +132,7 @@ const AbsencePage = () => {
       const existingAbsence = getStudentAbsenceForRoster(
         student.id,
         roster.id,
-        selectedDate
+        lessonDate
       );
       initialStates[student.id] = {
         status: existingAbsence ? 'absent' : 'present',
@@ -167,111 +176,144 @@ const AbsencePage = () => {
     return grouped;
   };
 
-  const groupedRosters = groupRostersByDay();
-
-  const selectedDayName = format(selectedDate, 'EEEE', {
-    /* locale: nl // Add this if you have date-fns dutch locale installed */
-  });
-
-  // Find the Dutch day name for filtering
-  const dayMapping = {
-    Monday: 'Maandag',
-    Tuesday: 'Dinsdag',
-    Wednesday: 'Woensdag',
-    Thursday: 'Donderdag',
-    Friday: 'Vrijdag',
-    Saturday: 'Zaterdag',
-    Sunday: 'Zondag',
+  const goToPreviousWeek = () => {
+    setSelectedDate(subDays(selectedDate, 7));
   };
-  const dutchSelectedDay = dayMapping[selectedDayName];
-  let lessonsForSelectedDay = groupedRosters[dutchSelectedDay] || [];
 
-  if (selectedClassId !== 'all') {
-    lessonsForSelectedDay = lessonsForSelectedDay.filter(
-      (roster) => roster.class_layout?.id === parseInt(selectedClassId)
+  const goToNextWeek = () => {
+    setSelectedDate(addDays(selectedDate, 7));
+  };
+
+  const groupedRosters = groupRostersByDay();
+  const weekDays = [
+    'Maandag',
+    'Dinsdag',
+    'Woensdag',
+    'Donderdag',
+    'Vrijdag',
+    'Zaterdag',
+    'Zondag',
+  ];
+
+  const filteredRostersByDay = (day) => {
+    const lessonsForDay = groupedRosters[day] || [];
+    if (!selectedClassId) {
+      return [];
+    }
+    return lessonsForDay.filter(
+      (roster) => roster.class_layout?.id.toString() === selectedClassId
     );
-  }
+  };
+
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekDisplay = `${format(weekStart, 'd MMM')} - ${format(
+    weekEnd,
+    'd MMM, yyyy'
+  )}`;
+
+  const getSelectedClassesNames = () => {
+    if (!selectedClassId) return 'Selecteer een klas...';
+    const selectedClass = uniqueClasses.find(
+      (c) => String(c.id) === selectedClassId
+    );
+    return selectedClass ? selectedClass.name : 'Selecteer een klas...';
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Afwezigheid Beheer</h1>
-          <p className="text-muted-foreground mt-1">
-            Beheer student afwezigheid per les. Lessen worden aangemaakt in het{' '}
-            <Button
-              variant="link"
-              className="p-0 h-auto font-normal text-muted-foreground underline"
-              onClick={() => (window.location.href = '/rooster')}
-            >
-              Rooster Beheer
-            </Button>
-            .
-          </p>
-        </div>
+      <PageHeader
+        title="Afwezigheid Beheer"
+        icon={<CalendarDays className="size-9" />}
+        description="Beheer student afwezigheid per les."
+      >
         <div className="flex items-center gap-4">
-          <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select a class" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classes</SelectItem>
-              {uniqueClasses.map((klass) => (
-                <SelectItem key={klass.id} value={String(klass.id)}>
-                  {klass.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={'outline'}
-                className={cn(
-                  'w-[280px] justify-start text-left font-normal',
-                  !selectedDate && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? (
-                  format(selectedDate, 'PPP')
-                ) : (
-                  <span>Pick a date</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+          <Button
+            variant="outline"
+            className="w-[250px] justify-start text-left font-normal"
+            onClick={() => setIsClassSelectionDialogOpen(true)}
+          >
+            {getSelectedClassesNames()}
+          </Button>
 
-      {rosters.length === 0 ? (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium w-48 text-center">
+              {weekDisplay}
+            </span>
+            <Button variant="outline" size="icon" onClick={goToNextWeek}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </PageHeader>
+
+      {classes.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-6">
-          {lessonsForSelectedDay.length > 0 ? (
-            <DaySection
-              day={dutchSelectedDay}
-              dayRosters={lessonsForSelectedDay}
-              onLessonClick={handleLessonClick}
-              getTeacherName={getTeacherName}
-            />
+          {selectedClassId ? (
+            (() => {
+              const hasLessons = weekDays.some((day) => {
+                const lessonsForDay = filteredRostersByDay(day);
+                return lessonsForDay.length > 0;
+              });
+
+              if (!hasLessons) {
+                const selectedClass = uniqueClasses.find(
+                  (c) => String(c.id) === selectedClassId
+                );
+                return (
+                  <Card>
+                    <CardContent className="text-center py-12">
+                      <h3 className="text-lg font-semibold mb-2">
+                        Geen lessen gepland
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Er zijn nog geen lessen gepland voor{' '}
+                        <strong>{selectedClass?.name}</strong>. Lessen kunnen
+                        worden aangemaakt in het{' '}
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-normal text-muted-foreground underline"
+                          onClick={() => (window.location.href = '/rooster')}
+                        >
+                          Rooster Beheer
+                        </Button>
+                        .
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              }
+
+              return weekDays.map((day) => {
+                const lessonsForDay = filteredRostersByDay(day);
+                if (lessonsForDay.length === 0) return null;
+                return (
+                  <DaySection
+                    key={day}
+                    day={day}
+                    dayRosters={lessonsForDay}
+                    onLessonClick={handleLessonClick}
+                    getTeacherName={getTeacherName}
+                  />
+                );
+              });
+            })()
           ) : (
-            <Card>
+            <Card
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => setIsClassSelectionDialogOpen(true)}
+            >
               <CardContent className="text-center py-12">
-                <CalendarIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-semibold mb-2">
-                  Geen lessen voor {format(selectedDate, 'PPP')}
+                  Selecteer een klas
                 </h3>
                 <p className="text-muted-foreground">
-                  Er zijn geen lessen geroosterd voor de geselecteerde datum.
+                  Selecteer een klas om de lessen te bekijken.
                 </p>
               </CardContent>
             </Card>
@@ -283,7 +325,7 @@ const AbsencePage = () => {
         open={isLessonDialogOpen}
         onOpenChange={setIsLessonDialogOpen}
         selectedRoster={selectedRoster}
-        selectedDate={selectedDate}
+        selectedDate={currentLessonDate}
         getClassStudents={getClassStudents}
         getStudentName={getStudentName}
         studentAbsences={studentAbsences}
@@ -291,6 +333,13 @@ const AbsencePage = () => {
         editingStudents={editingStudents}
         setEditingStudents={setEditingStudents}
         setAbsences={setAbsences}
+      />
+      <ClassSelectionDialog
+        open={isClassSelectionDialogOpen}
+        onOpenChange={setIsClassSelectionDialogOpen}
+        classes={uniqueClasses}
+        selectedClassId={selectedClassId}
+        setSelectedClassId={setSelectedClassId}
       />
     </div>
   );
