@@ -185,6 +185,16 @@ exports.delete_absence = async (req, res) => {
 		});
 	}
 };
+// Helper function to validate daily hours
+function validateDailyHours(hours) {
+	const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+	for (let day of days) {
+		if (hours[day] !== undefined && hours[day] > 24) {
+			return `Invalid entry: ${day} cannot exceed 24 hours`;
+		}
+	}
+	return null;
+}
 
 // Create a new time registration for a teacher
 exports.create_time_registration = async (req, res) => {
@@ -201,6 +211,12 @@ exports.create_time_registration = async (req, res) => {
 			saturday = 0,
 			sunday = 0
 		} = req.body;
+
+		// Validate daily hours
+		const validationError = validateDailyHours({ monday, tuesday, wednesday, thursday, friday, saturday, sunday });
+		if (validationError) {
+			return res.status(403).json({ success: false, message: validationError });
+		}
 
 		const total_hours = monday + tuesday + wednesday + thursday + friday + saturday + sunday;
 
@@ -235,25 +251,27 @@ exports.create_time_registration = async (req, res) => {
 // Update hours for an existing time registration
 exports.update_time_registration = async (req, res) => {
 	try {
+		const { id } = req.params;
 		const {
-			id
-		} = req.params;
-		const {
-			monday,
-			tuesday,
-			wednesday,
-			thursday,
-			friday,
-			saturday,
-			sunday
+			monday = 0,
+			tuesday = 0,
+			wednesday = 0,
+			thursday = 0,
+			friday = 0,
+			saturday = 0,
+			sunday = 0
 		} = req.body;
+
+		// Validate daily hours
+		const validationError = validateDailyHours({ monday, tuesday, wednesday, thursday, friday, saturday, sunday });
+		if (validationError) {
+			return res.status(403).json({ success: false, message: validationError });
+		}
 
 		const total_hours = monday + tuesday + wednesday + thursday + friday + saturday + sunday;
 
 		const registration = await prisma.time_registration.update({
-			where: {
-				id: parseInt(id)
-			},
+			where: { id: parseInt(id) },
 			data: {
 				monday,
 				tuesday,
