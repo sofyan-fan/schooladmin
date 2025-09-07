@@ -15,7 +15,7 @@ import LoginPage from './pages/LoginPage';
 import ModulesPage from './pages/ModulesPage';
 import RegisterPage from './pages/RegisterPage';
 import ResultsPage from './pages/ResultsPage';
-import RosterPage from './pages/RosterPage';
+// import RosterPage from './pages/RosterPage';
 import RostersPage from './pages/RostersPage';
 import SettingsPage from './pages/SettingsPage';
 import StudentsPage from './pages/StudentsPage';
@@ -50,7 +50,7 @@ const App = () => {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/klassen" element={<ClassesPage />} />
-        <Route path="/rooster" element={<RosterPage />} />
+        {/* <Route path="/rooster" element={<RosterPage />} /> */}
         <Route path="/roosters" element={<RostersPage />} />
         <Route path="/toetsen-en-examens" element={<AssessmentsPage />} />
         <Route path="/resultaten" element={<ResultsPage />} />
