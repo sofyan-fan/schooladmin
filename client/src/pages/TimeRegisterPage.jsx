@@ -29,6 +29,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import PageHeader from '@/components/shared/PageHeader';
+
 import { useAuth } from '@/hooks/useAuth';
 import { Check, Clock, Edit, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -180,23 +182,24 @@ const TimeRegisterPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Tijd Registratie</h1>
-      </div>
+    <div className="container mx-auto">
+      <PageHeader
+        title="Tijd Registraties"
+        icon={<Clock className="size-9" />}
+        description="Beheer tijd registraties voor docenten."
+        buttonText="Nieuwe Registratie"
+        onAdd={() => setIsTimeRegModalOpen(true)}
+      />
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">Tijd Registraties</h2>
+         
           <Dialog
             open={isTimeRegModalOpen}
             onOpenChange={setIsTimeRegModalOpen}
           >
             <DialogTrigger asChild>
-              <Button onClick={resetTimeRegForm}>
-                <Plus className="w-4 h-4 mr-2" />
-                Nieuwe Registratie
-              </Button>
+              
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
