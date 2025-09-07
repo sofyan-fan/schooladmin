@@ -1,11 +1,11 @@
+import format from 'date-fns/format';
+import getDay from 'date-fns/getDay';
+import enUS from 'date-fns/locale/en-US';
+import parse from 'date-fns/parse';
+import startOfWeek from 'date-fns/startOfWeek';
 import { useCallback, useEffect, useState } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
-import startOfWeek from 'date-fns/startOfWeek';
-import getDay from 'date-fns/getDay';
-import enUS from 'date-fns/locale/en-US';
 import { toast } from 'sonner';
 
 // APIs
@@ -16,14 +16,13 @@ import { get_subjects } from '@/apis/subjectAPI';
 import { get_teachers } from '@/apis/teachersAPI';
 
 // Components
-import PageHeader from '@/components/shared/PageHeader';
 import LessonModal from '@/components/rosters/LessonModal';
 import RosterFilters from '@/components/rosters/RosterFilters';
+import PageHeader from '@/components/shared/PageHeader';
 
 // Styles
-import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import '@/styles/calendar-overrides.css';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 import { CalendarDays } from 'lucide-react';
 
@@ -69,13 +68,13 @@ export default function RostersPage() {
     try {
       setLoading(true);
       const data = await rosterAPI.get_rosters();
-      
+
       // Transform roster data to calendar events
       const calendarEvents = data.map((roster) => {
         // Parse the ISO strings from the API
         const start = new Date(roster.start);
         const end = new Date(roster.end);
-        
+
         return {
           id: roster.id,
           title: roster.subject?.name || roster.title || 'Lesson',
@@ -88,13 +87,14 @@ export default function RostersPage() {
             classroomId: roster.classroom_id,
             subjectId: roster.subject_id,
             className: roster.class_layout?.name,
-            teacherName: roster.teacher ? 
-              `${roster.teacher.first_name} ${roster.teacher.last_name}` : '',
+            teacherName: roster.teacher
+              ? `${roster.teacher.first_name} ${roster.teacher.last_name}`
+              : '',
             classroomName: roster.classroom?.name,
           },
         };
       });
-      
+
       setEvents(calendarEvents);
     } catch (error) {
       console.error('Failed to fetch rosters:', error);
@@ -107,7 +107,7 @@ export default function RostersPage() {
   // Fetch supporting data
   const fetchSupportingData = useCallback(async () => {
     try {
-      const [classesData, subjectsData, teachersData, classroomsData] = 
+      const [classesData, subjectsData, teachersData, classroomsData] =
         await Promise.all([
           get_classes(),
           get_subjects(),
@@ -141,10 +141,13 @@ export default function RostersPage() {
     if (teacherIds.length > 0 && !teacherIds.includes(resource.teacherId)) {
       return false;
     }
-    if (classroomIds.length > 0 && !classroomIds.includes(resource.classroomId)) {
+    if (
+      classroomIds.length > 0 &&
+      !classroomIds.includes(resource.classroomId)
+    ) {
       return false;
     }
-    
+
     return true;
   });
 
@@ -173,16 +176,12 @@ export default function RostersPage() {
       };
 
       await rosterAPI.update_roster(updatedEvent);
-      
+
       // Update local state
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === event.id
-            ? { ...e, start, end }
-            : e
-        )
+        prev.map((e) => (e.id === event.id ? { ...e, start, end } : e))
       );
-      
+
       toast.success('Schedule updated successfully');
     } catch (error) {
       console.error('Failed to update schedule:', error);
@@ -202,16 +201,12 @@ export default function RostersPage() {
       };
 
       await rosterAPI.update_roster(updatedEvent);
-      
+
       // Update local state
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === event.id
-            ? { ...e, start, end }
-            : e
-        )
+        prev.map((e) => (e.id === event.id ? { ...e, start, end } : e))
       );
-      
+
       toast.success('Duration updated successfully');
     } catch (error) {
       console.error('Failed to resize event:', error);

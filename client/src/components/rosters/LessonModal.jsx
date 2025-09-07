@@ -1,11 +1,8 @@
-import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
 import rosterAPI from '@/apis/rosterAPI';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -25,9 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
 const formSchema = z.object({
@@ -49,7 +48,7 @@ const LessonModal = ({
   onSave,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -122,7 +121,7 @@ const LessonModal = ({
 
   const handleDelete = async () => {
     if (!selectedEvent) return;
-    
+
     try {
       setIsDeleting(true);
       await rosterAPI.delete_roster(selectedEvent.id);
@@ -139,10 +138,16 @@ const LessonModal = ({
 
   const getTimeDisplay = () => {
     if (selectedEvent) {
-      return `${format(selectedEvent.start, 'HH:mm')} - ${format(selectedEvent.end, 'HH:mm')}`;
+      return `${format(selectedEvent.start, 'HH:mm')} - ${format(
+        selectedEvent.end,
+        'HH:mm'
+      )}`;
     }
     if (selectedSlot) {
-      return `${format(selectedSlot.start, 'HH:mm')} - ${format(selectedSlot.end, 'HH:mm')}`;
+      return `${format(selectedSlot.start, 'HH:mm')} - ${format(
+        selectedSlot.end,
+        'HH:mm'
+      )}`;
     }
     return '';
   };
@@ -159,16 +164,17 @@ const LessonModal = ({
           <DialogTitle>
             {selectedEvent ? 'Les Bewerken' : 'Nieuwe Les'}
           </DialogTitle>
-          <DialogDescription>
-            <div className="space-y-1 mt-2">
-              <div>{getDateDisplay()}</div>
-              <div className="font-semibold">{getTimeDisplay()}</div>
-            </div>
-          </DialogDescription>
+          <div className="text-sm text-muted-foreground pt-2 space-y-1">
+            <div>{getDateDisplay()}</div>
+            <div className="font-semibold">{getTimeDisplay()}</div>
+          </div>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="subject_id"
@@ -185,7 +191,10 @@ const LessonModal = ({
                       {subjects
                         .filter((subject) => subject.id != null)
                         .map((subject) => (
-                          <SelectItem key={subject.id} value={subject.id.toString()}>
+                          <SelectItem
+                            key={subject.id}
+                            value={subject.id.toString()}
+                          >
                             {subject.name}
                           </SelectItem>
                         ))}
@@ -239,7 +248,10 @@ const LessonModal = ({
                       {teachers
                         .filter((teacher) => teacher.id != null)
                         .map((teacher) => (
-                          <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                          <SelectItem
+                            key={teacher.id}
+                            value={teacher.id.toString()}
+                          >
                             {teacher.first_name} {teacher.last_name}
                           </SelectItem>
                         ))}
@@ -266,7 +278,10 @@ const LessonModal = ({
                       {classrooms
                         .filter((classroom) => classroom.id != null)
                         .map((classroom) => (
-                          <SelectItem key={classroom.id} value={classroom.id.toString()}>
+                          <SelectItem
+                            key={classroom.id}
+                            value={classroom.id.toString()}
+                          >
                             {classroom.name}
                           </SelectItem>
                         ))}
@@ -290,7 +305,11 @@ const LessonModal = ({
                 </Button>
               )}
               <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
                   Annuleren
                 </Button>
                 <Button type="submit">
