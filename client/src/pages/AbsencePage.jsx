@@ -221,7 +221,7 @@ const AbsencePage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto ">
       <PageHeader
         title="Afwezigheid Beheer"
         icon={<CalendarDays className="size-9" />}

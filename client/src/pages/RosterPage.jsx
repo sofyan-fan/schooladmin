@@ -208,7 +208,6 @@ export default function RosterPage() {
                 <SelectValue placeholder="Alle klassen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Alle klassen</SelectItem>
                 {classes
                   .filter((cls) => cls.id != null)
                   .map((cls) => (
@@ -224,7 +223,6 @@ export default function RosterPage() {
                 <SelectValue placeholder="Alle docenten" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Alle docenten</SelectItem>
                 {teachers
                   .filter((teacher) => teacher.id != null)
                   .map((teacher) => (
@@ -240,7 +238,6 @@ export default function RosterPage() {
                 <SelectValue placeholder="Alle dagen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Alle dagen</SelectItem>
                 {DAYS_OF_WEEK.map((day) => (
                   <SelectItem key={day.value} value={day.value}>
                     {day.label}
