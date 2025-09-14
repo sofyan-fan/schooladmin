@@ -1,8 +1,8 @@
 // src/components/EditModal.jsx
-import { useEffect, useMemo, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import ComboboxField from '@/components/ui/combobox';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import ComboboxField from '@/components/ui/combobox';
-import { ArrowRight, GraduationCap, Users } from 'lucide-react';
+import { ArrowRight, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 function initialsOf(student) {
   const f = (student?.firstName || '').trim();
@@ -27,22 +27,18 @@ function initialsOf(student) {
  * - open, onOpenChange
  * - student: { id, firstName, lastName, email, phone, address, city, postalCode, classId, className, lessonPackage, status }
  * - classes: [{ id, name }]
- * - courses: [{ id, name }]
  * - onSave(formData)
  * - onDelete(id)
  * - onGoToResults(id)
- * - onGoToCourse(courseId)
  */
 export default function EditModal({
   open,
   onOpenChange,
   student,
   classes = [],
-  courses = [],
   onSave,
   onDelete,
   onGoToResults,
-  onGoToCourse,
 }) {
   const [form, setForm] = useState(() => ({
     email: '',
@@ -51,7 +47,6 @@ export default function EditModal({
     city: '',
     postalCode: '',
     classId: null,
-    courseId: null,
     status: student?.status === 'Active',
   }));
 
@@ -64,7 +59,6 @@ export default function EditModal({
       city: student.city || '',
       postalCode: student.postalCode || '',
       classId: student.classId ?? student.class_id ?? null,
-      courseId: student.courseId ?? null, // wire this if you store it on the student
       status: student.status === 'Active',
     });
   }, [student]);
@@ -77,13 +71,7 @@ export default function EditModal({
     [classes]
   );
 
-  const courseItems = useMemo(
-    () =>
-      courses
-        .filter((c) => c?.id != null)
-        .map((c) => ({ value: String(c.id), label: c.name })),
-    [courses]
-  );
+  // Courses are now assigned through classes, not directly to students
 
   const fullName = useMemo(
     () => [student?.firstName, student?.lastName].filter(Boolean).join(' '),
@@ -95,9 +83,6 @@ export default function EditModal({
     student?.className ||
     null;
 
-  const courseLabel =
-    courses.find((c) => String(c.id) === String(form.courseId))?.name || null;
-
   const statusText = form.status ? 'Actief' : 'Inactief';
 
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }));
@@ -105,16 +90,17 @@ export default function EditModal({
   const handleSave = () => {
     onSave?.({
       id: student?.id,
+      firstName: student?.firstName,
+      lastName: student?.lastName,
       email: form.email.trim(),
       phone: form.phone.trim(),
       address: form.address.trim(),
       city: form.city.trim(),
       postalCode: form.postalCode.trim(),
       classId: form.classId != null ? Number(form.classId) : null,
-      courseId: form.courseId != null ? Number(form.courseId) : null,
       status: form.status ? 'Active' : 'Inactive',
     });
-    onOpenChange(false);
+    // Note: Modal closing is handled by parent component after successful save
   };
 
   if (!student) return null;
@@ -167,7 +153,7 @@ export default function EditModal({
               {/* Left: Snel bewerken */}
               <section className="sm:col-span-7">
                 <h3 className="text-base font-medium text-muted-foreground mb-3">
-                  Snel bewerken
+                  Gegevens van {fullName}
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-1.5">
@@ -227,25 +213,15 @@ export default function EditModal({
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">
                     Snel naar
                   </h4>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex items-start flex-col gap-1.5">
                     <Button
                       variant="link"
                       className="p-0 h-auto text-green-700"
                       onClick={() => onGoToResults?.(student.id)}
                     >
                       Resultaten van toetsen en examens
-                      <ArrowRight className="ml-1 h-4 w-4" />
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
-                    {form.courseId && (
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto text-green-700"
-                        onClick={() => onGoToCourse?.(Number(form.courseId))}
-                      >
-                        Lespakket
-                        <ArrowRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                 </div>
               </section>
@@ -266,14 +242,7 @@ export default function EditModal({
                     placeholder="Selecteer klas of groep"
                   />
 
-                  <ComboboxField
-                    label="Course"
-                    value={form.courseId != null ? String(form.courseId) : ''}
-                    onChange={(v) => update('courseId', v ? Number(v) : null)}
-                    items={courseItems}
-                    icon={<GraduationCap className="h-4 w-4" />}
-                    placeholder="Selecteer course"
-                  />
+                  {/* Note: Courses are assigned through classes, not directly to students */}
 
                   <div className="space-y-2">
                     <Label>Inschrijving</Label>

@@ -1,3 +1,4 @@
+import classAPI from '@/apis/classAPI';
 import studentAPI from '@/apis/studentAPI';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
@@ -15,6 +16,7 @@ import {
 } from '@tanstack/react-table';
 import { BookOpen, GraduationCap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const NoData = (
   <TableRow>
@@ -32,6 +34,7 @@ const NoData = (
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
@@ -51,6 +54,8 @@ export default function StudentsPage() {
       setLoading(true);
       try {
         const response = await studentAPI.get_students();
+        const classesResponse = await classAPI.get_classes();
+        setClasses(classesResponse);
         const mapped = Array.isArray(response)
           ? response.map((s) => ({
               id: s.id,
@@ -93,6 +98,9 @@ export default function StudentsPage() {
   };
 
   const handleSave = async (updated) => {
+    // Show loading toast
+    const loadingToast = toast.loading('Leerling wordt bijgewerkt...');
+
     const apiPayload = {
       first_name: updated.firstName,
       last_name: updated.lastName,
@@ -106,6 +114,8 @@ export default function StudentsPage() {
       parent_email: updated.email,
       lesson_package: updated.lessonPackage,
       enrollment_status: updated.status === 'Active',
+      class_id: updated.classId,
+      // Note: course_id is not a direct field on student - it's accessed through class_layout
     };
 
     Object.keys(apiPayload).forEach(
@@ -115,22 +125,32 @@ export default function StudentsPage() {
     try {
       const response = await studentAPI.update_student(updated.id, apiPayload);
 
+      // If classId was updated, fetch the class name
+      let className = '';
+      if (updated.classId) {
+        const selectedClass = classes.find((c) => c.id === updated.classId);
+        className = selectedClass?.name || '';
+      }
+
       const updatedStudentForState = {
         id: response.id,
-        firstName: response.first_name,
-        lastName: response.last_name,
-        email: response.parent_email ?? '',
+        firstName: response.first_name || updated.firstName,
+        lastName: response.last_name || updated.lastName,
+        email: response.parent_email ?? updated.email ?? '',
         parentName: response.parent_name ?? '',
-        phone: response.phone ?? '',
-        address: response.address ?? '',
-        postalCode: response.postal_code ?? '',
-        city: response.city ?? '',
+        phone: response.phone ?? updated.phone ?? '',
+        address: response.address ?? updated.address ?? '',
+        postalCode: response.postal_code ?? updated.postalCode ?? '',
+        city: response.city ?? updated.city ?? '',
         birthDate: response.birth_date ?? '',
         gender: response.gender ?? '',
-        className: response.class_layout?.name ?? '',
+        className: className || response.class_layout?.name || '',
+        classId: response.class_id || updated.classId,
         registrationDate: response.created_at ?? '',
         lessonPackage: response.lesson_package ?? '',
-        status: response.enrollment_status ? 'Active' : 'Inactive',
+        status:
+          updated.status ||
+          (response.enrollment_status ? 'Active' : 'Inactive'),
       };
 
       setStudents((prev) =>
@@ -140,14 +160,37 @@ export default function StudentsPage() {
             : s
         )
       );
-      console.log('updatedStudentForState', updatedStudentForState);
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success(
+        `${updatedStudentForState.firstName} ${updatedStudentForState.lastName} is succesvol bijgewerkt!`
+      );
+
+      // Close the modal
+      setOpenEditProfile(false);
     } catch (error) {
       console.error('Failed to update student', error);
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToast);
+      toast.error(
+        'Er is een fout opgetreden bij het bijwerken van de leerling. Probeer het opnieuw.'
+      );
     }
   };
 
   const handleDelete = async (id) => {
     if (!id) return;
+
+    // Find the student to get their name for the toast
+    const studentToDelete = students.find((s) => s.id === id);
+    const studentName = studentToDelete
+      ? `${studentToDelete.firstName} ${studentToDelete.lastName}`
+      : 'Leerling';
+
+    // Show loading toast
+    const loadingToast = toast.loading('Leerling wordt verwijderd...');
+
     try {
       await studentAPI.delete_student(id);
       setStudents((prev) => prev.filter((s) => s.id !== id));
@@ -155,8 +198,17 @@ export default function StudentsPage() {
         setOpenEditProfile(false);
         setOpenViewProfile(false);
       }
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success(`${studentName} is succesvol verwijderd.`);
     } catch (error) {
       console.error('Failed to delete student', error);
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToast);
+      toast.error(
+        'Er is een fout opgetreden bij het verwijderen van de leerling. Probeer het opnieuw.'
+      );
     }
   };
 
@@ -213,11 +265,12 @@ export default function StudentsPage() {
       />
 
       <EditModal
-            open={openEditProfile}
-     onOpenChange={setOpenEditProfile}
-     student={selected}  
-     onSave={handleSave}
-     onDelete={handleDelete}
+        open={openEditProfile}
+        onOpenChange={setOpenEditProfile}
+        student={selected}
+        classes={classes}
+        onSave={handleSave}
+        onDelete={handleDelete}
       />
     </>
   );

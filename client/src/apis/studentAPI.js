@@ -16,9 +16,9 @@ export const add_student = async (studentData) => {
   return response.data;
 };
 
-export const update_student = async (studentData) => {
+export const update_student = async (id, studentData) => {
   const { data } = await RequestHandler.put(
-    `/general/student/${studentData.id}`,
+    `/general/student/${id}`,
     studentData
   );
   return data;
