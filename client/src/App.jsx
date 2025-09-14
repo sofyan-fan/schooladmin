@@ -23,6 +23,7 @@ import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
+import StudentDetailsPage from './pages/StudentDetailsPage';
 // import { useAuth } from './hooks/useAuth';
 
 // const user_role = useAuth();
@@ -67,6 +68,7 @@ const App = () => {
         {/* <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} /> */}
         <Route path="/financien" element={<FinancePage />} />
         <Route path="/instellingen" element={<SettingsPage />} />
+        <Route path="/leerlingen/:id" element={<StudentDetailsPage />} />
       </Route>
     </Routes>
   );

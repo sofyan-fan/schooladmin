@@ -1,9 +1,11 @@
-// src/pages/students/columns.jsx
+// src/components/students/columns.jsx
 import StatusIndicator from '@/components/shared/StatusIndicator';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const createColumns = ({ onView, onEdit, onDelete }) => [
+  // First Name -> link to details page
   {
     accessorKey: 'firstName',
     header: ({ column }) => (
@@ -12,12 +14,26 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        First Name
+        Voornaam
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    displayName: 'First Name',
+    // Render as link
+    cell: ({ row }) => {
+      const s = row.original;
+      return (
+        <Link
+          to={`/leerlingen/${s.id}`}
+          className="text-primary hover:underline font-medium"
+          title={`Bekijk details van ${s.firstName} ${s.lastName || ''}`}
+        >
+          {s.firstName}
+        </Link>
+      );
+    },
+    displayName: 'Voornaam',
   },
+
   {
     accessorKey: 'lastName',
     header: ({ column }) => (
@@ -26,22 +42,16 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Last Name
+        Achternaam
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    displayName: 'Last Name',
+    displayName: 'Achternaam',
   },
-  {
-    accessorKey: 'email',
-    header: 'Email',
-    displayName: 'Email',
-  },
-  {
-    accessorKey: 'className',
-    header: 'Class',
-    displayName: 'Class',
-  },
+
+  { accessorKey: 'email', header: 'Email', displayName: 'Email' },
+  { accessorKey: 'className', header: 'Klas', displayName: 'Klas' },
+
   {
     accessorKey: 'status',
     header: 'Status',
@@ -50,16 +60,18 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
     ),
     displayName: 'Status',
   },
+
   {
     id: 'actions',
     cell: ({ row }) => (
       <div className="flex items-center space-x-2">
+        {/* Keep the modal for the eye button if you like */}
         <Button
           variant="ghost"
           className="h-8 w-8 p-0"
           onClick={() => onView(row.original)}
         >
-          <span className="sr-only">View</span>
+          <span className="sr-only">Snel bekijken</span>
           <Eye className="h-4 w-4" />
         </Button>
         <Button
@@ -67,7 +79,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           className="h-8 w-8 p-0"
           onClick={() => onEdit(row.original)}
         >
-          <span className="sr-only">Edit</span>
+          <span className="sr-only">Bewerken</span>
           <Pencil className="h-4 w-4" />
         </Button>
         <Button
@@ -75,7 +87,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           className="h-8 w-8 p-0"
           onClick={() => onDelete(row.original.id)}
         >
-          <span className="sr-only">Delete</span>
+          <span className="sr-only">Verwijderen</span>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>

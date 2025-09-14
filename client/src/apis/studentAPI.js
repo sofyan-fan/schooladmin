@@ -1,7 +1,13 @@
+// ...existing imports
 import RequestHandler from './RequestHandler';
 
 export const get_students = async () => {
   const { data } = await RequestHandler.get('/general/students');
+  return data;
+};
+
+export const get_student_by_id = async (id) => {
+  const { data } = await RequestHandler.get(`/general/student/${id}`);
   return data;
 };
 
@@ -25,6 +31,7 @@ export const delete_student = async (studentId) => {
 
 const studentAPI = {
   get_students,
+  get_student_by_id,
   add_student,
   update_student,
   delete_student,

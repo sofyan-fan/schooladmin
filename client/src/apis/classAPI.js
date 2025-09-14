@@ -84,8 +84,13 @@ export const update_class = async (classData) => {
 
 export const get_class = async (id) => {
   const { data } = await RequestHandler.get(`/general/class_layouts/${id}`);
-  return data;
+  return {
+    ...data,
+    mentorId: data.mentor_id,
+    courseId: data.course_id,
+  };
 };
+
 
 const classAPI = {
   get_classes,

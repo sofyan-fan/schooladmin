@@ -1,5 +1,10 @@
 import RequestHandler from './RequestHandler';
 
+export const get_all_results = async () => {
+  const { data } = await RequestHandler.get('/general/result');
+  return data;
+};
+
 export const get_results = async () => {
   // The original API call to the backend.
   const { data } = await RequestHandler.get('/general/results');

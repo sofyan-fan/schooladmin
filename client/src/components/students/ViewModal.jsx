@@ -2,12 +2,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ArrowRight, Calendar, Home, Mail, Phone, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Calendar, Home, Mail, Phone, User } from 'lucide-react';
 
 const formatDate = (dateString) => {
   if (!dateString) return null;
@@ -43,13 +44,7 @@ const Row = ({ icon, label, value, clamp }) => {
   );
 };
 
-export default function StudentViewProfileCard({
-  open,
-  onOpenChange,
-  student,
-  maxWidth = '900px',
-  onEdit, // optional
-}) {
+export default function ViewModal({ open, onOpenChange, student, onEdit }) {
   if (!student) return null;
 
   const status = student.status === 'Active' ? 'Actief' : 'Inactief';
@@ -66,38 +61,30 @@ export default function StudentViewProfileCard({
   ].filter(Boolean);
   const address = addressParts.length ? addressParts.join(', ') : null;
 
-  // try both shapes you have used
-  const klasNaam = student.className ?? student.class_layout?.name ?? null;
-
-  const lespakket = student.lesson_package || student.lessonPackage || null;
+  const klas = student.className || null;
+  const module = student.lessonPackage || null;
   const geboortedatum = formatDate(student.birthDate);
-  const registratiedatum = formatDate(
-    student.registrationDate || student.created_at
-  );
+  const registratiedatum = formatDate(student.registrationDate);
   const gender = student.gender || null;
-
-  const resultsHref = `/leerlingen/${student.id}/resultaten`;
-  const packageHref = `/leerlingen/${student.id}/lespakket`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="w-[min(94vw,900px)] p-0 overflow-hidden bg-white rounded-2xl sm:!max-h-[82vh]"
-        maxWidth={maxWidth}
-      >
-        <DialogHeader className="p-6 pb-0">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-center gap-4 min-w-0">
+      {/* Ensure width overrides global sm:max-w-lg and keep corners clipped */}
+      <DialogContent className="w-[min(94vw,900px)] sm:!max-w-[900px] p-0 overflow-hidden bg-white rounded-2xl">
+        {/* Header */}
+        <DialogHeader className="p-7 pb-0">
+          <div className="flex items-start justify-between gap-5">
+            <div className="flex items-center gap-5 min-w-0">
               <div
                 className={[
-                  'size-16 shrink-0 rounded-full grid place-items-center bg-muted',
+                  'size-18 shrink-0 rounded-full grid place-items-center bg-muted',
                   status === 'Actief'
                     ? 'ring-2 ring-emerald-200'
                     : 'ring-2 ring-muted-foreground/20',
                 ].join(' ')}
                 aria-label={`Status: ${status}`}
               >
-                <User className="size-7 text-muted-foreground" />
+                <User className="size-8 text-muted-foreground" />
               </div>
 
               <div className="min-w-0">
@@ -105,28 +92,28 @@ export default function StudentViewProfileCard({
                   {fullName || 'Student'}
                 </DialogTitle>
 
-                {/* Pills under the name */}
                 <div className="mt-3 flex flex-wrap items-center gap-2.5">
                   <Badge variant="secondary" className="text-sm px-2.5 py-0.5">
                     Student
                   </Badge>
-                  {klasNaam && (
+                  {klas && (
                     <Badge variant="outline" className="text-sm px-2.5 py-0.5">
-                      {klasNaam}
+                      {klas}
                     </Badge>
                   )}
-                  {lespakket && (
+                  {module && (
                     <Badge variant="outline" className="text-sm px-2.5 py-0.5">
-                      Lespakket {lespakket}
+                      Module {module}
                     </Badge>
                   )}
                   <Badge
                     variant="secondary"
-                    className={
+                    className={[
+                      'text-sm px-2.5 py-0.5',
                       status === 'Actief'
-                        ? 'text-sm px-2.5 py-0.5 bg-emerald-50 text-emerald-700'
-                        : 'text-sm px-2.5 py-0.5'
-                    }
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : '',
+                    ].join(' ')}
                   >
                     {status}
                   </Badge>
@@ -134,23 +121,20 @@ export default function StudentViewProfileCard({
               </div>
             </div>
 
-            {/* Optional edit */}
-            <div className="flex items-start sm:items-end">
-              {onEdit ? (
-                <Button size="sm" variant="outline" onClick={onEdit}>
-                  Bewerken
-                </Button>
-              ) : null}
-            </div>
+            {onEdit ? (
+              <Button size="sm" variant="outline" onClick={onEdit}>
+                Bewerken
+              </Button>
+            ) : null}
           </div>
         </DialogHeader>
 
-        {/* Body */}
-        <div className="p-6 pt-5">
+        {/* Body with scroll inside, keep rounded corners clean */}
+        <div className="p-7 pt-6 max-h-[75vh] overflow-y-auto [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:border-0 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-foreground/15 hover:[&::-webkit-scrollbar-thumb]:bg-foreground/25">
           <div className="grid gap-8 sm:grid-cols-12">
-            {/* Left column */}
+            {/* Left */}
             <section className="sm:col-span-7">
-              <h3 className="text-base font-medium text-muted-foreground mb-3">
+              <h3 className="text-base font-medium text-muted-foreground mb-3.5">
                 Contactgegevens
               </h3>
               <ul className="space-y-3">
@@ -171,37 +155,13 @@ export default function StudentViewProfileCard({
                   clamp
                 />
               </ul>
-
-              {/* Quick links moved here, under Contactgegevens */}
-              <div className="mt-8">
-                <h3 className="text-base font-medium text-muted-foreground mb-1">
-                  Snel naar
-                </h3>
-                <div className="flex items-center  space-y-2 text-sm gap-3">
-                    <Link
-                      to={packageHref}
-                      className="text-green-700 hover:underline flex items-center gap-0.5 mb-0"
-                    >
-                      Lespakket 
-                      <ArrowRight size={16} />
-                    </Link>
-                    <Link
-                      to={resultsHref}
-                      className="text-green-700 hover:underline flex items-center gap-0.5"
-                    >
-                      Resultaten
-                      <ArrowRight size={16} />
-                    </Link>
-                  
-                </div>
-              </div>
             </section>
 
-            {/* Right column */}
+            {/* Right */}
             <section className="sm:col-span-5 sm:border-l border-border/60 sm:pl-7">
               <div className="space-y-7">
                 <div>
-                  <h3 className="text-base font-medium text-muted-foreground mb-2">
+                  <h3 className="text-base font-medium text-muted-foreground mb-3.5">
                     Persoonlijk
                   </h3>
                   <ul className="space-y-3">
@@ -219,12 +179,13 @@ export default function StudentViewProfileCard({
                 </div>
 
                 <div>
-                  <h3 className="text-base font-medium text-muted-foreground mb-2">
-                    Registratiedatum
+                  <h3 className="text-base font-medium text-muted-foreground mb-3.5">
+                    Schoolinformatie
                   </h3>
                   <ul className="space-y-3">
                     <Row
                       icon={<Calendar size={20} />}
+                      label="Registratiedatum"
                       value={registratiedatum}
                     />
                   </ul>
@@ -233,6 +194,14 @@ export default function StudentViewProfileCard({
             </section>
           </div>
         </div>
+
+        <DialogFooter className="bg-muted/60 px-7 py-5">
+          <DialogClose asChild>
+            <Button type="button" variant="secondary" size="lg">
+              Sluiten
+            </Button>
+          </DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

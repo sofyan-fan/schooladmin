@@ -1,10 +1,10 @@
 import studentAPI from '@/apis/studentAPI';
-import ProfileCard from '@/components/general/ProfileCard';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
 import { createColumns } from '@/components/students/columns';
-import StudentViewProfileCard from '@/components/StudentViewProfileCard';
+import EditModal from '@/components/students/EditModal';
+import ViewModal from '@/components/students/ViewModal';
 import { TableCell, TableRow } from '@/components/ui/table';
 import {
   getCoreRowModel,
@@ -206,13 +206,13 @@ export default function StudentsPage() {
         NoDataComponent={NoData}
       />
 
-      <StudentViewProfileCard
+      <ViewModal
         open={openViewProfile}
         onOpenChange={setOpenViewProfile}
         student={selected}
       />
 
-      <ProfileCard
+      <EditModal
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}
         user={selected}
