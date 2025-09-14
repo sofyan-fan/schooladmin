@@ -1,3 +1,5 @@
+// src/components/EditModal.jsx
+import { useEffect, useMemo, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,239 +11,304 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useEffect, useMemo, useState } from 'react';
+import ComboboxField from '@/components/ui/combobox';
+import { ArrowRight, GraduationCap, Users } from 'lucide-react';
 
-function fieldValue(obj, path, fallback = '') {
-  return (
-    path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj) ?? fallback
-  );
+function initialsOf(student) {
+  const f = (student?.firstName || '').trim();
+  const l = (student?.lastName || '').trim();
+  return `${f[0] || ''}${l[0] || ''}`.toUpperCase() || 'ST';
 }
 
+/**
+ * Props
+ * - open, onOpenChange
+ * - student: { id, firstName, lastName, email, phone, address, city, postalCode, classId, className, lessonPackage, status }
+ * - classes: [{ id, name }]
+ * - courses: [{ id, name }]
+ * - onSave(formData)
+ * - onDelete(id)
+ * - onGoToResults(id)
+ * - onGoToCourse(courseId)
+ */
 export default function EditModal({
   open,
   onOpenChange,
-  user,
+  student,
+  classes = [],
+  courses = [],
   onSave,
   onDelete,
+  onGoToResults,
+  onGoToCourse,
 }) {
-  const [form, setForm] = useState(user ?? {});
-  useEffect(() => setForm(user ?? {}), [user]);
+  const [form, setForm] = useState(() => ({
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    classId: null,
+    courseId: null,
+    status: student?.status === 'Active',
+  }));
 
-  const role = form?.role || user?.role || 'Student';
+  useEffect(() => {
+    if (!student) return;
+    setForm({
+      email: student.email || '',
+      phone: student.phone || '',
+      address: student.address || '',
+      city: student.city || '',
+      postalCode: student.postalCode || '',
+      classId: student.classId ?? student.class_id ?? null,
+      courseId: student.courseId ?? null, // wire this if you store it on the student
+      status: student.status === 'Active',
+    });
+  }, [student]);
 
-  const config = useMemo(() => {
-    const common = [
-      { name: 'firstName', label: 'Firstname' },
-      { name: 'lastName', label: 'Lastname' },
-      { name: 'email', label: 'Email' },
-      { name: 'phone', label: 'Phone' },
-      { name: 'address', label: 'Address' },
-      { name: 'postalCode', label: 'Postal Code' },
-      { name: 'city', label: 'City' },
-    ];
+  const classItems = useMemo(
+    () =>
+      classes
+        .filter((c) => c?.id != null)
+        .map((c) => ({ value: String(c.id), label: c.name })),
+    [classes]
+  );
 
-    const studentOnly = [
-      { name: 'birthDate', label: 'Birth Date', type: 'date' },
-      {
-        name: 'gender',
-        label: 'Gender',
-        type: 'select',
-        options: ['Male', 'Female'],
-      },
-      { name: 'className', label: 'Class / Group' },
-      { name: 'registrationDate', label: 'Registration Date', type: 'date' },
-      { name: 'lessonPackage', label: 'Lesson Package' },
-      { name: 'status', label: 'Status', type: 'switch' },
-    ];
+  const courseItems = useMemo(
+    () =>
+      courses
+        .filter((c) => c?.id != null)
+        .map((c) => ({ value: String(c.id), label: c.name })),
+    [courses]
+  );
 
-    const teacherOnly = [
-      { name: 'hireDate', label: 'Hire Date', type: 'date' },
-      { name: 'subject', label: 'Subject' },
-      { name: 'department', label: 'Department' },
-      { name: 'availability', label: 'Availability' },
-      { name: 'active', label: 'Active', type: 'switch' },
-    ];
+  const fullName = useMemo(
+    () => [student?.firstName, student?.lastName].filter(Boolean).join(' '),
+    [student]
+  );
 
-    return {
-      personal: common,
-      roleFields: role === 'Teacher' ? teacherOnly : studentOnly,
-    };
-  }, [role]);
+  const classLabel =
+    classes.find((c) => String(c.id) === String(form.classId))?.name ||
+    student?.className ||
+    null;
 
-  const initials = `${fieldValue(form, 'firstName', '?')[0] ?? ''}${
-    fieldValue(form, 'lastName', '?')[0] ?? ''
-  }`.toUpperCase();
+  const courseLabel =
+    courses.find((c) => String(c.id) === String(form.courseId))?.name || null;
 
-  const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+  const statusText = form.status ? 'Actief' : 'Inactief';
+
+  const update = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
   const handleSave = () => {
-    if (!form.firstName || !form.lastName)
-      return alert('Firstname and Lastname are required.');
-    if (form.email && !/.+@.+\..+/.test(form.email))
-      return alert('Email seems invalid.');
-    onSave?.(form);
+    onSave?.({
+      id: student?.id,
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      address: form.address.trim(),
+      city: form.city.trim(),
+      postalCode: form.postalCode.trim(),
+      classId: form.classId != null ? Number(form.classId) : null,
+      courseId: form.courseId != null ? Number(form.courseId) : null,
+      status: form.status ? 'Active' : 'Inactive',
+    });
     onOpenChange(false);
   };
 
+  if (!student) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Keep rounded corners and move scrolling inside */}
-      <DialogContent className="max-w-5xl w-full sm:!max-w-6xl p-0 overflow-hidden">
+      <DialogContent className="w-[min(95vw,960px)] p-0 overflow-hidden rounded-2xl">
         <div className="p-6">
+          {/* Header */}
           <DialogHeader className="mb-4">
-            <DialogTitle className="flex items-center gap-4">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold">
-                  {form.firstName || '—'} {form.lastName || ''}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{role}</Badge>
-                  {form.id && (
-                    <span className="text-muted-foreground text-sm">
-                      ID: {form.id}
-                    </span>
-                  )}
+            <DialogTitle className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback>{initialsOf(student)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="text-2xl font-semibold truncate">
+                    {fullName || 'Student'}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="px-2.5 py-0.5">
+                      Student
+                    </Badge>
+                    {classLabel ? (
+                      <Badge variant="outline" className="px-2.5 py-0.5">
+                        {classLabel}
+                      </Badge>
+                    ) : null}
+                    <Badge
+                      variant="secondary"
+                      className={
+                        form.status
+                          ? 'px-2.5 py-0.5 bg-emerald-50 text-emerald-700'
+                          : 'px-2.5 py-0.5'
+                      }
+                    >
+                      {statusText}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </DialogTitle>
           </DialogHeader>
 
-          {/* Scroll region */}
-          <div className="max-h-[70vh] overflow-y-auto pr-1 [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:border-0 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-foreground/15 hover:[&::-webkit-scrollbar-thumb]:bg-foreground/25">
-            {/* Personal Information */}
-            <section className="space-y-4">
-              <h3 className="font-medium">Personal Information</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {config.personal.map((f) => (
-                  <div key={f.name} className="space-y-1.5">
-                    <Label htmlFor={f.name}>{f.label}</Label>
-                    {f.type === 'select' ? (
-                      <Select
-                        value={form[f.name] ?? ''}
-                        onValueChange={(v) => update(f.name, v)}
-                      >
-                        <SelectTrigger id={f.name}>
-                          <SelectValue
-                            placeholder={`Select ${f.label.toLowerCase()}`}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {f.options?.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : f.type === 'switch' ? (
-                      <div className="flex h-10 items-center gap-3 rounded-md border px-3">
-                        <Switch
-                          id={f.name}
-                          checked={!!form[f.name]}
-                          onCheckedChange={(v) => update(f.name, v)}
-                        />
-                        <Label
-                          htmlFor={f.name}
-                          className="text-sm text-muted-foreground"
-                        >
-                          {form[f.name] ? 'Active' : 'Inactive'}
-                        </Label>
-                      </div>
-                    ) : (
+          <Separator />
+
+          {/* Body */}
+          <div className="pt-5">
+            <div className="grid gap-8 sm:grid-cols-12">
+              {/* Left: Snel bewerken */}
+              <section className="sm:col-span-7">
+                <h3 className="text-base font-medium text-muted-foreground mb-3">
+                  Snel bewerken
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">E-mailadres</Label>
+                    <Input
+                      id="email"
+                      value={form.email}
+                      onChange={(e) => update('email', e.target.value)}
+                      placeholder="naam@voorbeeld.nl"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone">Telefoonnummer</Label>
+                    <Input
+                      id="phone"
+                      value={form.phone}
+                      onChange={(e) => update('phone', e.target.value)}
+                      placeholder="+316..."
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="address">Adres</Label>
+                    <Input
+                      id="address"
+                      value={form.address}
+                      onChange={(e) => update('address', e.target.value)}
+                      placeholder="Straat en nummer"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="city">Stad</Label>
                       <Input
-                        id={f.name}
-                        type={f.type === 'date' ? 'date' : 'text'}
-                        value={fieldValue(form, f.name)}
-                        onChange={(e) => update(f.name, e.target.value)}
+                        id="city"
+                        value={form.city}
+                        onChange={(e) => update('city', e.target.value)}
+                        placeholder="Plaats"
                       />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="postal">Postcode</Label>
+                      <Input
+                        id="postal"
+                        value={form.postalCode}
+                        onChange={(e) => update('postalCode', e.target.value)}
+                        placeholder="1234 AB"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick links, now under Contactgegevens */}
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                    Snel naar
+                  </h4>
+                  <div className="flex flex-col gap-1.5">
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-green-700"
+                      onClick={() => onGoToResults?.(student.id)}
+                    >
+                      Resultaten van toetsen en examens
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                    {form.courseId && (
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto text-green-700"
+                        onClick={() => onGoToCourse?.(Number(form.courseId))}
+                      >
+                        Lespakket
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                ))}
-              </div>
-            </section>
+                </div>
+              </section>
 
-            <Separator className="my-6" />
+              {/* Right: Toewijzing */}
+              <section className="sm:col-span-5 sm:border-l border-border/60 sm:pl-7">
+                <h3 className="text-base font-medium text-muted-foreground mb-3">
+                  Toewijzing
+                </h3>
 
-            {/* Role-specific */}
-            <section className="space-y-4">
-              <h3 className="font-medium">
-                {role === 'Teacher'
-                  ? 'Employment / Teaching'
-                  : 'School Information'}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {config.roleFields.map((f) => (
-                  <div key={f.name} className="space-y-1.5">
-                    <Label htmlFor={f.name}>{f.label}</Label>
-                    {f.type === 'select' ? (
-                      <Select
-                        value={form[f.name] ?? ''}
-                        onValueChange={(v) => update(f.name, v)}
-                      >
-                        <SelectTrigger id={f.name}>
-                          <SelectValue
-                            placeholder={`Select ${f.label.toLowerCase()}`}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {f.options?.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : f.type === 'switch' ? (
-                      <div className="flex h-10 items-center gap-3 rounded-md border px-3">
-                        <Switch
-                          id={f.name}
-                          checked={!!form[f.name]}
-                          onCheckedChange={(v) => update(f.name, v)}
-                        />
-                        <Label
-                          htmlFor={f.name}
-                          className="text-sm text-muted-foreground"
-                        >
-                          {form[f.name] ? 'Active' : 'Inactive'}
-                        </Label>
-                      </div>
-                    ) : (
-                      <Input
-                        id={f.name}
-                        type={f.type || 'text'}
-                        value={form[f.name] ?? ''}
-                        onChange={(e) => update(f.name, e.target.value)}
-                        placeholder={f.label}
+                <div className="space-y-4">
+                  <ComboboxField
+                    label="Klas of groep"
+                    value={form.classId != null ? String(form.classId) : ''}
+                    onChange={(v) => update('classId', v ? Number(v) : null)}
+                    items={classItems}
+                    icon={<Users className="h-4 w-4" />}
+                    placeholder="Selecteer klas of groep"
+                  />
+
+                  <ComboboxField
+                    label="Course"
+                    value={form.courseId != null ? String(form.courseId) : ''}
+                    onChange={(v) => update('courseId', v ? Number(v) : null)}
+                    items={courseItems}
+                    icon={<GraduationCap className="h-4 w-4" />}
+                    placeholder="Selecteer course"
+                  />
+
+                  <div className="space-y-2">
+                    <Label>Inschrijving</Label>
+                    <div className="flex items-center gap-3 rounded-md border px-3 py-2">
+                      <Switch
+                        id="status"
+                        checked={form.status}
+                        onCheckedChange={(v) => update('status', v)}
                       />
-                    )}
+                      <Label
+                        htmlFor="status"
+                        className="text-sm text-muted-foreground"
+                      >
+                        {form.status ? 'Actief' : 'Inactief'}
+                      </Label>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </section>
+                </div>
+              </section>
+            </div>
+          </div>
 
-            {/* Footer actions */}
-            <div className="mt-6 flex items-center justify-between">
-              <Button variant="destructive" onClick={() => onDelete?.(form.id)}>
-                Verwijderen
+          {/* Footer actions */}
+          <div className="mt-6 flex items-center justify-between">
+            <Button
+              variant="destructive"
+              onClick={() => onDelete?.(student.id)}
+            >
+              Verwijderen
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Annuleren
               </Button>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
-                  Annuleren
-                </Button>
-                <Button onClick={handleSave}>Opslaan</Button>
-              </div>
+              <Button onClick={handleSave}>Opslaan</Button>
             </div>
           </div>
         </div>

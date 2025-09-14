@@ -8,7 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Calendar, Home, Mail, Phone, User } from 'lucide-react';
+import { ArrowRight, Calendar, Home, Mail, Phone, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const formatDate = (dateString) => {
   if (!dateString) return null;
@@ -66,6 +67,10 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
   const geboortedatum = formatDate(student.birthDate);
   const registratiedatum = formatDate(student.registrationDate);
   const gender = student.gender || null;
+
+
+  const resultsHref = `/leerlingen/${student.id}/resultaten`;
+  const packageHref = `/leerlingen/${student.id}/lespakket`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,6 +160,28 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
                   clamp
                 />
               </ul>
+              <div className="mt-8">
+                <h3 className="text-base font-medium text-muted-foreground mb-1">
+                  Snel naar
+                </h3>
+                <div className="flex items-center  space-y-2 text-sm gap-3">
+                    <Link
+                      to={packageHref}
+                      className="text-green-700 hover:underline flex items-center gap-0.5 mb-0"
+                    >
+                      Lespakket 
+                      <ArrowRight size={16} />
+                    </Link>
+                    <Link
+                      to={resultsHref}
+                      className="text-green-700 hover:underline flex items-center gap-0.5"
+                    >
+                      Resultaten
+                      <ArrowRight size={16} />
+                    </Link>
+                  
+                </div>
+              </div>
             </section>
 
             {/* Right */}
@@ -179,13 +206,12 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
                 </div>
 
                 <div>
-                  <h3 className="text-base font-medium text-muted-foreground mb-3.5">
+                  <h3 className="text-base font-medium text-muted-foreground mb-1">
                     Schoolinformatie
                   </h3>
                   <ul className="space-y-3">
                     <Row
                       icon={<Calendar size={20} />}
-                      label="Registratiedatum"
                       value={registratiedatum}
                     />
                   </ul>
@@ -195,13 +221,7 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
           </div>
         </div>
 
-        <DialogFooter className="bg-muted/60 px-7 py-5">
-          <DialogClose asChild>
-            <Button type="button" variant="secondary" size="lg">
-              Sluiten
-            </Button>
-          </DialogClose>
-        </DialogFooter>
+        
       </DialogContent>
     </Dialog>
   );

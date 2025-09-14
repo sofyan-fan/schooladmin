@@ -173,28 +173,7 @@ export default function StudentViewProfileCard({
               </ul>
 
               {/* Quick links moved here, under Contactgegevens */}
-              <div className="mt-8">
-                <h3 className="text-base font-medium text-muted-foreground mb-1">
-                  Snel naar
-                </h3>
-                <div className="flex items-center  space-y-2 text-sm gap-3">
-                    <Link
-                      to={packageHref}
-                      className="text-green-700 hover:underline flex items-center gap-0.5 mb-0"
-                    >
-                      Lespakket 
-                      <ArrowRight size={16} />
-                    </Link>
-                    <Link
-                      to={resultsHref}
-                      className="text-green-700 hover:underline flex items-center gap-0.5"
-                    >
-                      Resultaten
-                      <ArrowRight size={16} />
-                    </Link>
-                  
-                </div>
-              </div>
+            
             </section>
 
             {/* Right column */}

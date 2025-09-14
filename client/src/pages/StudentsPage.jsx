@@ -213,12 +213,11 @@ export default function StudentsPage() {
       />
 
       <EditModal
-        open={openEditProfile}
-        onOpenChange={setOpenEditProfile}
-        user={selected}
-        onSave={handleSave}
-        onDelete={handleDelete}
-        viewDateOnly={false}
+            open={openEditProfile}
+     onOpenChange={setOpenEditProfile}
+     student={selected}  
+     onSave={handleSave}
+     onDelete={handleDelete}
       />
     </>
   );
