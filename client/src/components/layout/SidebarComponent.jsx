@@ -61,6 +61,7 @@ const SidebarComponent = () => {
         { name: 'Klassen', path: 'klassen' },
         { name: 'Leslokalen', path: 'lokalen' },
         { name: 'Roosters', path: 'roosters' },
+        { name: 'Klas Planning', path: 'class-schedule' },
       ],
     },
     { name: 'Vakken', path: 'vakken', Icon: LibraryBig },

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -15,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -29,12 +31,23 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-const formSchema = z.object({
-  class_id: z.string().min(1, 'Klas is verplicht'),
-  subject_id: z.string().min(1, 'Vak is verplicht'),
-  teacher_id: z.string().min(1, 'Docent is verplicht'),
-  classroom_id: z.string().min(1, 'Lokaal is verplicht'),
-});
+const formSchema = z
+  .object({
+    class_id: z.string().min(1, 'Klas is verplicht'),
+    subject_id: z.string().min(1, 'Vak is verplicht'),
+    teacher_id: z.string().min(1, 'Docent is verplicht'),
+    classroom_id: z.string().min(1, 'Lokaal is verplicht'),
+    start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+      message: 'Ongeldig tijdformaat. Gebruik HH:mm',
+    }),
+    end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+      message: 'Ongeldig tijdformaat. Gebruik HH:mm',
+    }),
+  })
+  .refine((data) => data.end_time > data.start_time, {
+    message: 'Eindtijd moet na starttijd zijn',
+    path: ['end_time'], // Set error on end_time field
+  });
 
 const LessonModal = ({
   open,
@@ -51,11 +64,14 @@ const LessonModal = ({
 
   const form = useForm({
     resolver: zodResolver(formSchema),
+    mode: 'onChange', // Validate on change to enable/disable submit button
     defaultValues: {
       class_id: '',
       subject_id: '',
       teacher_id: '',
       classroom_id: '',
+      start_time: '',
+      end_time: '',
     },
   });
 
@@ -70,18 +86,22 @@ const LessonModal = ({
           subject_id: resource.subjectId?.toString() || '',
           teacher_id: resource.teacherId?.toString() || '',
           classroom_id: resource.classroomId?.toString() || '',
+          start_time: format(selectedEvent.start, 'HH:mm'),
+          end_time: format(selectedEvent.end, 'HH:mm'),
         });
-      } else {
+      } else if (selectedSlot) {
         // Creating new event
         form.reset({
           class_id: '',
           subject_id: '',
           teacher_id: '',
           classroom_id: '',
+          start_time: format(selectedSlot.start, 'HH:mm'),
+          end_time: format(selectedSlot.end, 'HH:mm'),
         });
       }
     }
-  }, [open, selectedEvent, form]);
+  }, [open, selectedEvent, selectedSlot, form]);
 
   const handleSubmit = async (values) => {
     try {
@@ -94,21 +114,47 @@ const LessonModal = ({
 
       if (selectedEvent) {
         // Update existing event
+        const dayNum = selectedEvent.start.getDay();
+        const days = [
+          'Sunday',
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ];
+        const dayOfWeek = days[dayNum];
+
         await rosterAPI.update_roster({
           ...data,
           id: selectedEvent.id,
-          start: selectedEvent.start.toISOString(),
-          end: selectedEvent.end.toISOString(),
+          day_of_week: dayOfWeek,
+          start_time: values.start_time,
+          end_time: values.end_time,
         });
         toast.success('Les succesvol bijgewerkt');
       } else if (selectedSlot) {
-        // Create new event
+        // Create new event - extract day and time for recurring weekly schedule
+        const dayNum = selectedSlot.start.getDay();
+        const days = [
+          'Sunday',
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ];
+        const dayOfWeek = days[dayNum];
+
         await rosterAPI.add_roster({
           ...data,
-          start: selectedSlot.start.toISOString(),
-          end: selectedSlot.end.toISOString(),
+          day_of_week: dayOfWeek,
+          start_time: values.start_time,
+          end_time: values.end_time,
         });
-        toast.success('Les succesvol toegevoegd');
+        toast.success('Les succesvol toegevoegd (wekelijks terugkerend)');
       }
 
       onSave();
@@ -164,146 +210,217 @@ const LessonModal = ({
           <DialogTitle>
             {selectedEvent ? 'Les Bewerken' : 'Nieuwe Les'}
           </DialogTitle>
-          <div className="text-sm text-muted-foreground pt-2 space-y-1">
-            <div>{getDateDisplay()}</div>
-            <div className="font-semibold">{getTimeDisplay()}</div>
-          </div>
+          <DialogDescription>
+            {selectedEvent
+              ? 'Bewerk de details van de les.'
+              : 'Vul de details in om een nieuwe les toe te voegen.'}
+          </DialogDescription>
         </DialogHeader>
+
+        <div className="border-t -mx-6 px-6 pt-4">
+          <div className="rounded-md bg-muted p-3 text-sm space-y-1">
+            <div className="font-semibold text-foreground">
+              {getDateDisplay()}
+            </div>
+            <div className="text-muted-foreground">{getTimeDisplay()}</div>
+          </div>
+        </div>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            className="space-y-6 pt-2"
           >
-            <FormField
-              control={form.control}
-              name="subject_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vak</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecteer een vak" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {subjects
-                        .filter((subject) => subject.id != null)
-                        .map((subject) => (
-                          <SelectItem
-                            key={subject.id}
-                            value={subject.id.toString()}
-                          >
-                            {subject.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Tijd
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Starttijd</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="end_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Eindtijd</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
-            <FormField
-              control={form.control}
-              name="class_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Klas</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecteer een klas" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {classes
-                        .filter((cls) => cls.id != null)
-                        .map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id.toString()}>
-                            {cls.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Lesdetails
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="subject_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vak</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        required
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {subjects
+                            .filter((subject) => subject.id != null)
+                            .map((subject) => (
+                              <SelectItem
+                                key={subject.id}
+                                value={subject.id.toString()}
+                              >
+                                {subject.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="teacher_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Docent</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecteer een docent" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {teachers
-                        .filter((teacher) => teacher.id != null)
-                        .map((teacher) => (
-                          <SelectItem
-                            key={teacher.id}
-                            value={teacher.id.toString()}
-                          >
-                            {teacher.first_name} {teacher.last_name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="class_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Klas</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        required
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {classes
+                            .filter((cls) => cls.id != null)
+                            .map((cls) => (
+                              <SelectItem
+                                key={cls.id}
+                                value={cls.id.toString()}
+                              >
+                                {cls.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="classroom_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lokaal</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecteer een lokaal" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {classrooms
-                        .filter((classroom) => classroom.id != null)
-                        .map((classroom) => (
-                          <SelectItem
-                            key={classroom.id}
-                            value={classroom.id.toString()}
-                          >
-                            {classroom.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="teacher_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Docent</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        required
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {teachers
+                            .filter((teacher) => teacher.id != null)
+                            .map((teacher) => (
+                              <SelectItem
+                                key={teacher.id}
+                                value={teacher.id.toString()}
+                              >
+                                {teacher.first_name} {teacher.last_name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <DialogFooter className="flex justify-between">
-              {selectedEvent && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="mr-auto"
-                >
-                  Verwijderen
-                </Button>
-              )}
+                <FormField
+                  control={form.control}
+                  name="classroom_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lokaal</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        required
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {classrooms
+                            .filter((classroom) => classroom.id != null)
+                            .map((classroom) => (
+                              <SelectItem
+                                key={classroom.id}
+                                value={classroom.id.toString()}
+                              >
+                                {classroom.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="!mt-8 flex justify-between w-full">
+              <div>
+                {selectedEvent && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    Verwijderen
+                  </Button>
+                )}
+              </div>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -312,7 +429,12 @@ const LessonModal = ({
                 >
                   Annuleren
                 </Button>
-                <Button type="submit">
+                <Button
+                  type="submit"
+                  disabled={
+                    !form.formState.isValid || form.formState.isSubmitting
+                  }
+                >
                   {selectedEvent ? 'Bijwerken' : 'Toevoegen'}
                 </Button>
               </div>

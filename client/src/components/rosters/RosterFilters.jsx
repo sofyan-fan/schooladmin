@@ -64,8 +64,8 @@ const RosterFilters = ({
     filters.classroomIds.length > 0;
 
   return (
-    <Card>
-      <CardContent className="p-4">
+    <Card className="bg-transparent shadow-none border-none rounded-b-none  pt-0">
+      <CardContent className="px-0">
         <div className="flex flex-wrap gap-4 items-center">
           <Select onValueChange={handleClassChange} value="">
             <SelectTrigger className="w-[200px]">

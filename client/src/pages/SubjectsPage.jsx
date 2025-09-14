@@ -138,7 +138,6 @@ const SubjectsPage = () => {
       fetchSubjects();
     } catch {
       toast.error('Kon het vak niet verwijderen. Probeer het opnieuw.');
-      setApiError('Failed to delete subject. Please try again.');
     } finally {
       setDeletingSubject(null);
     }
