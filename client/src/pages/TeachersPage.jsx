@@ -1,9 +1,10 @@
+import classAPI from '@/apis/classAPI';
 import teachersAPI from '@/apis/teachersAPI';
-import ProfileCard from '@/components/general/ProfileCard';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
-import StudentViewProfileCard from '@/components/StudentViewProfileCard';
+import TeacherEditModal from '@/components/teachers/EditModal';
+import TeacherViewModal from '@/components/teachers/ViewModal';
 import { createColumns } from '@/components/teachers/columns';
 import { TableCell, TableRow } from '@/components/ui/table';
 import {
@@ -32,6 +33,7 @@ const NoData = (
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
@@ -57,6 +59,7 @@ export default function TeachersPage() {
             email: s.email ?? '',
             phone: s.phone ?? '',
             address: s.address ?? '',
+            classId: s.class_id ?? s.class_layout?.id ?? null,
             className: s.class_layout?.name ?? '',
             registrationDate: s.created_at ?? '',
             active: s.active ?? false,
@@ -72,6 +75,14 @@ export default function TeachersPage() {
 
   useEffect(() => {
     fetchTeachers();
+    (async () => {
+      try {
+        const cls = await classAPI.get_classes();
+        setClasses(cls);
+      } catch (e) {
+        console.error('Failed to load classes', e);
+      }
+    })();
   }, [fetchTeachers]);
 
   const handleEdit = useCallback((record) => {
@@ -116,6 +127,21 @@ export default function TeachersPage() {
         response = await teachersAPI.add_teacher(payload);
       }
 
+      // Assign as mentor to selected class if provided
+      let className = '';
+      if (typeof updated.classId !== 'undefined' && updated.classId) {
+        try {
+          await classAPI.assign_mentor(
+            updated.classId,
+            response.id || updated.id
+          );
+          const selectedClass = classes.find((c) => c.id === updated.classId);
+          className = selectedClass?.name || '';
+        } catch (err) {
+          console.error('Failed to assign mentor', err);
+        }
+      }
+
       const mapped = {
         id: response.id,
         firstName: response.first_name,
@@ -123,7 +149,13 @@ export default function TeachersPage() {
         email: response.email ?? '',
         phone: response.phone ?? '',
         address: response.address ?? '',
-        className: response.class_layout?.name ?? '',
+        classId:
+          updated.classId ??
+          (response.class_layout ? response.class_layout.id : null),
+        className:
+          (className ||
+            (response.class_layout ? response.class_layout.name : '')) ??
+          '',
         registrationDate: response.created_at ?? '',
         active: response.active ?? false,
       };
@@ -206,19 +238,19 @@ export default function TeachersPage() {
         NoDataComponent={NoData}
       />
 
-      <StudentViewProfileCard
+      <TeacherViewModal
         open={openViewProfile}
         onOpenChange={setOpenViewProfile}
-        student={selected}
+        teacher={selected}
       />
 
-      <ProfileCard
+      <TeacherEditModal
         open={openEditProfile}
         onOpenChange={setOpenEditProfile}
-        user={{ ...selected, role: 'Teacher' }}
+        teacher={selected || {}}
+        classes={classes}
         onSave={handleSave}
         onDelete={handleDelete}
-        viewDateOnly={false}
       />
     </>
   );

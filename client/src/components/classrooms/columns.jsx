@@ -13,14 +13,17 @@ export const createColumns = ({ onEdit, onDelete }) => [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    displayName: 'Naam',
   },
   {
     accessorKey: 'max_students',
     header: 'Max. Studenten',
+    displayName: 'Max. studenten',
   },
   {
     accessorKey: 'description',
     header: 'Beschrijving',
+    displayName: 'Beschrijving',
   },
   {
     id: 'actions',
@@ -42,5 +45,6 @@ export const createColumns = ({ onEdit, onDelete }) => [
         </Button>
       </div>
     ),
+    displayName: 'Acties',
   },
 ];

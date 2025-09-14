@@ -91,6 +91,13 @@ export const get_class = async (id) => {
   };
 };
 
+export const assign_mentor = async (classId, mentorId) => {
+  const { data } = await RequestHandler.put(
+    `/general/class_layouts/${classId}/mentor`,
+    { mentor_id: mentorId ?? null }
+  );
+  return data;
+};
 
 const classAPI = {
   get_classes,
@@ -98,6 +105,7 @@ const classAPI = {
   delete_class,
   update_class,
   get_class,
+  assign_mentor,
 };
 
 export default classAPI;

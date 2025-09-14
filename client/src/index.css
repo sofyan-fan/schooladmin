@@ -8,6 +8,14 @@
   overflow-y: scroll;
 } */
 
+/* Always show vertical scrollbar to prevent layout shift when content changes */
+html {
+  /* Reserve scrollbar space on all platforms */
+  scrollbar-gutter: stable both-edges;
+  /* Fallback for WebKit browsers: force scrollbar reserve by always allowing scroll */
+  overflow-y: scroll;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

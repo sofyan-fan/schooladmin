@@ -20,7 +20,7 @@ const valueProps = [
   {
     icon: <BookOpen className="w-12 h-12 text-primary" />,
     title: 'Uitgebreid Lesmateriaal',
-    description: 'Toegang tot een brede selectie van vakken en cursussen.',
+    description: 'Toegang tot een brede selectie van vakken en lespakketten.',
   },
   {
     icon: <Users className="w-12 h-12 text-primary" />,
