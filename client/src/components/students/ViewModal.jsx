@@ -161,9 +161,7 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
                 />
               </ul>
               <div className="mt-8">
-                <h3 className="text-base font-medium text-muted-foreground mb-1">
-                  Snel naar
-                </h3>
+              
                 <div className="flex items-center  space-y-2 text-sm gap-3">
                     <Link
                       to={packageHref}
@@ -207,7 +205,7 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
 
                 <div>
                   <h3 className="text-base font-medium text-muted-foreground mb-1">
-                    Schoolinformatie
+                    Registratiedatum
                   </h3>
                   <ul className="space-y-3">
                     <Row

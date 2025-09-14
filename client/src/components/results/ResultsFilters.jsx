@@ -131,7 +131,7 @@ const ResultsFilters = ({
           {view === 'assessments' && (
             <>
               <Input
-                placeholder="Search assessments..."
+                placeholder="Zoek beoordelingen..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
               />
@@ -140,10 +140,10 @@ const ResultsFilters = ({
                 onValueChange={(v) => handleFilterChange('class', v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Classes" />
+                  <SelectValue placeholder="Alle klassen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Classes</SelectItem>
+                  <SelectItem value="all">Alle klassen</SelectItem>
                   {uniqueClasses.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
@@ -156,10 +156,10 @@ const ResultsFilters = ({
                 onValueChange={(v) => handleFilterChange('subject', v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Subjects" />
+                  <SelectValue placeholder="Alle vakken" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Subjects</SelectItem>
+                  <SelectItem value="all">Alle vakken</SelectItem>
                   {uniqueSubjects.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
@@ -172,13 +172,13 @@ const ResultsFilters = ({
                 onValueChange={(v) => handleFilterChange('status', v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Statuses" />
+                  <SelectValue placeholder="Alle statussen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="not_started">Not Started</SelectItem>
+                  <SelectItem value="all">Alle statussen</SelectItem>
+                  <SelectItem value="completed">Voltooid</SelectItem>
+                  <SelectItem value="pending">In behandeling</SelectItem>
+                  <SelectItem value="not_started">Nog niet begonnen</SelectItem>
                 </SelectContent>
               </Select>
             </>
@@ -187,7 +187,7 @@ const ResultsFilters = ({
           {view === 'students' && (
             <>
               <Input
-                placeholder="Search student name..."
+                placeholder="Zoek leerlingnaam..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
               />
@@ -196,10 +196,10 @@ const ResultsFilters = ({
                 onValueChange={(v) => handleFilterChange('class', v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Classes" />
+                  <SelectValue placeholder="Alle klassen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Classes</SelectItem>
+                  <SelectItem value="all">Alle klassen</SelectItem>
                   {uniqueClasses.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
@@ -212,10 +212,10 @@ const ResultsFilters = ({
                 onValueChange={(v) => handleFilterChange('assessment', v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Assessments" />
+                  <SelectValue placeholder="Alle beoordelingen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Assessments</SelectItem>
+                  <SelectItem value="all">Alle beoordelingen</SelectItem>
                   {uniqueAssessments.map((a) => (
                     <SelectItem key={a} value={a}>
                       {a}
@@ -228,17 +228,17 @@ const ResultsFilters = ({
                 onValueChange={(v) => handleFilterChange('gradeRange', v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Grades" />
+                  <SelectValue placeholder="Alle cijfers" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Grades</SelectItem>
-                  <SelectItem value="excellent">Excellent (8.0+)</SelectItem>
-                  <SelectItem value="good">Good (6.5-7.9)</SelectItem>
+                  <SelectItem value="all">Alle cijfers</SelectItem>
+                  <SelectItem value="excellent">Uitstekend (8,0+)</SelectItem>
+                  <SelectItem value="good">Goed (6,5-7,9)</SelectItem>
                   <SelectItem value="sufficient">
-                    Sufficient (5.5-6.4)
+                    Voldoende (5,5-6,4)
                   </SelectItem>
                   <SelectItem value="insufficient">
-                    Insufficient (&lt;5.5)
+                    Onvoldoende (&lt;5,5)
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -251,7 +251,7 @@ const ResultsFilters = ({
         <div className="flex justify-end pt-3">
           <Button variant="outline" size="sm" onClick={clearFilters}>
             <X className="h-4 w-4 mr-2" />
-            Clear Filters
+            Filters wissen
           </Button>
         </div>
       )}

@@ -69,6 +69,7 @@ export default function StudentsPage() {
               city: s.city ?? '',
               birthDate: s.birth_date ?? '',
               gender: s.gender ?? '',
+              classId: s.class_id ?? s.class_layout?.id ?? null,
               className: s.class_layout?.name ?? '',
               registrationDate: s.created_at ?? '',
               lessonPackage: s.lesson_package ?? '',

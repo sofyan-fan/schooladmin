@@ -52,16 +52,30 @@ export default function EditModal({
 
   useEffect(() => {
     if (!student) return;
+    // Derive classId from several possible sources to ensure the field prefills
+    const fromId = student.classId ?? student.class_id ?? null;
+    const fromNested = student.class_layout?.id ?? null;
+    let resolvedClassId = fromId || fromNested;
+
+    // If still not found, try to match by class name against provided classes
+    if (!resolvedClassId && student.className) {
+      const match = classes.find(
+        (c) =>
+          c.name === student.className || c.name === (student.class_name || '')
+      );
+      if (match) resolvedClassId = match.id;
+    }
+
     setForm({
       email: student.email || '',
       phone: student.phone || '',
       address: student.address || '',
       city: student.city || '',
       postalCode: student.postalCode || '',
-      classId: student.classId ?? student.class_id ?? null,
+      classId: resolvedClassId,
       status: student.status === 'Active',
     });
-  }, [student]);
+  }, [student, classes]);
 
   const classItems = useMemo(
     () =>
@@ -209,21 +223,6 @@ export default function EditModal({
                 </div>
 
                 {/* Quick links, now under Contactgegevens */}
-                <div className="mt-6">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                    Snel naar
-                  </h4>
-                  <div className="flex items-start flex-col gap-1.5">
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-green-700"
-                      onClick={() => onGoToResults?.(student.id)}
-                    >
-                      Resultaten van toetsen en examens
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
               </section>
 
               {/* Right: Toewijzing */}
@@ -242,8 +241,6 @@ export default function EditModal({
                     placeholder="Selecteer klas of groep"
                   />
 
-                  {/* Note: Courses are assigned through classes, not directly to students */}
-
                   <div className="space-y-2">
                     <Label>Inschrijving</Label>
                     <div className="flex items-center gap-3 rounded-md border px-3 py-2">
@@ -258,6 +255,20 @@ export default function EditModal({
                       >
                         {form.status ? 'Actief' : 'Inactief'}
                       </Label>
+                    </div>
+                    <div className="mt-6">
+                     
+                      <div className="flex justify-start ">
+                        <Button
+                          variant="link"
+                          size={null}
+                          className="p-0 h-auto text-green-700"
+                          onClick={() => onGoToResults?.(student.id)}
+                        >
+                          Resultaten van toetsen en examens
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

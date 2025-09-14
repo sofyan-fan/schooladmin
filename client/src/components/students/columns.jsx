@@ -31,7 +31,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
         </Link>
       );
     },
-    displayName: 'Voornaam',
+    displayName: 'voornaam',
   },
 
   {
