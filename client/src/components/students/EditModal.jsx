@@ -257,7 +257,6 @@ export default function EditModal({
                       </Label>
                     </div>
                     <div className="mt-6">
-                     
                       <div className="flex justify-start ">
                         <Button
                           variant="link"
