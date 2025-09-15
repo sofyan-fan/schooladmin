@@ -8,8 +8,8 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowRight,
-  Calendar,
   ClipboardPen,
+  Calendar,
   Home,
   Mail,
   Mars,
@@ -42,15 +42,13 @@ function ContactRow({ icon, value, href, multiline }) {
         target: '_blank',
         rel: 'noreferrer',
         className:
-          'text-base sm:text-lg hover:underline hover:text-accent transition-colors',
+          'text-xl hover:underline hover:text-accent transition-colors',
       }
-    : { className: 'text-base sm:text-lg' };
+    : { className: 'text-xl' };
 
   return (
-    <li className="flex items-center gap-3">
-      <span className="mt-0.5 grid size-9 shrink-0 place-items-center text-accent">
-        {icon}
-      </span>
+    <li className="flex items-start gap-3">
+      <span className="mt-0.5 shrink-0 text-accent">{icon}</span>
       <Tag
         {...tagProps}
         className={`${tagProps.className} ${
@@ -74,27 +72,21 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
   // Contact
   const email = student.email || null;
   const phone = student.phone || null;
-  const addressParts = [
-    student.address,
-    student.postalCode,
-    student.city,
-  ].filter(Boolean);
+  const addressParts = [student.address, student.postalCode, student.city].filter(Boolean);
   const address = addressParts.length ? addressParts.join(', ') : null;
 
   // Secondary
   const klas = student.className || null;
   const module = student.lessonPackage || null;
   const geboortedatum = formatDate(student.birthDate);
-  const geplandeInschrijving = formatDate(student.registrationDate);
+  const registratiedatum = formatDate(student.registrationDate);
   const gender = student.gender || null;
 
   // Links
   const mailHref = email ? `mailto:${email}` : null;
   const telHref = phone ? `tel:${String(phone).replace(/\s/g, '')}` : null;
   const mapsHref = address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        address
-      )}`
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
     : null;
 
   const resultsHref = `/leerlingen/${student.id}/resultaten`;
@@ -102,38 +94,33 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(94vw,980px)] sm:!max-w-[980px] p-0 overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-black/[0.04]">
-        {/* thin accent header line */}
-        {/* <div className="h-1 bg-accent/80" /> */}
-
-        {/* Header */}
-        <DialogHeader className="p-7 pb-4">
-          <div className="flex items-center gap-5 min-w-0">
-            <div className="size-20 shrink-0 rounded-full grid place-items-center bg-accent/10 ring-1 ring-accent/20 text-accent">
-              <User className="size-8" />
+      <DialogContent className="w-[min(94vw,950px)] sm:!max-w-[1000px] border border-primary p-0 overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-black/[0.04]">
+        <DialogHeader className="p-7 pb-2">
+          <div className="flex items-center gap-6 min-w-0">
+            <div className="size-24 shrink-0 rounded-full grid place-items-center bg-accent/12 ring-1 ring-accent/20 text-accent">
+              <User className="size-10" />
             </div>
 
             <div className="min-w-0 flex-1">
-              <DialogTitle className="text-3xl font-semibold leading-tight truncate">
+              <DialogTitle className="text-4xl font-medium leading-tight truncate">
                 {fullName || 'Student'}
               </DialogTitle>
 
-              {/* chips */}
               <div className="mt-3 flex flex-wrap items-center gap-2.5">
-                <Badge variant="secondary" className="px-2.5 py-0.5 text-sm">
+                <Badge variant="secondary" className="px-3 py-1 text-sm">
                   Student
                 </Badge>
                 {klas && (
-                  <Badge variant="secondary" className="px-2.5 py-0.5 text-sm">
+                  <Badge variant="secondary" className="px-3 py-1 text-sm">
                     {klas}
                   </Badge>
                 )}
                 {module && (
-                  <Badge variant="secondary" className="px-2.5 py-0.5 text-sm">
+                  <Badge variant="secondary" className="px-3 py-1 text-sm">
                     Module {module}
                   </Badge>
                 )}
-                <Badge className="px-2.5 py-0.5 text-sm bg-accent/15 text-accent border border-accent/20">
+                <Badge className="px-3 py-1 text-sm bg-accent/18 text-accent border border-accent/25">
                   {status}
                 </Badge>
 
@@ -152,22 +139,13 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
           </div>
         </DialogHeader>
 
-        {/* Body */}
-        <div className="px-7 pb-7">
-          <div className="grid gap-8 sm:[grid-template-columns:minmax(0,1fr)_420px]">
-            {/* Left: contact */}
-            <section className="flex flex-col h-full">
-              <ul className="space-y-5">
-                <ContactRow
-                  icon={<Mail size={25} />}
-                  value={email}
-                  href={mailHref}
-                />
-                <ContactRow
-                  icon={<Phone size={25} />}
-                  value={phone}
-                  href={telHref}
-                />
+        <div className="px-7 pb-7 pt-4">
+          <div className="grid gap-8 sm:[grid-template-columns:minmax(0,1fr)_440px]">
+            {/* Left: contact (flex column so actions can sit at the bottom) */}
+            <section className="flex min-h-full flex-col">
+              <ul className="space-y-6">
+                <ContactRow icon={<Mail size={25} />} value={email} href={mailHref} />
+                <ContactRow icon={<Phone size={25} />} value={phone} href={telHref} />
                 <ContactRow
                   icon={<Home size={25} />}
                   value={address}
@@ -176,65 +154,68 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
                 />
               </ul>
 
-              <div className="mt-auto pt-6 flex flex-wrap gap-3">
+              {/* spacer pushes actions down when the right column is taller */}
+              <div className="flex-1" />
+
+              {/* Actions: identical styling */}
+              <div className="pt-6 flex flex-wrap gap-4">
                 <Link to={packageHref}>
                   <Button
                     variant="outline"
-                    className="rounded-full border-accent/40 text-accent hover:bg-accent/10 hover:text-accent"
+                    className="rounded-full border-2 border-accent text-accent px-6 py-5 text-lg hover:bg-accent/10 hover:text-accent"
                   >
-                    Lespakket <ArrowRight className="ml-1 h-4 w-4" />
+                    Lespakket
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to={resultsHref}>
-                  <Button variant="outline" className="rounded-full">
+                  <Button
+                    variant="outline"
+                    className="rounded-full border-2 border-accent text-accent px-6 py-5 text-lg hover:bg-accent/10 hover:text-accent"
+                  >
                     Resultaten
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
               </div>
             </section>
 
             {/* Right: details */}
-            <section className="sm:pl-8 sm:border-l sm:border-accent/20">
-              <div className="space-y-7">
-                <div className="space-y-2">
-                  <p className="text-base font-semibold tracking-wide uppercase text-muted-foreground/90">
+            <section className="sm:pl-8 sm:border-l-2 sm:border-accent/25">
+              <div className="space-y-10">
+                <div className="mb-8">
+                  <p className="text-base font-semibold tracking-wide uppercase text-muted-foreground">
                     Geboortedatum
                   </p>
-                  <div className="flex items-center gap-3">
-                    <span className="grid size-9 place-items-center text-accent">
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="text-accent">
                       <Calendar size={25} />
                     </span>
-                    <p className="text-xl font-medium">{geboortedatum}</p>
+                    <p className="text-xl font-normal">{geboortedatum}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-base font-semibold tracking-wide uppercase text-muted-foreground/90">
+                <div className="mb-8">
+                  <p className="text-base font-semibold tracking-wide uppercase text-muted-foreground">
                     Geslacht
                   </p>
-                  <div className="flex items-center gap-3">
-                    <span className="grid size-9 place-items-center text-accent">
-                      {gender === 'Man' ? (
-                        <Mars size={25} />
-                      ) : (
-                        <Venus size={25} />
-                      )}
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="text-accent">
+                      {gender === 'Man' ? <Mars size={25} /> : <Venus size={25} />}
                     </span>
-                    <p className="text-xl font-medium">{gender}</p>
+                    <p className="text-xl font-normal">{gender}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-base font-semibold tracking-wide uppercase text-muted-foreground/90">
-                    Geplande inschrijving
+                <div className="mb-8">
+                  <p className="text-base font-semibold tracking-wide uppercase text-muted-foreground">
+                    Registratiedatum
                   </p>
-                  <div className="flex items-center gap-3">
-                    <span className="grid size-9 place-items-center text-accent">
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="text-accent">
                       <ClipboardPen size={25} />
                     </span>
-                    <p className="text-xl font-medium">
-                      {geplandeInschrijving}
-                    </p>
+                    <p className="text-xl font-normal">{registratiedatum}</p>
                   </div>
                 </div>
               </div>
