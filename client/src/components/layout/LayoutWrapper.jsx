@@ -11,7 +11,7 @@ const LayoutWrapper = ({ children }) => {
       <AppSidebar />
       <SidebarInset>
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6 bg-background [scrollbar-gutter:stable]">
+        <main className="flex-1 overflow-y-auto p-6 bg-background">
           {children ? children : <Outlet />}
         </main>
       </SidebarInset>

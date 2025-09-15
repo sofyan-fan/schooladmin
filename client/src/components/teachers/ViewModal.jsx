@@ -8,7 +8,8 @@ import {
 } from '@/components/ui/dialog';
 import { Home, Mail, Phone, User } from 'lucide-react';
 
-const formatDate = (dateString) => {
+// eslint-disable-next-line no-unused-vars
+const formatDate = (dateString) => {  
   if (!dateString) return null;
   try {
     return new Date(dateString).toLocaleDateString('nl-NL', {

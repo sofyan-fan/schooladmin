@@ -8,13 +8,23 @@
   overflow-y: scroll;
 } */
 
-/* Always show vertical scrollbar to prevent layout shift when content changes */
-html {
-  /* Reserve scrollbar space on all platforms */
-  scrollbar-gutter: stable;
-  /* Fallback for WebKit browsers: force scrollbar reserve by always allowing scroll */
-  overflow-y: scroll;
+
+
+/* Avoid extra right gap when Radix Dialog locks scroll (react-remove-scroll) */
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }
+
+/* Neutralize react-remove-scroll's CSS variable compensation globally */
+/* :root,
+html,
+body,
+[data-scroll-locked] {
+  --removed-body-scroll-bar-size: 0px !important;
+} */
+
+
 
 @custom-variant dark (&:is(.dark *));
 
@@ -144,7 +154,7 @@ html {
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
-  --primary-foreround: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
