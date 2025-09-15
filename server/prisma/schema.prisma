@@ -86,7 +86,7 @@ model class_layout {
   id   Int    @id @default(autoincrement())
   name String
 
-  mentor_id Int?
+  mentor_id Int?     @unique
   mentor    teacher? @relation(fields: [mentor_id], references: [id])
 
   course_id Int?

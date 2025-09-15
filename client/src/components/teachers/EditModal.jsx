@@ -41,8 +41,13 @@ export default function EditModal({
   useEffect(() => {
     if (!teacher) return;
     // Resolve classId from teacher or by matching class name
-    let resolvedClassId =
-      teacher.classId ?? teacher.class_id ?? teacher.class_layout?.id ?? null;
+    let resolvedClassId = teacher.classId ?? teacher.class_id ?? null;
+    if (!resolvedClassId && teacher.class_layout) {
+      const mentorClass = Array.isArray(teacher.class_layout)
+        ? teacher.class_layout[0]
+        : teacher.class_layout;
+      resolvedClassId = mentorClass?.id ?? null;
+    }
     if (!resolvedClassId && teacher.className) {
       const match = classes.find(
         (c) => c?.name === teacher.className || c?.name === teacher.class_name

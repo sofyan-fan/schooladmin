@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon -r dotenv/config server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "cleanup:mentors": "node -r dotenv/config prisma/scripts/cleanup-duplicate-mentors.js"
   },
   "keywords": [],
   "author": "",

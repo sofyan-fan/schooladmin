@@ -192,12 +192,28 @@ exports.assign_mentor = async (req, res) => {
     const { class_id } = req.params;
     const { mentor_id } = req.body;
 
+    const classId = parseInt(class_id);
+    const mentorId = mentor_id == null ? null : parseInt(mentor_id);
+
+    // Ensure a teacher can mentor only one class at a time
+    if (mentorId != null) {
+      await prisma.class_layout.updateMany({
+        where: {
+          mentor_id: mentorId,
+          id: { not: classId },
+        },
+        data: {
+          mentor_id: null,
+        },
+      });
+    }
+
     const updatedClass = await prisma.class_layout.update({
       where: {
-        id: parseInt(class_id),
+        id: classId,
       },
       data: {
-        mentor_id,
+        mentor_id: mentorId,
       },
     });
 

@@ -52,18 +52,23 @@ export default function TeachersPage() {
     try {
       const response = await teachersAPI.get_teachers();
       const mapped = Array.isArray(response)
-        ? response.map((s) => ({
-            id: s.id,
-            firstName: s.first_name,
-            lastName: s.last_name,
-            email: s.email ?? '',
-            phone: s.phone ?? '',
-            address: s.address ?? '',
-            classId: s.class_id ?? s.class_layout?.id ?? null,
-            className: s.class_layout?.name ?? '',
-            registrationDate: s.created_at ?? '',
-            active: s.active ?? false,
-          }))
+        ? response.map((s) => {
+            const mentorClass = Array.isArray(s.class_layout)
+              ? s.class_layout[0]
+              : s.class_layout;
+            return {
+              id: s.id,
+              firstName: s.first_name,
+              lastName: s.last_name,
+              email: s.email ?? '',
+              phone: s.phone ?? '',
+              address: s.address ?? '',
+              classId: mentorClass?.id ?? null,
+              className: mentorClass?.name ?? '',
+              registrationDate: s.created_at ?? '',
+              active: s.active ?? false,
+            };
+          })
         : [];
       setTeachers(mapped);
     } catch (e) {

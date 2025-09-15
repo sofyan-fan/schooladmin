@@ -22,8 +22,8 @@ const Toolbar = ({ table, filterColumn }) => {
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="ml-auto">
-            Kolommen <ChevronDown className="ml-2 h-4 w-4" />
+          <Button variant="outline" className="ml-auto bg-white">
+            Kolommen <ChevronDown className="ml-2 h-4 w-4 " />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -33,7 +33,7 @@ const Toolbar = ({ table, filterColumn }) => {
             .map((col) => (
               <DropdownMenuCheckboxItem
                 key={col.id}
-                className="capitalize"
+                className="capitalize cursor-pointer hover:text-white hover:bg-primary data-[highlighted]:text-white data-[highlighted]:bg-primary"
                 checked={col.getIsVisible()}
                 onCheckedChange={(value) => col.toggleVisibility(!!value)}
               >
