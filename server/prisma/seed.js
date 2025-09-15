@@ -8,27 +8,146 @@ const USER_COUNT = 50;
 const TEACHER_COUNT = 10;
 const STUDENT_COUNT = USER_COUNT - TEACHER_COUNT;
 const ADMIN_COUNT = 1;
+
+// Vakken (geen Engels). Mix van Arabisch (voorkeur) en Nederlands waar passend
 const SUBJECTS = [
-  'Quran Recitation',
+  'Quran Recitatie',
   'Tajweed',
-  'Arabic Language',
-  'Islamic History',
+  'Arabisch (taal)',
+  'Islamitische Geschiedenis',
   'Fiqh',
   'Aqeedah',
-  'Hadith Studies',
-  'Seerah of the Prophet',
+  'Hadith',
+  'Seerah',
 ];
-// Modules are derived from subjects (module name == subject name)
+
+// Lespakketten (Nederlands)
+// Modules worden verderop aan courses gekoppeld
 const COURSES = [
-  { name: 'Comprehensive Islamic Studies', price: 500 },
-  { name: 'Intensive Quran Program', price: 350 },
-  { name: 'Arabic for Beginners', price: 250 },
+  { name: 'Islamitische Studies - Compleet', price: 500 },
+  { name: 'Intensief Quranprogramma', price: 350 },
+  { name: 'Arabisch voor Beginners', price: 250 },
 ];
+
 const CLASSROOM_COUNT = 5;
 const CLASS_LAYOUT_COUNT = 5;
 
+// Veelgebruikte naamverzamelingen (Nederlands-Marokkaanse context)
+const MOROCCAN_MALE_FIRST_NAMES = [
+  'Mohammed',
+  'Youssef',
+  'Yassine',
+  'Achraf',
+  'Anouar',
+  'Zakaria',
+  'Omar',
+  'Hamza',
+  'Ismail',
+  'Khalid',
+  'Abdelhakim',
+  'Abderrahman',
+  'Nordin',
+  'Rachid',
+  'Karim',
+  'Soufiane',
+  'Redouan',
+  'Tarik',
+  'Ayoub',
+  'Bilal',
+  'Imad',
+  'Hicham',
+  'Said',
+  'Hakim',
+  'Mostafa',
+  'Anass',
+];
+const MOROCCAN_FEMALE_FIRST_NAMES = [
+  'Fatima',
+  'Aicha',
+  'Khadija',
+  'Naima',
+  'Zineb',
+  'Imane',
+  'Sara',
+  'Souad',
+  'Nadia',
+  'Malika',
+  'Samira',
+  'Ilham',
+  'Meryem',
+  'Laila',
+  'Yasmina',
+  'Asmae',
+  'Ikram',
+  'Salma',
+  'Hajar',
+  'Rania',
+  'Noura',
+  'Amal',
+  'Safae',
+  'Dounia',
+  'Chaimae',
+];
+const MOROCCAN_SURNAMES = [
+  'El Amrani',
+  'El Idrissi',
+  'El Yousfi',
+  'El Bakkali',
+  'Benali',
+  'Bennani',
+  'Ait El Kadi',
+  'Ait Moussa',
+  'Bouhaddou',
+  'Bouziane',
+  'Chahboun',
+  'Aarab',
+  'Harchaoui',
+  'Nouri',
+  'Ouarghi',
+  'Ouahbi',
+  'El Ghazali',
+  'El Barkaoui',
+  'Tannane',
+  'El Arbaoui',
+  'El Ouazzani',
+  'El Mountassir',
+  'Tahiri',
+  'Amghar',
+  'Zaoui',
+  'El Yazidi',
+  'Azarkan',
+  'El Morabit',
+];
+
+function pickRandom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function generatePersonNameByGender(isMale) {
+  const first = pickRandom(
+    isMale ? MOROCCAN_MALE_FIRST_NAMES : MOROCCAN_FEMALE_FIRST_NAMES
+  );
+  const last = pickRandom(MOROCCAN_SURNAMES);
+  return { first, last };
+}
+
+function slugify(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.|\.$/g, '');
+}
+
+function makeEmail(first, last, domain = 'school.com') {
+  const base = `${slugify(first)}.${slugify(last)}`;
+  const suffix = Math.floor(1000 + Math.random() * 9000);
+  return `${base}${suffix}@${domain}`;
+}
+
 async function cleanDatabase() {
-  console.log('🧹 Cleaning database...');
+  console.log('🧹 Database wordt opgeschoond...');
   // Delete records in an order that respects foreign key constraints.
   await prisma.result.deleteMany();
   await prisma.assessment.deleteMany();
@@ -54,33 +173,41 @@ async function cleanDatabase() {
   await prisma.subject.deleteMany();
   await prisma.events.deleteMany();
   await prisma.book_inventory.deleteMany();
-  console.log('✅ Database cleaned.');
+  console.log('✅ Database opgeschoond.');
 }
 
 async function main() {
-  const { faker } = await import('@faker-js/faker');
+  const { faker } = await import('@faker-js/faker/locale/nl');
   await cleanDatabase();
 
-  console.log(`🌱 Start seeding ...`);
+  console.log(`🌱 Start met vullen ...`);
 
   const hashedPassword = await bcrypt.hash('password', 10);
 
-  // 1. Seed Subjects
-  console.log('Seeding subjects...');
+  // 1. Vakken
+  console.log('Vakken worden aangemaakt...');
   const subjects = await Promise.all(
     SUBJECTS.map((name) => prisma.subject.create({ data: { name } }))
   );
-  console.log(`✅ Seeded ${subjects.length} subjects.`);
+  console.log(`✅ ${subjects.length} vakken aangemaakt.`);
 
-  // 2. Seed subject levels and materials (1-3 each per subject)
-  console.log('Seeding subject levels/materials...');
-  const LEVEL_POOL = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
-  const MATERIAL_POOL = ['Book A', 'Book B', 'Workbook', 'Handouts'];
+  // 2. Niveaus (NL) en materialen (AR) per vak (1-3 elk)
+  console.log('Niveaus en materialen worden aangemaakt...');
+  const LEVEL_POOL = ['Beginner', 'Gemiddeld', 'Gevorderd', 'Expert'];
+  const MATERIAL_POOL = [
+    'Juz Amma',
+    'Surah al-Fatiha',
+    'Surah al-Ikhlas',
+    'Bidayat at-Tajweed',
+  ];
 
   const subjectIdToLevels = new Map();
   const subjectIdToMaterials = new Map();
+  const subjectIdToName = new Map();
+  const moduleSubjects = [];
 
   for (const s of subjects) {
+    subjectIdToName.set(s.id, s.name);
     const levelCount = faker.number.int({ min: 1, max: 3 });
     const chosenLevels = faker.helpers.arrayElements(LEVEL_POOL, levelCount);
     const createdLevels = [];
@@ -106,15 +233,15 @@ async function main() {
     }
     subjectIdToMaterials.set(s.id, createdMaterials);
   }
-  console.log('✅ Seeded levels and materials for subjects.');
+  console.log('✅ Niveaus en materialen aangemaakt.');
 
-  // 3. Seed Course Modules (one per subject; module name = subject + level)
-  console.log('Seeding course modules and module-subject mapping...');
+  // 3. Modules (1 per vak; naam = vak + niveau) en koppeling module-vak
+  console.log('Modules en koppelingen worden aangemaakt...');
   const modules = [];
   for (const s of subjects) {
     const levels = subjectIdToLevels.get(s.id) || [{ level: 'Beginner' }];
     const materials = subjectIdToMaterials.get(s.id) || [
-      { material: 'Book A' },
+      { material: 'Juz Amma' },
     ];
     const chosenLevel = faker.helpers.arrayElement(levels).level;
     const chosenMaterial = faker.helpers.arrayElement(materials).material;
@@ -124,7 +251,7 @@ async function main() {
       data: { name: moduleName },
     });
     modules.push(mod);
-    await prisma.course_module_subject.create({
+    const cms = await prisma.course_module_subject.create({
       data: {
         course_module_id: mod.id,
         subject_id: s.id,
@@ -132,13 +259,14 @@ async function main() {
         material: chosenMaterial,
       },
     });
+    moduleSubjects.push(cms);
   }
   console.log(
-    `✅ Seeded ${modules.length} modules and linked each to a subject with level/material.`
+    `✅ ${modules.length} modules aangemaakt en gekoppeld met niveau/materiaal.`
   );
 
-  // 4. Seed Courses and link to Modules
-  console.log('Seeding courses...');
+  // 4. Lespakketten en koppeling aan modules
+  console.log('Lespakketten worden aangemaakt...');
   const courses = await Promise.all(
     COURSES.map(async (courseData) => {
       const createdCourse = await prisma.courses.create({
@@ -166,10 +294,10 @@ async function main() {
       return createdCourse;
     })
   );
-  console.log(`✅ Seeded ${courses.length} courses.`);
+  console.log(`✅ ${courses.length} lespakketten aangemaakt.`);
 
-  // 5. Seed Users (Admin, Teachers, Students)
-  console.log('Seeding users...');
+  // 5. Gebruikers (Admin, Docenten, Leerlingen)
+  console.log('Gebruikers worden aangemaakt...');
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@school.com',
@@ -178,11 +306,17 @@ async function main() {
     },
   });
 
+  // Voor docenten: eerst namen genereren zodat e-mails NL/Marokkaans lijken
+  const teacherNamePairs = Array.from({ length: TEACHER_COUNT }).map(() => {
+    const isMale = Math.random() < 0.5;
+    return generatePersonNameByGender(isMale);
+  });
+
   const teacherUsers = await Promise.all(
-    Array.from({ length: TEACHER_COUNT }).map(() =>
+    teacherNamePairs.map((nm) =>
       prisma.user.create({
         data: {
-          email: faker.internet.email().toLowerCase(),
+          email: makeEmail(nm.first, nm.last).toLowerCase(),
           password: hashedPassword,
           role: 'teacher',
         },
@@ -190,11 +324,19 @@ async function main() {
     )
   );
 
+  // Voor leerlingen: namen + e-mails genereren
+  const studentNameTriples = Array.from({ length: STUDENT_COUNT }).map(() => {
+    const isMale = Math.random() < 0.5;
+    const genderLabel = isMale ? 'Man' : 'Vrouw';
+    const nm = generatePersonNameByGender(isMale);
+    return { ...nm, genderLabel };
+  });
+
   const studentUsers = await Promise.all(
-    Array.from({ length: STUDENT_COUNT }).map(() =>
+    studentNameTriples.map((nm) =>
       prisma.user.create({
         data: {
-          email: faker.internet.email().toLowerCase(),
+          email: makeEmail(nm.first, nm.last).toLowerCase(),
           password: hashedPassword,
           role: 'student',
         },
@@ -202,19 +344,19 @@ async function main() {
     )
   );
   console.log(
-    `✅ Seeded ${1 + teacherUsers.length + studentUsers.length} users.`
+    `✅ ${1 + teacherUsers.length + studentUsers.length} gebruikers aangemaakt.`
   );
 
-  // 6. Seed Teachers
-  console.log('Seeding teachers...');
+  // 6. Docenten
+  console.log('Docenten worden aangemaakt...');
   const teachers = await Promise.all(
-    teacherUsers.map((user) =>
+    teacherUsers.map((user, idx) =>
       prisma.teacher.create({
         data: {
-          first_name: faker.person.firstName(),
-          last_name: faker.person.lastName(),
+          first_name: teacherNamePairs[idx].first,
+          last_name: teacherNamePairs[idx].last,
           email: user.email,
-          phone: faker.phone.number(),
+          phone: `06${faker.string.numeric(8)}`,
           address: faker.location.streetAddress(),
           is_active: true,
           // generate numeric float to satisfy Prisma Float type (use multipleOf to avoid deprecation)
@@ -227,54 +369,63 @@ async function main() {
       })
     )
   );
-  console.log(`✅ Seeded ${teachers.length} teachers.`);
+  console.log(`✅ ${teachers.length} docenten aangemaakt.`);
 
-  // 7. Seed Students
-  console.log('Seeding students...');
+  // 7. Leerlingen
+  console.log('Leerlingen worden aangemaakt...');
   const students = await Promise.all(
-    studentUsers.map((user) =>
+    studentUsers.map((user, idx) =>
       prisma.student.create({
         data: {
-          first_name: faker.person.firstName(),
-          last_name: faker.person.lastName(),
+          first_name: studentNameTriples[idx].first,
+          last_name: studentNameTriples[idx].last,
           birth_date: faker.date.birthdate({ min: 6, max: 18, mode: 'age' }),
-          gender: faker.person.sex(),
+          gender: studentNameTriples[idx].genderLabel,
           address: faker.location.streetAddress(),
           postal_code: faker.location.zipCode(),
           city: faker.location.city(),
-          phone: faker.phone.number(),
-          parent_name: faker.person.fullName(),
-          parent_email: faker.internet.email(),
-          lesson_package: faker.helpers.arrayElement(['Standard', 'Premium']),
+          phone: `06${faker.string.numeric(8)}`,
+          parent_name: (() => {
+            const isMale = Math.random() < 0.5;
+            const p = generatePersonNameByGender(isMale);
+            return `${p.first} ${p.last}`;
+          })(),
+          parent_email: (() => {
+            const isMale = Math.random() < 0.5;
+            const p = generatePersonNameByGender(isMale);
+            return makeEmail(p.first, p.last).toLowerCase();
+          })(),
+          lesson_package: faker.helpers.arrayElement(['Standaard', 'Premium']),
           payment_method: faker.helpers.arrayElement([
-            'Bank Transfer',
-            'Credit Card',
+            'Bankoverschrijving',
+            'Creditcard',
+            'iDEAL',
           ]),
-          sosnumber: faker.phone.number(),
+          sosnumber: faker.string.numeric(9),
           enrollment_status: true,
         },
       })
     )
   );
-  console.log(`✅ Seeded ${students.length} students.`);
+  console.log(`✅ ${students.length} leerlingen aangemaakt.`);
 
-  // 8. Seed Classrooms
-  console.log('Seeding classrooms...');
+  // 8. Lokalen
+  console.log('Lokalen worden aangemaakt...');
   const classrooms = await Promise.all(
     Array.from({ length: CLASSROOM_COUNT }).map((_, i) =>
       prisma.classroom.create({
         data: {
-          name: `Classroom ${i + 1}`,
+          name: `Lokaal ${i + 1}`,
           capacity: faker.number.int({ min: 15, max: 30 }),
           description: faker.lorem.sentence(),
         },
       })
     )
   );
-  console.log(`✅ Seeded ${classrooms.length} classrooms.`);
+  console.log(`✅ ${classrooms.length} lokalen aangemaakt.`);
 
-  // 9. Seed Class Layouts (ensure unique mentors to satisfy @unique constraint)
-  console.log('Seeding class layouts...');
+  // 9. Klassen (unieke mentor per klas i.v.m. @unique)
+  console.log('Klassen worden aangemaakt...');
   const shuffledTeachers = faker.helpers.shuffle([...teachers]);
   const uniqueMentorSlice = shuffledTeachers.slice(0, CLASS_LAYOUT_COUNT);
   const classLayouts = await Promise.all(
@@ -282,7 +433,7 @@ async function main() {
       const mentor = uniqueMentorSlice[i];
       return prisma.class_layout.create({
         data: {
-          name: `Class ${101 + i}`,
+          name: `Klas ${101 + i}`,
           // If there are fewer teachers than classes, fall back to null mentor
           mentor_id: mentor ? mentor.id : null,
           course_id: faker.helpers.arrayElement(courses).id,
@@ -290,10 +441,10 @@ async function main() {
       });
     })
   );
-  console.log(`✅ Seeded ${classLayouts.length} class layouts.`);
+  console.log(`✅ ${classLayouts.length} klassen aangemaakt.`);
 
-  // 10. Assign Students to Classes
-  console.log('Assigning students to classes...');
+  // 10. Leerlingen aan klassen toewijzen
+  console.log('Leerlingen aan klassen toewijzen...');
   await Promise.all(
     students.map((student) =>
       prisma.student.update({
@@ -304,10 +455,10 @@ async function main() {
       })
     )
   );
-  console.log(`✅ Assigned students to classes.`);
+  console.log(`✅ Leerlingen toegewezen aan klassen.`);
 
-  // 11. Seed Rosters (Schedule)
-  console.log('Seeding rosters...');
+  // 11. Roosters (Let op: day_of_week in Engels houden voor compatibiliteit)
+  console.log('Roosters worden aangemaakt...');
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   const timeSlots = [
     { start_time: '09:00', end_time: '10:30' },
@@ -336,10 +487,62 @@ async function main() {
       }
     }
   }
-  console.log(`✅ Seeded ${rostersCreated} roster entries.`);
+  console.log(`✅ ${rostersCreated} roosterregels aangemaakt.`);
 
-  // 12. Seed Events
-  console.log('Seeding events...');
+  // 12. Beoordelingen (Assessments)
+  console.log('Beoordelingen (toetsen/examens) worden aangemaakt...');
+  const assessmentNames = {
+    Test: ['Toets 1', 'Kleine Toets', 'Theorie Toets', 'Praktijk Toets'],
+    Exam: ['Examen 1', 'Eindtoets', 'Tussentoets'],
+  };
+  const pickAssessmentName = (type) =>
+    faker.helpers.arrayElement(assessmentNames[type] || ['Beoordeling']);
+
+  const assessments = [];
+  for (const classLayout of classLayouts) {
+    // kies 2-3 willekeurige module-subject koppelingen om afwisseling te krijgen
+    const chosenCms = faker.helpers.arrayElements(
+      moduleSubjects,
+      faker.number.int({ min: 2, max: 3 })
+    );
+    for (const cms of chosenCms) {
+      // maak een Test
+      const test = await prisma.assessment.create({
+        data: {
+          type: 'Test',
+          name: pickAssessmentName('Test'),
+          class_id: classLayout.id,
+          subject_id: cms.id, // verwijst naar course_module_subject
+          leverage: faker.number.float({ min: 0.5, max: 2, multipleOf: 0.5 }),
+          date: faker.date.soon({ days: 45 }),
+          is_central: false,
+          description: 'Korte toets',
+        },
+      });
+      assessments.push(test);
+
+      // maak soms ook een Exam voor dezelfde class/subject
+      if (faker.datatype.boolean(0.4)) {
+        const exam = await prisma.assessment.create({
+          data: {
+            type: 'Exam',
+            name: pickAssessmentName('Exam'),
+            class_id: classLayout.id,
+            subject_id: cms.id,
+            leverage: faker.number.float({ min: 1, max: 3, multipleOf: 0.5 }),
+            date: faker.date.soon({ days: 90 }),
+            is_central: faker.datatype.boolean(0.3),
+            description: 'Eindtoets/Examen',
+          },
+        });
+        assessments.push(exam);
+      }
+    }
+  }
+  console.log(`✅ ${assessments.length} beoordelingen aangemaakt.`);
+
+  // 13. Evenementen
+  console.log('Evenementen worden aangemaakt...');
   const events = await Promise.all(
     Array.from({ length: 6 }).map((_, i) => {
       const date = faker.date.soon({ days: 90 });
@@ -355,7 +558,7 @@ async function main() {
 
       return prisma.events.create({
         data: {
-          name: `Event ${i + 1}`,
+          name: `Evenement ${i + 1}`,
           description: faker.lorem.sentence(),
           date,
           start_time,
@@ -365,9 +568,9 @@ async function main() {
       });
     })
   );
-  console.log(`✅ Seeded ${events.length} events.`);
+  console.log(`✅ ${events.length} evenementen aangemaakt.`);
 
-  console.log(`🎉 Seeding finished.`);
+  console.log(`🎉 Vullen voltooid.`);
 }
 
 main()
