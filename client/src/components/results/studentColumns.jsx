@@ -19,15 +19,16 @@ export const createStudentResultColumns = ({ onEdit }) => [
     header: ({ column }) => (
       <Button
         variant="ghost"
+        className="hover:bg-transparent hover:text-primary text-lg"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Student
+        Leerling
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
     cell: ({ row }) => {
       const { student } = row.original;
-      if (!student) return 'Unknown Student';
+      if (!student) return 'Onbekende leerling';
       const studentName = `${student.first_name} ${student.last_name}`;
       return (
         <div className="flex items-center gap-3">
@@ -47,16 +48,16 @@ export const createStudentResultColumns = ({ onEdit }) => [
   },
   {
     accessorKey: 'class',
-    header: 'Class',
+    header: 'Klas',
     cell: ({ row }) =>
-      row.original.student.class_layout?.name || 'Unknown Class',
+      row.original.student.class_layout?.name || 'Onbekende klas',
   },
   {
     accessorKey: 'assessment_name',
-    header: 'Assessment',
+    header: 'Beoordeling',
     cell: ({ row }) => {
       const assessment = row.original.assessment;
-      return assessment ? assessment.name : 'Unknown Assessment';
+      return assessment ? assessment.name : 'Onbekende beoordeling';
     },
   },
   {
@@ -64,9 +65,10 @@ export const createStudentResultColumns = ({ onEdit }) => [
     header: ({ column }) => (
       <Button
         variant="ghost"
+        className="hover:bg-transparent hover:text-primary text-lg"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Grade
+        Cijfer
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -81,12 +83,12 @@ export const createStudentResultColumns = ({ onEdit }) => [
   },
   {
     accessorKey: 'date',
-    header: 'Date',
+    header: 'Datum',
     cell: ({ row }) => format(new Date(row.original.date), 'PPP'),
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: 'Acties',
     cell: ({ row }) => (
       <Button
         variant="ghost"
@@ -94,7 +96,7 @@ export const createStudentResultColumns = ({ onEdit }) => [
         onClick={() => onEdit(row.original)}
       >
         <Edit className="h-4 w-4" />
-        <span className="sr-only">Edit Result</span>
+        <span className="sr-only">Resultaat bewerken</span>
       </Button>
     ),
   },

@@ -93,7 +93,7 @@ const AbsencePage = () => {
   const getStudentAbsenceForRoster = (studentId, rosterId, date) => {
     return absences.find(
       (absence) =>
-        absence.user_id === studentId &&
+        absence.student_id === studentId &&
         absence.roster_id === rosterId &&
         new Date(absence.date).toDateString() === date.toDateString()
     );
@@ -134,8 +134,13 @@ const AbsencePage = () => {
         roster.id,
         lessonDate
       );
+      const status = existingAbsence
+        ? existingAbsence.reason === 'Te Laat'
+          ? 'late'
+          : 'absent'
+        : 'present';
       initialStates[student.id] = {
-        status: existingAbsence ? 'absent' : 'present',
+        status,
         reason: existingAbsence?.reason || '',
         custom_reason: '',
         absenceId: existingAbsence?.id || null,

@@ -177,6 +177,7 @@ export default function EditModal({
                       value={form.email}
                       onChange={(e) => update('email', e.target.value)}
                       placeholder="naam@voorbeeld.nl"
+                      className="bg-white"
                     />
                   </div>
 
@@ -187,6 +188,7 @@ export default function EditModal({
                       value={form.phone}
                       onChange={(e) => update('phone', e.target.value)}
                       placeholder="+316..."
+                      className="bg-white"
                     />
                   </div>
 
@@ -197,6 +199,7 @@ export default function EditModal({
                       value={form.address}
                       onChange={(e) => update('address', e.target.value)}
                       placeholder="Straat en nummer"
+                      className="bg-white"
                     />
                   </div>
 
@@ -208,6 +211,7 @@ export default function EditModal({
                         value={form.city}
                         onChange={(e) => update('city', e.target.value)}
                         placeholder="Plaats"
+                        className="bg-white"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -217,6 +221,7 @@ export default function EditModal({
                         value={form.postalCode}
                         onChange={(e) => update('postalCode', e.target.value)}
                         placeholder="1234 AB"
+                        className="bg-white"
                       />
                     </div>
                   </div>

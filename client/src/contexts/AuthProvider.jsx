@@ -6,6 +6,8 @@ import { AuthContext } from './auth';
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [justRegistered, setJustRegistered] = useState(false);
+  const [pendingStudentId, setPendingStudentId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const login = async (email, password) => {
+  const login = async (email, password, options) => {
     try {
       const response = await RequestHandler.post('auth/login', {
         email,
@@ -38,7 +40,8 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         localStorage.setItem('token', token); // Storing session identifier
         localStorage.setItem('user', JSON.stringify(userData));
-        navigate('/dashboard');
+        const redirectTo = options?.redirectTo || '/dashboard';
+        navigate(redirectTo);
         return true;
       }
       console.error('Login failed:', response);
@@ -75,8 +78,48 @@ export const AuthProvider = ({ children }) => {
       const response = await RequestHandler.post('auth/register', requestData);
 
       if (response?.status === 201 && response?.data?.user) {
-        // Automatically log in the user after successful registration
-        const loginSuccess = await login(email, password);
+        // If the server returned a created profile (student), capture its id
+        const createdProfile = response?.data?.user?.data;
+        if (createdProfile?.id) {
+          setPendingStudentId(createdProfile.id);
+          try {
+            localStorage.setItem('pendingStudentId', String(createdProfile.id));
+          } catch (err) {
+            console.warn('Failed to persist pendingStudentId', err);
+          }
+        }
+
+        // Mark as just registered and automatically log in the user
+        setJustRegistered(true);
+        const loginSuccess = await login(email, password, {
+          redirectTo: '/dashboard',
+        });
+        if (loginSuccess) {
+          // Merge known profile fields into the lightweight session user
+          setUser((prev) => {
+            const studentIdValue =
+              (createdProfile && createdProfile.id) ||
+              pendingStudentId ||
+              prev?.studentId;
+            const merged = {
+              ...prev,
+              first_name: profileData?.first_name || prev?.first_name,
+              firstName: profileData?.first_name || prev?.firstName,
+              last_name: profileData?.last_name || prev?.last_name,
+              // Attach the student id when available
+              studentId: studentIdValue,
+            };
+            localStorage.setItem('user', JSON.stringify(merged));
+            try {
+              localStorage.removeItem('pendingStudentId');
+            } catch (err) {
+              console.warn('Failed to remove pendingStudentId', err);
+            }
+            return merged;
+          });
+          // Clear pending id after merging (state)
+          setPendingStudentId(null);
+        }
         return loginSuccess;
       }
 
@@ -95,6 +138,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const clearJustRegistered = () => setJustRegistered(false);
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -107,7 +152,16 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, login, logout, token, register }}
+      value={{
+        isAuthenticated,
+        user,
+        login,
+        logout,
+        token,
+        register,
+        justRegistered,
+        clearJustRegistered,
+      }}
     >
       {children}
     </AuthContext.Provider>

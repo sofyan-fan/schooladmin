@@ -137,6 +137,7 @@ export default function EditModal({
                       id="firstName"
                       value={form.firstName}
                       onChange={(e) => update('firstName', e.target.value)}
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -145,6 +146,7 @@ export default function EditModal({
                       id="lastName"
                       value={form.lastName}
                       onChange={(e) => update('lastName', e.target.value)}
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -154,6 +156,7 @@ export default function EditModal({
                       value={form.email}
                       onChange={(e) => update('email', e.target.value)}
                       placeholder="naam@voorbeeld.nl"
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -163,6 +166,7 @@ export default function EditModal({
                       value={form.phone}
                       onChange={(e) => update('phone', e.target.value)}
                       placeholder="+316..."
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -172,6 +176,7 @@ export default function EditModal({
                       value={form.address}
                       onChange={(e) => update('address', e.target.value)}
                       placeholder="Straat en nummer"
+                      className="bg-white"
                     />
                   </div>
                 </div>
@@ -190,6 +195,7 @@ export default function EditModal({
                       .filter((c) => c?.id != null)
                       .map((c) => ({ value: String(c.id), label: c.name }))}
                     placeholder="Selecteer klas of groep"
+                    className="bg-white"
                   />
 
                   <div className="space-y-2">
@@ -199,6 +205,7 @@ export default function EditModal({
                         id="active"
                         checked={form.active}
                         onCheckedChange={(v) => update('active', v)}
+                        className="bg-white"
                       />
                       <Label
                         htmlFor="active"

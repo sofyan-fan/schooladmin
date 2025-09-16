@@ -19,9 +19,9 @@ export const ModuleCard = ({ module, onEdit, onDelete, onView }) => {
       onClick={onView}
     >
       {/* Compact header */}
-      <CardHeader className="pb-0">
+      <CardHeader className="pb-0 relative">
         <div className="flex justify-between items-start gap-4">
-          <div>
+          <div className="flex-1 min-w-0 pr-10">
             <CardTitle
               className="text-lg font-semibold group-hover:text-primary transition-colors truncate"
               title={name}
@@ -38,7 +38,10 @@ export const ModuleCard = ({ module, onEdit, onDelete, onView }) => {
             )}
           </div>
 
-          <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex-shrink-0 absolute right-2 top-2"
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

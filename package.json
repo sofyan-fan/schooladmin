@@ -4,6 +4,7 @@
     "@fullcalendar/react": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
     "bcryptjs": "^3.0.2",
-    "embla-carousel-autoplay": "^8.6.0"
+    "embla-carousel-autoplay": "^8.6.0",
+    "hijri-date": "^0.2.2"
   }
 }

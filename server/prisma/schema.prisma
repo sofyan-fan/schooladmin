@@ -14,8 +14,6 @@ model user {
   role       String
   active     Boolean  @default(true)
   created_at DateTime @default(now())
-
-  absence absence[]
 }
 
 model student {
@@ -130,17 +128,17 @@ model progress {
 
 model absence {
   id         Int      @id @default(autoincrement())
-  user       user     @relation(fields: [user_id], references: [id])
-  user_id    Int
+  // Exactly one of student_id or teacher_id should be set based on role
+  student    student? @relation(fields: [student_id], references: [id])
+  student_id Int?
+  teacher    teacher? @relation(fields: [teacher_id], references: [id])
+  teacher_id Int?
   role       String // "student" or "teacher"
   roster     roster   @relation(fields: [roster_id], references: [id])
   roster_id  Int
   reason     String
   date       DateTime
   created_at DateTime @default(now())
-
-  teacher teacher[]
-  student student[]
 }
 
 // model test {

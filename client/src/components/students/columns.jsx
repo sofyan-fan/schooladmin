@@ -18,12 +18,14 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    // Render as link
+    // Render as link -> ensure we use the student id field if present
     cell: ({ row }) => {
       const s = row.original;
+      // Prefer `studentId` if the row maps it, otherwise fall back to `id`
+      const studentId = s.studentId || s.id;
       return (
         <Link
-          to={`/leerlingen/${s.id}`}
+          to={`/leerlingen/${studentId}`}
           className="hover:text-primary hover:underline font-medium"
           title={`Bekijk details van ${s.firstName} ${s.lastName || ''}`}
         >

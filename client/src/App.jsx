@@ -16,14 +16,16 @@ import LoginPage from './pages/LoginPage';
 import ModulesPage from './pages/ModulesPage';
 import RegisterPage from './pages/RegisterPage';
 import ResultsPage from './pages/ResultsPage';
+// import WelcomePage from './pages/WelcomePage';
 // import RosterPage from './pages/RosterPage';
 import RostersPage from './pages/RostersPage';
 import SettingsPage from './pages/SettingsPage';
+import StudentDetailsPage from './pages/StudentDetailsPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
-import StudentDetailsPage from './pages/StudentDetailsPage';
+// import StudentDetailsPage2 from './pages/StudentDetailsPage-2';
 // import { useAuth } from './hooks/useAuth';
 
 // const user_role = useAuth();
@@ -50,6 +52,7 @@ const App = () => {
       <Route
         element={isAuthenticated ? <LayoutWrapper /> : <Navigate to="/login" />}
       >
+        {/* <Route path="/welcome" element={<WelcomePage />} /> */}
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/klassen" element={<ClassesPage />} />
         {/* <Route path="/rooster" element={<RosterPage />} /> */}

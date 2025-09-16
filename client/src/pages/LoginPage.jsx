@@ -39,7 +39,8 @@ export default function LoginPage() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="nassef@gmail.com"
+                  placeholder="maktab@voorbeeld.nl"
+                  className="placeholder:italic placeholder:text-gray-400"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -48,20 +49,24 @@ export default function LoginPage() {
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Wachtwoord</Label>
-                  <Link
-                    href="#"
-                    className="ml-auto inline-block text-sm underline"
-                  >
-                    Wachtwoord vergeten?
-                  </Link>
+                 
                 </div>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="********"
+                  className="placeholder:italic placeholder:text-gray-400"
+
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                 <Link
+                    href="#"
+                    className="mr-auto inline-block text-sm underline"
+                  >
+                    Wachtwoord vergeten?
+                  </Link>
               </div>
               <Button type="submit" className="w-full cursor-pointer">
                 Login
