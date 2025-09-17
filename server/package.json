@@ -2,15 +2,20 @@
   "name": "project-el-fath",
   "version": "1.0.0",
   "main": "server.js",
+  "description": "",
+  "license": "ISC",
   "scripts": {
     "dev": "nodemon -r dotenv/config server.js",
     "start": "node server.js",
+    "build": "echo \"(no build step; JS only)\"",
+    "postinstall": "prisma generate",
     "cleanup:mentors": "node -r dotenv/config prisma/scripts/cleanup-duplicate-mentors.js"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "description": "",
   "prisma": {
     "seed": "node prisma/seed.js"
   },
