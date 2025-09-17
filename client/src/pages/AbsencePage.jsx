@@ -11,7 +11,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { addDays, endOfWeek, format, startOfWeek, subDays } from 'date-fns';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -235,13 +235,16 @@ const AbsencePage = () => {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            className="w-[250px] justify-start text-left font-normal"
+
+            className="w-[250px] flex justify-between font-normal bg-white"
             onClick={() => setIsClassSelectionDialogOpen(true)}
           >
             {getSelectedClassesNames()}
-          </Button>
+          <ChevronDown className="h-4 w-4" />
 
-          <div className="flex items-center gap-2">
+          </Button>   
+
+          {/* <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -251,7 +254,7 @@ const AbsencePage = () => {
             <Button variant="outline" size="icon" onClick={goToNextWeek}>
               <ChevronRight className="h-4 w-4" />
             </Button>
-          </div>
+          </div> */}
         </div>
       </PageHeader>
 

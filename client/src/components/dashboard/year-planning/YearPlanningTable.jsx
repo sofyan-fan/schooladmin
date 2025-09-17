@@ -49,7 +49,7 @@ const YearPlanningTable = ({
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
       pagination: {
-        pageSize: 5,
+        pageSize: 4,
       },
     },
   });
@@ -71,7 +71,12 @@ const YearPlanningTable = ({
               <Plus className="size-[1.5rem] mr-2" />
               Toevoegen
             </Button>
-            <Button variant="outline" size="sm" onClick={onExportClick} className="hover:text-white text-base">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExportClick}
+              className="hover:text-regular text-base"
+            >
               <FileDown className="size-[1.5rem] mr-2" />
               Exporteren
             </Button>

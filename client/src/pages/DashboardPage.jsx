@@ -9,10 +9,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatHijri } from '@/utils/hijri';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Clock, Presentation, UserCheck, Users, UserX } from 'lucide-react';
+import { Clock, Presentation, Users, UserX } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Label, Pie, PieChart } from 'recharts';
 import StatCard from '../components/dashboard/StatCard';
+import { UpcomingLessons } from '../components/dashboard/UpcomingLessons';
 import YearPlanning from '../components/dashboard/YearPlanning';
 
 import eventAPI from '@/apis/eventAPI';
@@ -163,19 +164,18 @@ const DashboardPage = () => {
 
   return (
     <>
-      {/* Welcome Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between gap-4">
           {/* <h1 className="text-3xl font-semibold text-regular">
             Welkom{firstName ? `, ${firstName}` : ''}!
           </h1> */}
-          <div >
+          <div>
             <div className="text-2xl text-regular font-medium">
               {capitalizeDay}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-base text-regular">{hijriDate}</div>
+            <div className="text-base text-regular italic">{hijriDate}</div>
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ const DashboardPage = () => {
         }}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-      {isAdmin ? (
+        {isAdmin ? (
           <Card className="flex flex-row items-center p-8 rounded-lg border shadow-sm bg-[#FEFEFD] h-[140px] transition-all hover:shadow-md">
             <div className="mr-2">
               <ChartContainer className="h-[90px] w-[90px]" config={{}}>
@@ -249,12 +249,12 @@ const DashboardPage = () => {
               </ChartContainer>
             </div>
             <CardContent className="p-0">
-              <div className="text-lg font-medium text-regular mb-2">
+              <div className="text-xl font-medium text-regular mb-2">
                 Afwezigen
               </div>
-              <div className="text-3xl font-bold text-regular">
+              <div className="text-3xl font-medium text-regular">
                 {stats.totalStudents - stats.studentsPresent}
-                <span className="text-lg font-medium text-regular">
+                <span className="text-xl font-medium text-regular">
                   {' '}
                   / {stats.totalStudents}
                 </span>
@@ -293,8 +293,6 @@ const DashboardPage = () => {
           icon={<Presentation className="h-8 w-8" />}
           variant="default" // Using default blue/primary color
         />
-
-        
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -337,46 +335,7 @@ const DashboardPage = () => {
           ) : null}
         </div>
         <div className="space-y-6">
-          <Card className="rounded-lg border shadow-sm bg-white">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">
-                Komende lessen (vandaag)
-              </h3>
-              {loading ? (
-                <div className="text-sm text-regular py-8 text-center">
-                  Laden...
-                </div>
-              ) : lessons.length === 0 ? (
-                <div className="text-sm text-regular py-8 text-center">
-                  Geen lessen vandaag
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {lessons.slice(0, 4).map((l, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium text-regular">
-                          {l.title}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-regular">
-                          {l.time}
-                        </div>
-                        <div className="text-xs text-regular">
-                          {l.group ? `${l.group}` : ''}
-                          {l.classroom ? ` · ${l.classroom}` : ''}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <UpcomingLessons lessons={lessons} loading={loading} />
         </div>
       </div>
     </>

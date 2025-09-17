@@ -1,29 +1,16 @@
-/* @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap'); */
-/* @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap'); */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* html{
-  overflow-y: scroll;
-} */
 
 
 
-/* Avoid extra right gap when Radix Dialog locks scroll (react-remove-scroll) */
 body[data-scroll-locked] {
   padding-right: 0 !important;
   margin-right: 0 !important;
   scrollbar-gutter: stable;
 }
 
-/* Neutralize react-remove-scroll's CSS variable compensation globally */
-/* :root,
-html,
-body,
-[data-scroll-locked] {
-  --removed-body-scroll-bar-size: 0px !important;
-} */
 
 
 
@@ -73,69 +60,38 @@ body,
 :root {
   --radius: 0.75rem;
   --regular: oklch(0.2788 0.029 43.34);
-  /* Page & Card Colors */
   --background: oklch(0.982 0.004 250);
-  /* #F8F9FA - Very light gray page background */
   --foreground: oklch(0.24 0.02 250);
-  /* #1F2937 - Dark gray for main text */
   --card: oklch(1 0 0);
-  /* #FFFFFF - Pure white card background */
   --card-foreground: oklch(0.24 0.02 250);
-  /* #1F2937 - Dark gray text on cards */
 
-  /* Popover */
   --popover: oklch(1 0 0);
-  /* #FFFFFF */
   --popover-foreground: oklch(0.24 0.02 250);
-  /* #1F2937 */
 
-  /* Primary Colors (Header & Active Tab) */
   --primary: oklch(0.73 0.1825 127.06);
-  /* #0B57D0 - Deep blue */
   --primary-foreground: oklch(0.95 0.0022 17.2);
-  /* #FFFFFF - White text */
   --primary-selection: oklch(0.73 0.1825 127.06 / 0.3);
-  /* Primary with 30% opacity for selections */
 
-  /* Secondary Colors (Inactive Tabs background) */
   --secondary: oklch(0.95 0.01 250);
-  /* #E9ECEF - Light gray for inactive elements */
   --secondary-foreground: oklch(0.4 0.015 250);
-  /* #5A6472 - Slightly muted text for inactive tabs */
 
-  /* Muted Colors (Sub-labels like "DATUM", "TIJD") */
   --muted: oklch(1 0 0);
-  /* Muted text is on a white background */
   --muted-foreground: oklch(0.51 0.01 250);
-  /* #6B7280 - Lighter gray subtext */
 
-  /* Accent Colors (Icons & Chart) */
   --accent: oklch(0.73 0.1825 127.06);
-  /* #F9A825 - Orange/Yellow for icons and hover states */
   --accent-foreground: oklch(0.24 0.02 250);
-  /* Dark text on accent elements */
 
-  /* Border, Input, Ring */
   --destructive: oklch(0.577 0.245 27.325);
-  /* Default destructive color */
   --border: oklch(0.93 0.005 250);
-  /* #E5E7EB - Light gray for list dividers */
   --input: oklch(0.93 0.005 250);
-  /* Use border color for inputs */
   --ring: oklch(0.45 0.22 260 / 0.8);
-  /* Primary blue for focus rings */
 
-  /* Chart Colors (from image pie chart) */
   --chart-1: oklch(0.85 0.12 70);
-  /* #FBCB6F - Light yellow/orange slice ("Late") */
   --chart-2: oklch(0.73 0.17 65);
-  /* #F9A825 - Deeper orange/yellow slice ("Present") */
   --chart-3: oklch(0.45 0.22 260);
-  /* #0B57D0 - Using primary blue for "Absent" */
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
 
-  /* Sidebar (Using sensible defaults from your original file) */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -147,7 +103,6 @@ body,
 }
 
 .dark {
-  /* Your original dark mode values are preserved. */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -203,7 +158,6 @@ body,
 
 @layer components {
 
-  /* FullCalendar Custom Styles */
   .fc {
     --fc-border-color: var(--border);
     --fc-daygrid-event-dot-width: 8px;
@@ -227,7 +181,6 @@ body,
   }
 
   .fc .fc-button-primary {
-    /* This class is used by FC, but we want a unified style */
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
     border: none;
   }
@@ -368,7 +321,6 @@ body,
   background-color: oklch(from var(--color-accent) l 0.95 c h);
 }
 
-/* Selection area when dragging to create new event */
 .rbc-slot-selection {
   background-color: var(--primary-selection) !important;
   z-index: 10 !important;

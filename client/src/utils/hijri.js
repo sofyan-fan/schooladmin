@@ -23,7 +23,14 @@ export function formatHijri(date = new Date()) {
   ];
   for (const loc of locales) {
     try {
-      const body = new Intl.DateTimeFormat(loc, opts).format(date);
+      // Use Intl to get the formatted parts so we can inject dashes between day, month and year
+      const parts = new Intl.DateTimeFormat(loc, opts).formatToParts(date);
+      const dayPart = parts.find((p) => p.type === 'day')?.value || '';
+      const monthPart = parts.find((p) => p.type === 'month')?.value || '';
+      const yearPart = parts.find((p) => p.type === 'year')?.value || '';
+
+      // Join with dashes and preserve the weekday at the start
+      const body = [dayPart, monthPart, yearPart].filter(Boolean).join(' - ');
       return `${weekday} ${body}`.trim();
     } catch {
       // Try next locale

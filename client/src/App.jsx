@@ -20,12 +20,12 @@ import ResultsPage from './pages/ResultsPage';
 // import RosterPage from './pages/RosterPage';
 import RostersPage from './pages/RostersPage';
 import SettingsPage from './pages/SettingsPage';
-import StudentDetailsPage from './pages/StudentDetailsPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
-// import StudentDetailsPage2 from './pages/StudentDetailsPage-2';
+import StudentDetailsPage from './pages/StudentDetailsPage';
+// import StudentDetailsPage from './pages/StudentDetailsPage';
 // import { useAuth } from './hooks/useAuth';
 
 // const user_role = useAuth();

@@ -21,7 +21,7 @@ const iconContainerVariants = cva('p-4 rounded-full flex items-center justify-ce
   },
 });
 
-const StatCard = ({
+const   StatCard = ({
   title,
   value,
   icon,

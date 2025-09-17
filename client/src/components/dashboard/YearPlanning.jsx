@@ -440,7 +440,7 @@ const YearPlanning = ({ items, setItems }) => {
 
   return (
     <>
-      <Card className="rounded-lg border shadow-sm bg-white p-6">
+      <Card className="rounded-lg border shadow-sm bg-white p-6 min-h-[28rem]">
         <YearPlanningTable
           items={mappedItems}
           onEditClick={handleEditClick}
