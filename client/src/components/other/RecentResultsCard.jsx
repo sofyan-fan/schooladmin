@@ -1,35 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Check, TrendingDown, TrendingUp } from 'lucide-react';
 
-function AverageLinearBar({
-  value = 0,
-  threshold = 5.5,
-  max = 10,
-  color = 'oklch(0.7805 0.1825 127.06)',
-  track = 'color-mix(in oklab, var(--muted), white 25%)',
-}) {
-  const v = Math.max(0, Math.min(max, Number(value) || 0));
-  const pct = (v / max) * 100;
-  const markerPct = (threshold / max) * 100;
-  return (
-    <div className="w-full">
-      <div
-        className="relative h-3 w-full rounded-full "
-        style={{ background: track }}
-      >
-        <div
-          className="absolute left-0 top-0 h-full rounded-full"
-          style={{ width: `${pct}%`, background: color }}
-        />
-        <div
-          aria-hidden
-          className="absolute top-1/2 h-4 w-[2px] -translate-y-1/2 bg-border"
-          style={{ left: `${markerPct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
+
 
 export function RecentResultsCard({
   studentStats,
@@ -54,8 +26,6 @@ export function RecentResultsCard({
   const avgNumber =
     typeof stats?.avg === 'number' ? stats.avg : Number(stats?.avg);
   const avgValue = Number.isFinite(avgNumber) ? avgNumber : 0;
-
-  // no last assessment label shown in compact version
 
   const thresholdPass = 5.5;
   const thresholdGood = 6.5;
@@ -122,16 +92,15 @@ export function RecentResultsCard({
           <div className="tabular-nums text-5xl font-semibold leading-none">
             {Number.isFinite(avgNumber) ? avgValue.toFixed(1) : '—'}
           </div>
-          <AverageLinearBar
-            value={avgValue}
-            threshold={thresholdPass}
-            color={avgColor.bar}
-          />
-          <span
-            className={`inline-flex items-center gap-1 text-xs ${avgColor.text}`}
-          >
-            <Check className="h-3.5 w-3.5" /> Voldoet aan norm
-          </span>
+         
+          {/* BONUS: Added conditional rendering for the passing grade text */}
+          {avgValue >= thresholdPass && (
+            <span
+              className={`inline-flex items-center gap-1 text-lg ${avgColor.text}`}
+            >
+              <Check className="h-3.5 w-3.5" /> Voldoet aan norm
+            </span>
+          )}
         </section>
       </CardContent>
     </Card>

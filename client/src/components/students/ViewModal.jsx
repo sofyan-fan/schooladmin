@@ -162,7 +162,7 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
                 <Link to={packageHref}>
                   <Button
                     variant="outline"
-                    className="rounded-full border-2 border-accent text-accent px-6 py-5 text-lg hover:bg-accent/10 hover:text-accent"
+                    className="rounded-full  text-accent px-6 py-5 text-lg hover:bg-accent/10 hover:text-accent"
                   >
                     Lespakket
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -171,7 +171,7 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
                 <Link to={resultsHref}>
                   <Button
                     variant="outline"
-                    className="rounded-full border-2 border-accent text-accent px-6 py-5 text-lg hover:bg-accent/10 hover:text-accent"
+                    className="rounded-full  text-accent px-6 py-5 text-lg hover:bg-accent/10 hover:text-accent"
                   >
                     Resultaten
                     <ArrowRight className="ml-2 h-5 w-5" />

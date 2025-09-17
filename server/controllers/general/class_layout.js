@@ -109,21 +109,60 @@ exports.update_class_layout = async (req, res) => {
 exports.delete_class_layout = async (req, res) => {
   try {
     const { id } = req.params;
+    const classId = parseInt(id);
 
     // First, unassign all students from this class
     await prisma.student.updateMany({
       where: {
-        class_id: parseInt(id),
+        class_id: classId,
       },
       data: {
         class_id: null,
       },
     });
 
-    // Then delete the class layout
+    // Delete dependent records in safe order to satisfy FKs
+    // 1) Absences linked via rosters of this class
+    const rosters = await prisma.roster.findMany({
+      where: { class_id: classId },
+      select: { id: true },
+    });
+    const rosterIds = rosters.map((r) => r.id);
+    if (rosterIds.length > 0) {
+      await prisma.absence.deleteMany({
+        where: { roster_id: { in: rosterIds } },
+      });
+    }
+
+    // 2) Results -> Assessments belonging to this class
+    const assessments = await prisma.assessment.findMany({
+      where: { class_id: classId },
+      select: { id: true },
+    });
+    const assessmentIds = assessments.map((a) => a.id);
+    if (assessmentIds.length > 0) {
+      await prisma.result.deleteMany({
+        where: { assessment_id: { in: assessmentIds } },
+      });
+      await prisma.assessment.deleteMany({
+        where: { id: { in: assessmentIds } },
+      });
+    }
+
+    // 3) Schedules and Rosters for this class
+    await prisma.schedule.deleteMany({
+      where: { class_id: classId },
+    });
+    if (rosterIds.length > 0) {
+      await prisma.roster.deleteMany({
+        where: { id: { in: rosterIds } },
+      });
+    }
+
+    // 4) Finally delete the class layout
     await prisma.class_layout.delete({
       where: {
-        id: parseInt(id),
+        id: classId,
       },
     });
 

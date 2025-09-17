@@ -157,12 +157,25 @@ exports.update_student = async (req, res) => {
 // DELETE student
 exports.delete_student = async (req, res) => {
   try {
-    await prisma.student.delete({
-      where: { id: Number(req.params.id) },
+    const studentId = Number(req.params.id);
+
+    // Cleanup dependent data to satisfy foreign keys
+    await prisma.result.deleteMany({ where: { student_id: studentId } });
+    await prisma.absence.deleteMany({ where: { student_id: studentId } });
+    await prisma.progress.deleteMany({ where: { student_id: studentId } });
+    await prisma.tuition_payment.deleteMany({
+      where: { student_id: studentId },
     });
+    await prisma.student_log.deleteMany({ where: { student_id: studentId } });
+
+    await prisma.student.delete({ where: { id: studentId } });
+
     res.status(200).json({ message: 'Student deleted successfully' });
   } catch (error) {
     console.error(error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Student not found' });
+    }
     res.status(500).json({ error: 'Error deleting student' });
   }
 };

@@ -1,2 +1,0 @@
-﻿# schooladmin
-Islamitische Schooladmin

@@ -124,9 +124,24 @@ exports.delete_classroom = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const classroomId = parseInt(id);
+
+    // Remove rosters (and their absences) for this classroom before deletion
+    const rosters = await prisma.roster.findMany({
+      where: { classroom_id: classroomId },
+      select: { id: true },
+    });
+    const rosterIds = rosters.map((r) => r.id);
+    if (rosterIds.length > 0) {
+      await prisma.absence.deleteMany({
+        where: { roster_id: { in: rosterIds } },
+      });
+      await prisma.roster.deleteMany({ where: { id: { in: rosterIds } } });
+    }
+
     await prisma.classroom.delete({
       where: {
-        id: parseInt(id),
+        id: classroomId,
       },
     });
 

@@ -169,15 +169,26 @@ exports.delete_course = async (req, res) => {
   const { id } = req.params;
 
   try {
+    const courseId = Number(id);
+
+    // Detach any classes pointing to this course to avoid FK errors
+    await prisma.class_layout.updateMany({
+      where: { course_id: courseId },
+      data: { course_id: null },
+    });
+
     // With a many-to-many relationship, we only need to delete the relations,
     // not the modules themselves. This allows modules to be reused.
     await prisma.course_module_relation.deleteMany({
-      where: { course_id: Number(id) },
+      where: { course_id: courseId },
     });
+
+    // Optional: delete tuition payments for this course (uncomment if desired)
+    // await prisma.tuition_payment.deleteMany({ where: { course_id: courseId } });
 
     // Then, delete the course itself
     await prisma.courses.delete({
-      where: { id: Number(id) },
+      where: { id: courseId },
     });
 
     res.status(200).json({
@@ -300,19 +311,46 @@ exports.delete_module = async (req, res) => {
       return res.status(404).json({ error: 'Module not found' });
     }
 
-    // When a module is deleted, we must also delete its relations to any courses.
+    const moduleId = Number(id);
+
+    // Gather subject relation IDs for this module
+    const cms = await prisma.course_module_subject.findMany({
+      where: { course_module_id: moduleId },
+      select: { id: true, subject_id: true },
+    });
+    const moduleSubjectIds = cms.map((r) => r.id);
+
+    // Assessments referencing this module's subjects and class combos are modeled via course_module_subject -> subject
+    // First delete dependent results, then assessments
+    const assessments = await prisma.assessment.findMany({
+      where: { subject_id: { in: moduleSubjectIds } },
+      select: { id: true },
+    });
+    const assessmentIds = assessments.map((a) => a.id);
+    if (assessmentIds.length > 0) {
+      await prisma.result.deleteMany({
+        where: { assessment_id: { in: assessmentIds } },
+      });
+      await prisma.assessment.deleteMany({
+        where: { id: { in: assessmentIds } },
+      });
+    }
+
+    // Delete course relations to this module
     await prisma.course_module_relation.deleteMany({
-      where: { module_id: Number(id) },
+      where: { module_id: moduleId },
     });
 
-    // And also delete its relations to subjects
-    await prisma.course_module_subject.deleteMany({
-      where: { course_module_id: Number(id) },
-    });
+    // Delete module-subject links
+    if (moduleSubjectIds.length > 0) {
+      await prisma.course_module_subject.deleteMany({
+        where: { id: { in: moduleSubjectIds } },
+      });
+    }
 
     // Finally, delete the course module itself
     await prisma.course_module.delete({
-      where: { id: Number(id) },
+      where: { id: moduleId },
     });
 
     res.status(200).json({ message: 'Course module deleted successfully' });

@@ -4,6 +4,7 @@ import {
   CreditCard,
   Home,
   IdCard,
+  Info,
   LifeBuoy,
   Mail,
   MapPin,
@@ -247,7 +248,7 @@ export default function StudentDetailsPage2() {
   ];
 
   return (
-    <div className="mx-auto max-w-[1200px] space-y-6 px-2 sm:px-6 h-screen">
+    <div className="w-full space-y-6 px-2 sm:px-6 h-screen">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -337,8 +338,8 @@ export default function StudentDetailsPage2() {
             {/* Profiel (beknopt) */}
             <Card className="lg:col-span-4 gap-4">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <User size={25} /> Gegevens
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <Info size={25} /> Gegevens
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -357,6 +358,10 @@ export default function StudentDetailsPage2() {
                   <div className="text-base ml-2 flex  text-regular mb-1 items-center gap-2">
                     <Phone className="size-5" />
                     {student?.phone || '—'}
+                  </div>
+                  <div className="text-base ml-2 flex  text-regular mb-1 items-center gap-2">
+                    <MapPin className="size-5" />
+                    {student?.address || '—'}
                   </div>
                 </div>
               </CardContent>

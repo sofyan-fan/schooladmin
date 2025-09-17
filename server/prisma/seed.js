@@ -178,6 +178,16 @@ async function cleanDatabase() {
 
 async function main() {
   const { faker } = await import('@faker-js/faker/locale/nl');
+  // Compatibility helper for faker boolean across versions
+  function booleanWithProb(prob) {
+    try {
+      // Newer faker versions accept an options object
+      return faker.datatype.boolean({ probability: prob });
+    } catch (e) {
+      // Fallback for older versions
+      return Math.random() < prob;
+    }
+  }
   await cleanDatabase();
 
   console.log(`🌱 Start met vullen ...`);
@@ -469,7 +479,7 @@ async function main() {
   let rostersCreated = 0;
   for (const classLayout of classLayouts) {
     for (const day_of_week of daysOfWeek) {
-      if (faker.datatype.boolean(0.7)) {
+      if (booleanWithProb(0.7)) {
         // 70% chance of a class on any given day
         const timeSlot = faker.helpers.arrayElement(timeSlots);
         await prisma.roster.create({
@@ -522,7 +532,7 @@ async function main() {
       assessments.push(test);
 
       // maak soms ook een Exam voor dezelfde class/subject
-      if (faker.datatype.boolean(0.4)) {
+      if (booleanWithProb(0.4)) {
         const exam = await prisma.assessment.create({
           data: {
             type: 'Exam',
@@ -531,7 +541,7 @@ async function main() {
             subject_id: cms.id,
             leverage: faker.number.float({ min: 1, max: 3, multipleOf: 0.5 }),
             date: faker.date.soon({ days: 90 }),
-            is_central: faker.datatype.boolean(0.3),
+            is_central: booleanWithProb(0.3),
             description: 'Eindtoets/Examen',
           },
         });
