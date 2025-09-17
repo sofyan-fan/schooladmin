@@ -4,7 +4,7 @@ import { LayoutGrid, Users } from 'lucide-react';
 
 const ViewToggle = ({ view, onViewChange }) => {
   const activeClasses =
-    'bg-green-600 text-white data-[state=on]:!text-white hover:bg-green-700 cursor-pointer';
+    'bg-green-600 text-white shadow-none data-[state=on]:!text-white hover:bg-green-700 cursor-pointer';
   const inactiveClasses = 'hover:bg-muted cursor-pointer';
 
   return (
@@ -13,7 +13,7 @@ const ViewToggle = ({ view, onViewChange }) => {
       value={view}
       onValueChange={onViewChange}
       variant="outline"
-      className=" p-1"
+      className=" p-1 shadow-none data-[variant=outline]:shadow-none"
     >
       <ToggleGroupItem
         value="assessments"

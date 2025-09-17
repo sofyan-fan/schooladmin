@@ -7,8 +7,10 @@ import AssessmentResultCard from '@/components/results/AssessmentResultCard';
 import EditResultModal from '@/components/results/EditResultModal';
 import ResultsFilters from '@/components/results/ResultsFilters';
 // import StudentResultCard from '@/components/results/StudentResultCard';
+import AssessmentsResultTable from '@/components/results/AssessmentsResultTable';
 import StudentsResultTable from '@/components/results/StudentsResultTable';
 import PageHeader from '@/components/shared/PageHeader';
+import { cn } from '@/lib/utils';
 import { BarChart } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -24,6 +26,7 @@ const ResultsPage = () => {
   const [selectedAssessment, setSelectedAssessment] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
+  const [assessmentsLayout, setAssessmentsLayout] = useState('grid');
 
   useEffect(() => {
     const fetchResultsData = async () => {
@@ -183,17 +186,27 @@ const ResultsPage = () => {
     }
   };
 
-  const renderAssessmentsView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {filteredAssessments.map((assessment) => (
-        <AssessmentResultCard
-          key={assessment.id}
-          assessment={assessment}
-          onSelect={() => handleAssessmentCardClick(assessment)}
+  const renderAssessmentsView = () => {
+    if (assessmentsLayout === 'table') {
+      return (
+        <AssessmentsResultTable
+          data={filteredAssessments}
+          onSelect={(assessment) => handleAssessmentCardClick(assessment)}
         />
-      ))}
-    </div>
-  );
+      );
+    }
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filteredAssessments.map((assessment) => (
+          <AssessmentResultCard
+            key={assessment.id}
+            assessment={assessment}
+            onSelect={() => handleAssessmentCardClick(assessment)}
+          />
+        ))}
+      </div>
+    );
+  };
 
   const renderStudentsView = () => (
     // <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -220,9 +233,10 @@ const ResultsPage = () => {
           title="Resultaten"
           icon={<BarChart className="size-9" />}
           description="Beheer hier alle beoordelingen en hun resultaten."
+          className={cn('mb-2')}
         />
 
-        <div className="bg-card border rounded-lg p-4">
+        <div className="bg-transparent rounded-lg p-0">
           <ResultsFilters
             view={view}
             onViewChange={handleViewChange}
@@ -230,6 +244,8 @@ const ResultsPage = () => {
             results={allResults}
             onFilterChange={handleFilterChange}
             classes={classes}
+            assessmentsLayout={assessmentsLayout}
+            onAssessmentsLayoutChange={setAssessmentsLayout}
           />
         </div>
 

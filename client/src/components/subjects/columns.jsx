@@ -12,7 +12,7 @@ export const getColumns = (onEdit, onDelete) => [
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         className="-ml-4 text-lg hover:bg-transparent hover:text-primary"
       >
-        Subject
+        Vak
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -22,31 +22,31 @@ export const getColumns = (onEdit, onDelete) => [
       </div>
     ),
     size: 250,
-    displayName: 'Subject',
+    displayName: 'Vak',
   },
   {
     accessorKey: 'levels',
-    header: 'Levels',
+    header: 'Niveaus',
     cell: ({ row }) => {
       const levels = row.original.levels.map((l) => l.level);
       return <TruncatedListCell items={levels} />;
     },
     size: 250,
-    displayName: 'Levels',
+    displayName: 'Niveaus',
   },
   {
     accessorKey: 'materials',
-    header: 'Materials',
+    header: 'Materialen',
     cell: ({ row }) => {
       const materials = row.original.materials.map((m) => m.material);
       return <TruncatedListCell items={materials} />;
     },
     size: 250,
-    displayName: 'Materials',
+    displayName: 'Materialen',
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: 'Acties',
     cell: ({ row }) => (
       <ActionCell row={row} onEdit={onEdit} onDelete={onDelete} />
     ),

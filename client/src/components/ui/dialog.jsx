@@ -35,6 +35,7 @@ function DialogOverlay({ className, ...props }) {
 function DialogContent({
   className,
   children,
+  maxWidth = '900px',        // new: control max width from props
   showCloseButton = true,
   ...props
 }) {
@@ -43,8 +44,20 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        // set a CSS var that we can use in Tailwind's arbitrary value
+        style={{ ['--dialog-max-w']: maxWidth, ...(props.style || {}) }}
         className={cn(
-          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg sm:max-h-[85vh]',
+          // width behavior:
+          // - full width minus 1rem margin on each side on very small screens
+          // - cap by CSS var on sm+ screens
+          'bg-background fixed top-[50%] left-[50%] z-50 grid w-full ' +
+            'max-w-[calc(100%-2rem)] max-h-[calc(100vh-2rem)] ' +
+            'translate-x-[-50%] translate-y-[-50%] overflow-y-auto ' +
+            'gap-4 rounded-lg border p-6 shadow-lg duration-200 ' +
+            'data-[state=open]:animate-in data-[state=closed]:animate-out ' +
+            'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ' +
+            'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 ' +
+            'sm:max-w-[var(--dialog-max-w)] sm:max-h-[85vh]',      // <-- replaces sm:max-w-lg
           className
         )}
         {...props}

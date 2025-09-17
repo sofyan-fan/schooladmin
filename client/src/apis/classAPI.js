@@ -84,6 +84,18 @@ export const update_class = async (classData) => {
 
 export const get_class = async (id) => {
   const { data } = await RequestHandler.get(`/general/class_layouts/${id}`);
+  return {
+    ...data,
+    mentorId: data.mentor_id,
+    courseId: data.course_id,
+  };
+};
+
+export const assign_mentor = async (classId, mentorId) => {
+  const { data } = await RequestHandler.put(
+    `/general/class_layouts/${classId}/mentor`,
+    { mentor_id: mentorId ?? null }
+  );
   return data;
 };
 
@@ -93,6 +105,7 @@ const classAPI = {
   delete_class,
   update_class,
   get_class,
+  assign_mentor,
 };
 
 export default classAPI;

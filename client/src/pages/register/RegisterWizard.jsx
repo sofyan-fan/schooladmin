@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { ValuePropPlaceholder } from '../../components/ValuePropPlaceholder';
 import { defaultValues } from './form/defaults';
@@ -29,7 +29,6 @@ import {
 
 export default function RegisterWizard() {
   const { register } = useAuth();
-  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState('');
 
@@ -48,33 +47,39 @@ export default function RegisterWizard() {
     }
   };
 
-  const studentStepInfo = [
-    { title: 'Registreren', description: 'Maak een nieuw account aan.' },
-    {
-      title: 'Gegevens Leerling',
-      description: 'Vul de persoonlijke gegevens van de leerling in.',
-    },
-    {
-      title: 'Gegevens Ouder',
-      description: 'Vul de gegevens van de ouder/verzorger in.',
-    },
-    {
-      title: 'Inschrijving',
-      description: 'Kies een module en voltooi de inschrijving.',
-    },
-  ];
+  const studentStepInfo = useMemo(
+    () => [
+      { title: 'Registreren', description: 'Maak een nieuw account aan.' },
+      {
+        title: 'Gegevens Leerling',
+        description: 'Vul de persoonlijke gegevens van de leerling in.',
+      },
+      {
+        title: 'Gegevens Ouder',
+        description: 'Vul de gegevens van de ouder/verzorger in.',
+      },
+      {
+        title: 'Inschrijving',
+        description: 'Kies een module en voltooi de inschrijving.',
+      },
+    ],
+    []
+  );
 
-  const teacherStepInfo = [
-    { title: 'Registreren', description: 'Maak een nieuw account aan.' },
-    {
-      title: 'Persoonlijke Gegevens',
-      description: 'Vul uw persoonlijke en contactgegevens in.',
-    },
-  ];
+  const teacherStepInfo = useMemo(
+    () => [
+      { title: 'Registreren', description: 'Maak een nieuw account aan.' },
+      {
+        title: 'Persoonlijke Gegevens',
+        description: 'Vul uw persoonlijke en contactgegevens in.',
+      },
+    ],
+    []
+  );
 
   const stepInfo = useMemo(() => {
     return isStudentFlow ? studentStepInfo : teacherStepInfo;
-  }, [isStudentFlow]);
+  }, [isStudentFlow, studentStepInfo, teacherStepInfo]);
 
   const currentStepInfo = stepInfo[step];
 
@@ -198,9 +203,7 @@ export default function RegisterWizard() {
       const success = await register(email, password, roleValue, profileData);
       console.log('Registration success:', success);
 
-      if (success) {
-        navigate('/dashboard');
-      } else {
+      if (!success) {
         setFormError('Registratie is mislukt. Bestaat het e-mailadres al?');
       }
     } catch (err) {

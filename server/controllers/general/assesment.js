@@ -161,6 +161,13 @@ exports.delete_assessment = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // First, delete dependent results for this assessment
+    await prisma.result.deleteMany({
+      where: {
+        assessment_id: parseInt(id),
+      },
+    });
+
     await prisma.assessment.delete({
       where: {
         id: parseInt(id),

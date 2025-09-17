@@ -26,6 +26,7 @@ export const createColumns = ({
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    displayName: 'Naam',
     cell: ({ row }) => (
       <div className="font-medium">{row.getValue('name')}</div>
     ),
@@ -42,6 +43,7 @@ export const createColumns = ({
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    displayName: 'Klas',
     cell: ({ row }) => (
       <div className="truncate max-w-[180px]">{row.getValue('class')}</div>
     ),
@@ -59,6 +61,7 @@ export const createColumns = ({
       </Button>
     ),
     size: 280,
+    displayName: 'Vak',
     cell: ({ row }) => {
       const value = row.getValue('subject') ?? '';
       return (
@@ -94,6 +97,7 @@ export const createColumns = ({
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    displayName: 'Datum',
     cell: ({ row }) => {
       const date = row.getValue('date');
       if (!date) return '—';
@@ -116,6 +120,7 @@ export const createColumns = ({
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    displayName: 'Weging',
     cell: ({ row }) => {
       const score = row.getValue('maxScore');
       return <span className="font-mono">{score || '—'}</span>;

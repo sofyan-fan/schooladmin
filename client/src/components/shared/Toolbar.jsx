@@ -8,39 +8,42 @@ import {
 import { Input } from '@/components/ui/input';
 import { ChevronDown } from 'lucide-react';
 
-const Toolbar = ({ table, filterColumn }) => (
-  <div className="flex items-center mb-4 space-x-2">
-    <Input
-      placeholder={`Filter by ${filterColumn}...`}
-      value={table.getColumn(filterColumn)?.getFilterValue() ?? ''}
-      onChange={(event) =>
-        table.getColumn(filterColumn)?.setFilterValue(event.target.value)
-      }
-      className="max-w-sm bg-card"
-    />
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="ml-auto">
-          Columns <ChevronDown className="ml-2 h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {table
-          .getAllColumns()
-          .filter((column) => column.getCanHide())
-          .map((column) => (
-            <DropdownMenuCheckboxItem
-              key={column.id}
-              className="capitalize"
-              checked={column.getIsVisible()}
-              onCheckedChange={(value) => column.toggleVisibility(!!value)}
-            >
-              {column.columnDef.displayName ?? column.id}
-            </DropdownMenuCheckboxItem>
-          ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  </div>
-);
+const Toolbar = ({ table, filterColumn }) => {
+  const column = table.getColumn(filterColumn);
+  const displayName = column?.columnDef?.displayName ?? filterColumn;
+
+  return (
+    <div className="flex items-center mb-4 space-x-2">
+      <Input
+        placeholder={`Zoek op ${displayName}`}
+        value={column?.getFilterValue() ?? ''}
+        onChange={(event) => column?.setFilterValue(event.target.value)}
+        className="max-w-sm bg-card placeholder:italic"
+      />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="ml-auto bg-white">
+            Kolommen <ChevronDown className="ml-2 h-4 w-4 " />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {table
+            .getAllColumns()
+            .filter((col) => col.getCanHide())
+            .map((col) => (
+              <DropdownMenuCheckboxItem
+                key={col.id}
+                className="capitalize cursor-pointer hover:text-white hover:bg-primary data-[highlighted]:text-white data-[highlighted]:bg-primary"
+                checked={col.getIsVisible()}
+                onCheckedChange={(value) => col.toggleVisibility(!!value)}
+              >
+                {col.columnDef.displayName ?? col.id}
+              </DropdownMenuCheckboxItem>
+            ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+};
 
 export default Toolbar;

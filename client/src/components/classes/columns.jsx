@@ -12,31 +12,35 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Class Name
+        Klasnaam
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    displayName: 'Klasnaam',
   },
   {
     accessorKey: 'mentor',
     header: 'Mentor',
     cell: ({ row }) => {
       const mentor = row.original.mentor;
-      return mentor ? `${mentor.first_name} ${mentor.last_name}` : 'N/A';
+      return mentor ? `${mentor.first_name} ${mentor.last_name}` : 'n.v.t.';
     },
+    displayName: 'Mentor',
   },
   {
     accessorKey: 'students',
-    header: 'Students',
+    header: 'Studenten',
     cell: ({ row }) => row.original.students?.length || 0,
+    displayName: 'Studenten',
   },
   {
     accessorKey: 'course',
-    header: 'Course',
+    header: 'Lespakket',
     cell: ({ row }) => {
       const course = row.original.course;
-      return course ? course.name : 'N/A';
+      return course ? course.name : 'n.v.t.';
     },
+    displayName: 'Lespakket',
   },
   {
     id: 'actions',
@@ -48,7 +52,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           className="h-8 w-8 p-0"
           onClick={() => onView(row.original)}
         >
-          <span className="sr-only">View</span>
+          <span className="sr-only">Bekijken</span>
           <Eye className="h-4 w-4" />
         </Button>
         <Button
@@ -57,7 +61,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           className="h-8 w-8 p-0"
           onClick={() => onEdit(row.original)}
         >
-          <span className="sr-only">Edit</span>
+          <span className="sr-only">Bewerken</span>
           <Pencil className="h-4 w-4" />
         </Button>
         <Button
@@ -66,10 +70,11 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           className="h-8 w-8 p-0"
           onClick={() => onDelete(row.original)}
         >
-          <span className="sr-only">Delete</span>
+          <span className="sr-only">Verwijderen</span>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     ),
+    displayName: 'Acties',
   },
 ];

@@ -2,152 +2,216 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Calendar,
-  Clock,
-  GraduationCap,
-  Home,
-  Mail,
-  Package,
-  Phone,
-  User,
-} from 'lucide-react';
-
-const displayValue = (value) => value || 'Niet opgegeven';
+import { ArrowRight, Calendar, Home, Mail, Phone, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'Niet opgegeven';
+  if (!dateString) return null;
   try {
     return new Date(dateString).toLocaleDateString('nl-NL', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
-  } catch (error) {
-    console.error('Error formatting date:', error);
+  } catch {
     return dateString;
   }
 };
 
-const ProfileDetailItem = ({ icon, label, value }) => (
-  <div className="flex items-start gap-3">
-    <div className="text-muted-foreground mt-1">{icon}</div>
-    <div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="font-medium text-text-default">{value}</p>
-    </div>
-  </div>
-);
+const Row = ({ icon, label, value, clamp }) => {
+  if (!value) return null;
+  return (
+    <li className="flex items-start gap-3">
+      <span className="text-muted-foreground mt-0.5">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p
+          className={
+            clamp
+              ? 'text-lg font-medium break-words line-clamp-2'
+              : 'text-lg font-medium truncate'
+          }
+        >
+          {value}
+        </p>
+      </div>
+    </li>
+  );
+};
 
 export default function StudentViewProfileCard({
   open,
   onOpenChange,
   student,
+  maxWidth = '900px',
+  onEdit, // optional
 }) {
   if (!student) return null;
 
-  const dutchStatus = student.status === 'Active' ? 'Actief' : 'Inactief';
+  const status = student.status === 'Active' ? 'Actief' : 'Inactief';
+
+  const fullName = [student.firstName, student.lastName]
+    .filter(Boolean)
+    .join(' ');
+  const email = student.email || null;
+  const phone = student.phone || null;
+  const addressParts = [
+    student.address,
+    student.postalCode,
+    student.city,
+  ].filter(Boolean);
+  const address = addressParts.length ? addressParts.join(', ') : null;
+
+  // try both shapes you have used
+  const klasNaam = student.className ?? student.class_layout?.name ?? null;
+
+  const lespakket = student.lesson_package || student.lessonPackage || null;
+  const geboortedatum = formatDate(student.birthDate);
+  const registratiedatum = formatDate(
+    student.registrationDate || student.created_at
+  );
+  const gender = student.gender || null;
+
+  const resultsHref = `/leerlingen/${student.id}/resultaten`;
+  const packageHref = `/leerlingen/${student.id}/lespakket`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] p-0">
+      <DialogContent
+        className="w-[min(94vw,900px)] p-0 overflow-hidden bg-white rounded-2xl sm:!max-h-[82vh]"
+        maxWidth={maxWidth}
+      >
         <DialogHeader className="p-6 pb-0">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <User className="h-8 w-8 text-muted-foreground" />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-4 min-w-0">
+              <div
+                className={[
+                  'size-16 shrink-0 rounded-full grid place-items-center bg-muted',
+                  status === 'Actief'
+                    ? 'ring-2 ring-emerald-200'
+                    : 'ring-2 ring-muted-foreground/20',
+                ].join(' ')}
+                aria-label={`Status: ${status}`}
+              >
+                <User className="size-7 text-muted-foreground" />
+              </div>
+
+              <div className="min-w-0">
+                <DialogTitle className="text-3xl font-semibold leading-tight truncate">
+                  {fullName || 'Student'}
+                </DialogTitle>
+
+                {/* Pills under the name */}
+                <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                  <Badge variant="secondary" className="text-sm px-2.5 py-0.5">
+                    Student
+                  </Badge>
+                  {klasNaam && (
+                    <Badge variant="outline" className="text-sm px-2.5 py-0.5">
+                      {klasNaam}
+                    </Badge>
+                  )}
+                  {lespakket && (
+                    <Badge variant="outline" className="text-sm px-2.5 py-0.5">
+                      Lespakket {lespakket}
+                    </Badge>
+                  )}
+                  <Badge
+                    variant="secondary"
+                    className={
+                      status === 'Actief'
+                        ? 'text-sm px-2.5 py-0.5 bg-emerald-50 text-emerald-700'
+                        : 'text-sm px-2.5 py-0.5'
+                    }
+                  >
+                    {status}
+                  </Badge>
+                </div>
+              </div>
             </div>
-            <div>
-              <DialogTitle className="text-2xl font-bold">
-                {student.firstName} {student.lastName}
-              </DialogTitle>
-              <DialogDescription>
-                Profiel details{' '}
-                <Badge variant="outline" className="ml-2">
-                  {dutchStatus}
-                </Badge>
-              </DialogDescription>
+
+            {/* Optional edit */}
+            <div className="flex items-start sm:items-end">
+              {onEdit ? (
+                <Button size="sm" variant="outline" onClick={onEdit}>
+                  Bewerken
+                </Button>
+              ) : null}
             </div>
           </div>
         </DialogHeader>
 
-        <div className="grid gap-6 p-6">
-          <div className="grid gap-4">
-            <h3 className="font-semibold text-text-default">Contactgegevens</h3>
-            <ProfileDetailItem
-              icon={<Mail size={16} />}
-              label="E-mailadres"
-              value={displayValue(student.email)}
-            />
-            <ProfileDetailItem
-              icon={<Phone size={16} />}
-              label="Telefoonnummer"
-              value={displayValue(student.phone)}
-            />
-            <ProfileDetailItem
-              icon={<Home size={16} />}
-              label="Adres"
-              value={`${displayValue(student.address)}, ${displayValue(
-                student.postalCode
-              )} ${displayValue(student.city)}`}
-            />
-          </div>
+        {/* Body */}
+        <div className="p-6 pt-5">
+          <div className="grid gap-8 sm:grid-cols-12">
+            {/* Left column */}
+            <section className="sm:col-span-7">
+              <h3 className="text-base font-medium text-muted-foreground mb-3">
+                Contactgegevens
+              </h3>
+              <ul className="space-y-3">
+                <Row
+                  icon={<Mail size={20} />}
+                  label="E-mailadres"
+                  value={email}
+                />
+                <Row
+                  icon={<Phone size={20} />}
+                  label="Telefoonnummer"
+                  value={phone}
+                />
+                <Row
+                  icon={<Home size={20} />}
+                  label="Adres"
+                  value={address}
+                  clamp
+                />
+              </ul>
 
-          <hr className="border-border" />
+              {/* Quick links moved here, under Contactgegevens */}
+            
+            </section>
 
-          <div className="grid gap-4">
-            <h3 className="font-semibold text-text-default">
-              Persoonlijke Informatie
-            </h3>
-            <ProfileDetailItem
-              icon={<Calendar size={16} />}
-              label="Geboortedatum"
-              value={formatDate(student.birthDate)}
-            />
-            <ProfileDetailItem
-              icon={<User size={16} />}
-              label="Geslacht"
-              value={displayValue(student.gender)}
-            />
-          </div>
+            {/* Right column */}
+            <section className="sm:col-span-5 sm:border-l border-border/60 sm:pl-7">
+              <div className="space-y-7">
+                <div>
+                  <h3 className="text-base font-medium text-muted-foreground mb-2">
+                    Persoonlijk
+                  </h3>
+                  <ul className="space-y-3">
+                    <Row
+                      icon={<Calendar size={20} />}
+                      label="Geboortedatum"
+                      value={geboortedatum}
+                    />
+                    <Row
+                      icon={<User size={20} />}
+                      label="Geslacht"
+                      value={gender}
+                    />
+                  </ul>
+                </div>
 
-          <hr className="border-border" />
-
-          <div className="grid gap-4">
-            <h3 className="font-semibold text-text-default">
-              Schoolinformatie
-            </h3>
-            <ProfileDetailItem
-              icon={<GraduationCap size={16} />}
-              label="Klas"
-              value={displayValue(student.className)}
-            />
-            <ProfileDetailItem
-              icon={<Package size={16} />}
-              label="Module"
-              value={displayValue(student.lessonPackage)}
-            />
-            <ProfileDetailItem
-              icon={<Clock size={16} />}
-              label="Registratiedatum"
-              value={formatDate(student.registrationDate)}
-            />
+                <div>
+                  <h3 className="text-base font-medium text-muted-foreground mb-2">
+                    Registratiedatum
+                  </h3>
+                  <ul className="space-y-3">
+                    <Row
+                      icon={<Calendar size={20} />}
+                      value={registratiedatum}
+                    />
+                  </ul>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
-
-        <DialogFooter className="bg-muted p-4">
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Sluiten
-            </Button>
-          </DialogClose>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

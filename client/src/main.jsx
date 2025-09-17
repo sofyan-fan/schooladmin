@@ -5,7 +5,7 @@ import { AuthProvider } from './contexts/AuthProvider.jsx';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
-  <Router      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}  >
+  <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
     <AuthProvider>
       <App />
     </AuthProvider>

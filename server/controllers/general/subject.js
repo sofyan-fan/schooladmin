@@ -147,12 +147,49 @@ exports.delete_subject = async (req, res) => {
     });
 
   try {
-    // First, delete all module-subject relations that use this subject
-    await prisma.course_module_subject.deleteMany({
-      where: {
-        subject_id: idNum,
-      },
+    // Collect course_module_subject ids for this subject
+    const cms = await prisma.course_module_subject.findMany({
+      where: { subject_id: idNum },
+      select: { id: true },
     });
+    const moduleSubjectIds = cms.map((r) => r.id);
+
+    // Delete dependent results -> assessments that reference these course_module_subject ids
+    if (moduleSubjectIds.length > 0) {
+      const assessments = await prisma.assessment.findMany({
+        where: { subject_id: { in: moduleSubjectIds } },
+        select: { id: true },
+      });
+      const assessmentIds = assessments.map((a) => a.id);
+      if (assessmentIds.length > 0) {
+        await prisma.result.deleteMany({
+          where: { assessment_id: { in: assessmentIds } },
+        });
+        await prisma.assessment.deleteMany({
+          where: { id: { in: assessmentIds } },
+        });
+      }
+
+      // Now safe to delete module-subject relations for this subject
+      await prisma.course_module_subject.deleteMany({
+        where: { id: { in: moduleSubjectIds } },
+      });
+    }
+
+    // Delete rosters referencing this subject (and their absences)
+    const rosters = await prisma.roster.findMany({
+      where: { subject_id: idNum },
+      select: { id: true },
+    });
+    const rosterIds = rosters.map((r) => r.id);
+    if (rosterIds.length > 0) {
+      await prisma.absence.deleteMany({
+        where: { roster_id: { in: rosterIds } },
+      });
+      await prisma.roster.deleteMany({
+        where: { id: { in: rosterIds } },
+      });
+    }
 
     // Then, delete the subject's levels and materials
     await prisma.subject_level.deleteMany({

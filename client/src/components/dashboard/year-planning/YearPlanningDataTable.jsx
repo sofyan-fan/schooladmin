@@ -23,7 +23,7 @@ const YearPlanningDataTable = ({
   NoDataComponent,
 }) => {
   const renderSkeleton = () =>
-    Array.from({ length: 5 }).map((_, index) => (
+    Array.from({ length: 4 }).map((_, index) => (
       <TableRow key={index}>
         <TableCell colSpan={columns.length}>
           <Skeleton className="h-8 w-full" />
@@ -33,7 +33,7 @@ const YearPlanningDataTable = ({
 
   return (
     <>
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm max-h-[20rem] min-h-[18rem] overflow-y-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

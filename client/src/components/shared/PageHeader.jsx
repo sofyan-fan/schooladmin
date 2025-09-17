@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Plus } from 'lucide-react';
 
 const PageHeader = ({
@@ -8,8 +9,9 @@ const PageHeader = ({
   buttonText,
   onAdd,
   children,
+  className,
 }) => (
-  <div className="flex justify-between items-center mb-6">
+  <div className={cn('flex justify-between items-center mb-6', className)}>
     <div>
       <div className="flex items-center gap-2">
         {icon}
@@ -17,12 +19,14 @@ const PageHeader = ({
       </div>
       <p className="text-muted-foreground">{description}</p>
     </div>
-    {children || (
+    {children ? (
+      children
+    ) : onAdd ? (
       <Button onClick={onAdd}>
         <Plus className="mr-2 h-4 w-4" />
         {buttonText}
       </Button>
-    )}
+    ) : null}
   </div>
 );
 

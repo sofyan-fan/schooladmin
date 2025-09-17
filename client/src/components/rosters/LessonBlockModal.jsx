@@ -120,7 +120,7 @@ export default function LessonBlockModal({
     classStudents.forEach((student) => {
       const existingAbsence = absences.find(
         (a) =>
-          a.user_id === student.id &&
+          a.student_id === student.id &&
           a.roster_id === lesson.id &&
           new Date(a.date).toDateString() === selectedDate.toDateString()
       );

@@ -8,3 +8,4 @@ SEEDING.md
 
 # Seeder-related files in server directory
 server/prisma/dynamic-seeder.js
+server/prisma/seed.js/scripts/api-smoke-tests.sh
