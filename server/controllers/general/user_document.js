@@ -57,12 +57,44 @@ exports.update_teacher = async (req, res) => {
 // DELETE teacher
 exports.delete_teacher = async (req, res) => {
   try {
-    await prisma.teacher.delete({
-      where: { id: Number(req.params.id) },
+    const teacherId = Number(req.params.id);
+
+    // 1) Delete absences linked directly to this teacher
+    await prisma.absence.deleteMany({ where: { teacher_id: teacherId } });
+
+    // 2) Delete rosters taught by this teacher (and their absences)
+    const rosters = await prisma.roster.findMany({
+      where: { teacher_id: teacherId },
+      select: { id: true },
     });
+    const rosterIds = rosters.map((r) => r.id);
+    if (rosterIds.length > 0) {
+      await prisma.absence.deleteMany({
+        where: { roster_id: { in: rosterIds } },
+      });
+      await prisma.roster.deleteMany({ where: { id: { in: rosterIds } } });
+    }
+
+    // 3) Unassign as mentor from any classes
+    await prisma.class_layout.updateMany({
+      where: { mentor_id: teacherId },
+      data: { mentor_id: null },
+    });
+
+    // 4) Delete time registrations for this teacher
+    await prisma.time_registration.deleteMany({
+      where: { teacher_id: teacherId },
+    });
+
+    // 5) Finally, delete the teacher
+    await prisma.teacher.delete({ where: { id: teacherId } });
+
     res.status(200).json({ message: 'Teacher deleted successfully' });
   } catch (error) {
     console.error(error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Teacher not found' });
+    }
     res.status(500).json({ error: 'Error deleting teacher' });
   }
 };

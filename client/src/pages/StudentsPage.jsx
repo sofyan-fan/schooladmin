@@ -4,6 +4,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
 import { createColumns } from '@/components/students/columns';
+import DeleteStudentDialog from '@/components/students/DeleteDialog';
 import EditModal from '@/components/students/EditModal';
 import ViewModal from '@/components/students/ViewModal';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -39,6 +40,7 @@ export default function StudentsPage() {
   const [selected, setSelected] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
   const [openViewProfile, setOpenViewProfile] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -180,36 +182,42 @@ export default function StudentsPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!id) return;
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
-    // Find the student to get their name for the toast
-    const studentToDelete = students.find((s) => s.id === id);
+  const handleDelete = (id) => {
+    if (!id) return;
+    setPendingDeleteId(id);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) return;
+
+    const studentToDelete = students.find((s) => s.id === pendingDeleteId);
     const studentName = studentToDelete
       ? `${studentToDelete.firstName} ${studentToDelete.lastName}`
       : 'Leerling';
 
-    // Show loading toast
     const loadingToast = toast.loading('Leerling wordt verwijderd...');
 
     try {
-      await studentAPI.delete_student(id);
-      setStudents((prev) => prev.filter((s) => s.id !== id));
-      if (selected?.id === id) {
+      await studentAPI.delete_student(pendingDeleteId);
+      setStudents((prev) => prev.filter((s) => s.id !== pendingDeleteId));
+      if (selected?.id === pendingDeleteId) {
         setOpenEditProfile(false);
         setOpenViewProfile(false);
       }
-
-      // Dismiss loading toast and show success
       toast.dismiss(loadingToast);
       toast.success(`${studentName} is succesvol verwijderd.`);
     } catch (error) {
       console.error('Failed to delete student', error);
-      // Dismiss loading toast and show error
       toast.dismiss(loadingToast);
       toast.error(
         'Er is een fout opgetreden bij het verwijderen van de leerling. Probeer het opnieuw.'
       );
+    } finally {
+      setOpenDeleteDialog(false);
+      setPendingDeleteId(null);
     }
   };
 
@@ -272,6 +280,17 @@ export default function StudentsPage() {
         classes={classes}
         onSave={handleSave}
         onDelete={handleDelete}
+      />
+
+      <DeleteStudentDialog
+        isOpen={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
+        studentName={
+          selected
+            ? `${selected.firstName ?? ''} ${selected.lastName ?? ''}`.trim()
+            : ''
+        }
       />
     </>
   );
