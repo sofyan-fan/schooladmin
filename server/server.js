@@ -57,8 +57,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
-      secure: process.env.NODE_ENV === 'production', // send cookie over HTTPS only in prod
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     },
   })
 );
