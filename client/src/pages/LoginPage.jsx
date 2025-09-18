@@ -23,50 +23,47 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-950">
-      <Card className="min-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Inloggen</CardTitle>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-8 dark:bg-gray-950">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl sm:text-3xl">Inloggen</CardTitle>
           <CardDescription>
             Voer je gebruikersnaam en wachtwoord in om in te loggen
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 sm:p-8">
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="username">Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="username"
-                  type="text"
+                  id="email"
+                  type="email"
                   placeholder="maktab@voorbeeld.nl"
                   className="placeholder:italic placeholder:text-gray-400"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
+                <div className="flex items-center justify-between">
                   <Label htmlFor="password">Wachtwoord</Label>
-                 
+                  <Link to="#" className="text-sm underline">
+                    Wachtwoord vergeten?
+                  </Link>
                 </div>
                 <Input
                   id="password"
                   type="password"
                   placeholder="********"
                   className="placeholder:italic placeholder:text-gray-400"
-
+                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                 <Link
-                    href="#"
-                    className="mr-auto inline-block text-sm underline"
-                  >
-                    Wachtwoord vergeten?
-                  </Link>
               </div>
               <Button type="submit" className="w-full cursor-pointer">
                 Login
