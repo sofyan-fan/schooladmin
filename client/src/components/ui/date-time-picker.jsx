@@ -17,6 +17,15 @@ import * as React from 'react';
 function toDateOrUndefined(v) {
   if (!v) return undefined;
   if (v instanceof Date) return v;
+  if (typeof v === 'string') {
+    const match = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const year = Number(match[1]);
+      const monthIndex = Number(match[2]) - 1;
+      const day = Number(match[3]);
+      return new Date(year, monthIndex, day);
+    }
+  }
   const d = new Date(v);
   return isNaN(d.getTime()) ? undefined : d;
 }
@@ -92,6 +101,7 @@ export function DateTimePicker({
                 }
                 setOpen(false);
               }}
+              highlightToday={false}
               initialFocus
             />
           </PopoverContent>

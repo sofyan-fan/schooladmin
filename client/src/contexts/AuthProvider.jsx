@@ -138,6 +138,44 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Register a user profile without logging in or navigating
+  // Returns the raw API payload so callers can extract created user/profile
+  const registerSilently = async (email, password, role, profileData) => {
+    try {
+      const normalizedRole =
+        typeof role === 'string' && role.trim()
+          ? role.toLowerCase().trim()
+          : null;
+
+      if (!normalizedRole || !email || !password) {
+        console.error('Registration error: Missing email/password/role', {
+          emailPresent: Boolean(email),
+          passwordPresent: Boolean(password),
+          role,
+        });
+        return { ok: false };
+      }
+
+      const requestData = {
+        email,
+        password,
+        role: normalizedRole,
+        ...profileData,
+      };
+
+      const response = await RequestHandler.post('auth/register', requestData);
+      if (response?.status === 201 && response?.data?.user) {
+        return { ok: true, data: response.data };
+      }
+      return { ok: false, error: response?.data?.message || 'Unknown error' };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error?.response?.data?.message || error.message,
+      };
+    }
+  };
+
   const clearJustRegistered = () => setJustRegistered(false);
 
   const logout = () => {
@@ -159,6 +197,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         token,
         register,
+        registerSilently,
         justRegistered,
         clearJustRegistered,
       }}

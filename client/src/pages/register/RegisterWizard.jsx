@@ -1,10 +1,11 @@
 // src/pages/Register/RegisterWizardPage.jsx (or your chosen path)
 
+import studentAPI from '@/apis/studentAPI';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
@@ -27,13 +28,29 @@ import {
   StepPersonal,
 } from './ui';
 
-export default function RegisterWizard() {
-  const { register } = useAuth();
+export default function RegisterWizard({
+  initialRole = null,
+  lockRole = false,
+  silent = false,
+  onSuccess,
+  createStudentOnly = false,
+  inDialog = false,
+}) {
+  const { register, registerSilently } = useAuth();
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState('');
 
-  const [currentRole, setCurrentRole] = useState(null);
-  const [roleSelected, setRoleSelected] = useState(false);
+  const [currentRole, setCurrentRole] = useState(initialRole || null);
+  const [roleSelected, setRoleSelected] = useState(
+    Boolean(lockRole && initialRole)
+  );
+
+  useEffect(() => {
+    if (lockRole && initialRole) {
+      setCurrentRole(initialRole);
+      setRoleSelected(true);
+    }
+  }, [initialRole, lockRole]);
   const isStudentFlow = currentRole === 'student';
   const totalSteps = isStudentFlow ? 4 : 2;
 
@@ -200,11 +217,35 @@ export default function RegisterWizard() {
         profileData.gender = gender || '';
       }
 
-      const success = await register(email, password, roleValue, profileData);
-      console.log('Registration success:', success);
-
-      if (!success) {
-        setFormError('Registratie is mislukt. Bestaat het e-mailadres al?');
+      if (silent && createStudentOnly && roleValue === 'student') {
+        // Admin-side creation: only create student profile to avoid session switching
+        const created = await studentAPI.add_student(profileData);
+        if (!created || !created.id) {
+          setFormError('Aanmaken van leerling is mislukt.');
+          return;
+        }
+        if (onSuccess) onSuccess({ student: created });
+      } else if (silent) {
+        const result = await registerSilently(
+          email,
+          password,
+          roleValue,
+          profileData
+        );
+        if (!result?.ok) {
+          setFormError(result?.error || 'Registratie is mislukt.');
+          return;
+        }
+        const createdStudent = result?.data?.user?.data || null;
+        if (onSuccess && createdStudent) {
+          onSuccess({ student: createdStudent });
+        }
+      } else {
+        const success = await register(email, password, roleValue, profileData);
+        console.log('Registration success:', success);
+        if (!success) {
+          setFormError('Registratie is mislukt. Bestaat het e-mailadres al?');
+        }
       }
     } catch (err) {
       console.error('Registration submission error', err);
@@ -223,8 +264,12 @@ export default function RegisterWizard() {
     );
   }
 
+  const outerClasses = inDialog
+    ? 'w-full'
+    : 'flex items-start justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4 pt-10 sm:p-8';
+
   return (
-    <div className="flex items-start justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4 pt-10 sm:p-8">
+    <div className={outerClasses}>
       <div className="mx-auto w-full max-w-3xl rounded-2xl border bg-background shadow-sm">
         <div className="space-y-6 p-5 sm:p-8">
           <div>

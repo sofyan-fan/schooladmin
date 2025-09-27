@@ -35,7 +35,7 @@ function DialogOverlay({ className, ...props }) {
 function DialogContent({
   className,
   children,
-  maxWidth = '900px',        // new: control max width from props
+  maxWidth = '900px', // new: control max width from props
   showCloseButton = true,
   ...props
 }) {
@@ -57,7 +57,7 @@ function DialogContent({
             'data-[state=open]:animate-in data-[state=closed]:animate-out ' +
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ' +
             'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 ' +
-            'sm:max-w-[var(--dialog-max-w)] sm:max-h-[85vh]',      // <-- replaces sm:max-w-lg
+            'sm:max-w-[var(--dialog-max-w)] sm:max-h-[92vh]', // allow taller dialogs on sm+
           className
         )}
         {...props}

@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Edit, Eye, Layers3, MoreVertical, Trash2 } from 'lucide-react'; // Using MoreVertical as it's common for this pattern
+import { Edit, Eye, Layers3, MoreVertical, Trash2 } from 'lucide-react';
 
 export const CourseCard = ({ course, onEdit, onDelete, onView }) => {
   if (!course) {

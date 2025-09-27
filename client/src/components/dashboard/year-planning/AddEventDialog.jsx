@@ -47,14 +47,21 @@ const AddEventDialog = ({
               {/* <Label className="text-sm font-medium">Datum & Tijd</Label> */}
               <div>
                 <DateTimePicker
-                  date={newItem.date ? new Date(newItem.date) : undefined}
+                  date={newItem.date || undefined}
                   startTime={newItem.startTime || ''}
                   endTime={newItem.endTime || ''}
+                  highlightToday={false}
                   onDateChange={(date) => {
                     const event = {
                       target: {
                         name: 'date',
-                        value: date ? date.toISOString().split('T')[0] : '',
+                        value: date
+                          ? `${date.getFullYear()}-${String(
+                              date.getMonth() + 1
+                            ).padStart(2, '0')}-${String(
+                              date.getDate()
+                            ).padStart(2, '0')}`
+                          : '',
                       },
                     };
                     onNewItemChange(event);

@@ -8,6 +8,7 @@ import DeleteStudentDialog from '@/components/students/DeleteDialog';
 import EditModal from '@/components/students/EditModal';
 import ViewModal from '@/components/students/ViewModal';
 import { TableCell, TableRow } from '@/components/ui/table';
+import RegisterWizardDialog from '@/pages/register/RegisterWizardDialog';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -41,6 +42,7 @@ export default function StudentsPage() {
   const [openEditProfile, setOpenEditProfile] = useState(false);
   const [openViewProfile, setOpenViewProfile] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -256,8 +258,8 @@ export default function StudentsPage() {
         title="Leerlingen"
         icon={<GraduationCap className="size-9" />}
         description="Beheer hier alle leerlingen."
-        buttonText="Nieuwe leerling"
-        onAdd={() => {}}
+        buttonText="Leerling Toevoegen"
+        onAdd={() => setOpenCreateDialog(true)}
       />
       <Toolbar table={table} filterColumn="firstName" />
       <DataTable
@@ -265,6 +267,41 @@ export default function StudentsPage() {
         loading={loading}
         columns={columns}
         NoDataComponent={NoData}
+      />
+
+      <RegisterWizardDialog
+        open={openCreateDialog}
+        onOpenChange={setOpenCreateDialog}
+        title="Nieuwe Leerling Registreren"
+        initialRole="student"
+        lockRole
+        silent
+        createStudentOnly
+        onSuccess={({ student }) => {
+          const mapped = {
+            id: student.id,
+            firstName: student.first_name,
+            lastName: student.last_name,
+            email: student.parent_email ?? '',
+            parentName: student.parent_name ?? '',
+            phone: student.phone ?? '',
+            address: student.address ?? '',
+            postalCode: student.postal_code ?? '',
+            city: student.city ?? '',
+            birthDate: student.birth_date ?? '',
+            gender: student.gender ?? '',
+            classId: student.class_id ?? null,
+            className: '',
+            registrationDate: student.created_at ?? '',
+            lessonPackage: student.lesson_package ?? '',
+            status: student.enrollment_status ? 'Active' : 'Inactive',
+          };
+          setStudents((prev) => [mapped, ...prev]);
+          setOpenCreateDialog(false);
+          toast.success(
+            `${mapped.firstName} ${mapped.lastName} is succesvol toegevoegd!`
+          );
+        }}
       />
 
       <ViewModal

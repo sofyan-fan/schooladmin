@@ -195,7 +195,6 @@ export default function EditModal({
                       .filter((c) => c?.id != null)
                       .map((c) => ({ value: String(c.id), label: c.name }))}
                     placeholder="Selecteer klas of groep"
-                    className="bg-white"
                   />
 
                   <div className="space-y-2">
