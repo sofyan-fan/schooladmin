@@ -24,7 +24,7 @@ export default function EditModal({
   open,
   onOpenChange,
   teacher,
-  classes = [],
+  classes,
   onSave,
   onDelete,
 }) {
@@ -49,7 +49,7 @@ export default function EditModal({
       resolvedClassId = mentorClass?.id ?? null;
     }
     if (!resolvedClassId && teacher.className) {
-      const match = classes.find(
+      const match = (Array.isArray(classes) ? classes : []).find(
         (c) => c?.name === teacher.className || c?.name === teacher.class_name
       );
       if (match) resolvedClassId = match.id;
@@ -64,7 +64,7 @@ export default function EditModal({
       active: !!teacher.active,
       classId: resolvedClassId ?? null,
     });
-  }, [teacher, classes]);
+  }, [teacher]);
 
   const fullName = useMemo(
     () => [teacher?.firstName, teacher?.lastName].filter(Boolean).join(' '),
@@ -191,7 +191,7 @@ export default function EditModal({
                     label="Klas of groep"
                     value={form.classId != null ? String(form.classId) : ''}
                     onChange={(v) => update('classId', v ? Number(v) : null)}
-                    items={classes
+                    items={(Array.isArray(classes) ? classes : [])
                       .filter((c) => c?.id != null)
                       .map((c) => ({ value: String(c.id), label: c.name }))}
                     placeholder="Selecteer klas of groep"

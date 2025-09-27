@@ -135,21 +135,6 @@ export default function TeachersPage() {
         response = await teachersAPI.add_teacher(payload);
       }
 
-      // Assign as mentor to selected class if provided
-      let className = '';
-      if (typeof updated.classId !== 'undefined' && updated.classId) {
-        try {
-          await classAPI.assign_mentor(
-            updated.classId,
-            response.id || updated.id
-          );
-          const selectedClass = classes.find((c) => c.id === updated.classId);
-          className = selectedClass?.name || '';
-        } catch (err) {
-          console.error('Failed to assign mentor', err);
-        }
-      }
-
       const mapped = {
         id: response.id,
         firstName: response.first_name,
@@ -157,13 +142,9 @@ export default function TeachersPage() {
         email: response.email ?? '',
         phone: response.phone ?? '',
         address: response.address ?? '',
-        classId:
-          updated.classId ??
-          (response.class_layout ? response.class_layout.id : null),
+        classId: response.class_layout ? response.class_layout.id : null,
         className:
-          (className ||
-            (response.class_layout ? response.class_layout.name : '')) ??
-          '',
+          (response.class_layout ? response.class_layout.name : '') ?? '',
         registrationDate: response.created_at ?? '',
         active: response.active ?? false,
       };
@@ -173,14 +154,23 @@ export default function TeachersPage() {
         setTeachers((prev) =>
           prev.map((s) => (s.id === mapped.id ? mapped : s))
         );
+        toast.success(
+          `${mapped.firstName ?? 'Docent'} ${mapped.lastName ?? ''}`.trim() +
+            ' is succesvol bijgewerkt.'
+        );
       } else {
         // Add new teacher to list
         setTeachers((prev) => [...prev, mapped]);
+        toast.success(
+          `${mapped.firstName ?? 'Docent'} ${mapped.lastName ?? ''}`.trim() +
+            ' is succesvol aangemaakt.'
+        );
       }
 
       setOpenEditProfile(false);
     } catch (e) {
       console.error('Failed to save teacher', e);
+      toast.error('Opslaan van docent is mislukt. Probeer het opnieuw.');
     }
   };
 
