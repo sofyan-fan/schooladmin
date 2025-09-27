@@ -46,7 +46,6 @@ export default function CreateClassModal({
           ]);
           setAllTeachers(teacherData);
           setAllCourses(courseData);
-          // Filter to only show unassigned students (students without a class_id)
           const unassignedStudents = studentData.filter(
             (student) => !student.class_id
           );

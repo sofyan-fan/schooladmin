@@ -16,7 +16,7 @@ function CourseCard({ course, selected, onClick }) {
           {course.description}
         </p>
       </div>
-      <p className="text-sm font-semibold mt-4">{course.price}</p>
+      <p className="text-sm font-semibold mt-4">€{course.price}</p>
     </div>
   );
 }

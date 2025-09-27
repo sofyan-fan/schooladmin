@@ -226,12 +226,12 @@ export default function RegisterWizard() {
   return (
     <div className="flex items-start justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4 pt-10 sm:p-8">
       <div className="mx-auto w-full max-w-3xl rounded-2xl border bg-background shadow-sm">
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="space-y-6 p-5 sm:p-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-center">
+            <h1 className="text-center text-2xl font-bold sm:text-3xl">
               {currentStepInfo.title}
             </h1>
-            <p className="text-muted-foreground mt-2 text-center">
+            <p className="mt-2 text-center text-muted-foreground">
               {currentStepInfo.description}
             </p>
           </div>
@@ -262,7 +262,7 @@ export default function RegisterWizard() {
               )}
 
               <Separator />
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                   type="button"
                   variant="outline"
@@ -273,11 +273,17 @@ export default function RegisterWizard() {
                   Terug
                 </Button>
                 {step < totalSteps - 1 ? (
-                  <Button type="button" onClick={next}>
+                  <Button
+                    type="button"
+                    onClick={next}
+                    className="w-full sm:w-auto"
+                  >
                     Doorgaan
                   </Button>
                 ) : (
-                  <Button type="submit">Registreren</Button>
+                  <Button type="submit" className="w-full sm:w-auto">
+                    Registreren
+                  </Button>
                 )}
               </div>
             </form>

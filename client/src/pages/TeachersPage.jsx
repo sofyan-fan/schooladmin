@@ -3,6 +3,7 @@ import teachersAPI from '@/apis/teachersAPI';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
+import DeleteTeacherDialog from '@/components/teachers/DeleteDialog';
 import TeacherEditModal from '@/components/teachers/EditModal';
 import TeacherViewModal from '@/components/teachers/ViewModal';
 import { createColumns } from '@/components/teachers/columns';
@@ -16,6 +17,7 @@ import {
 } from '@tanstack/react-table';
 import { BookOpen, Presentation } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const NoData = (
   <TableRow>
@@ -38,6 +40,7 @@ export default function TeachersPage() {
   const [selected, setSelected] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
   const [openViewProfile, setOpenViewProfile] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -181,21 +184,41 @@ export default function TeachersPage() {
     }
   };
 
-  const handleDelete = useCallback(
-    async (id) => {
-      if (!id) return;
-      try {
-        await teachersAPI.delete_teacher(id);
-        setTeachers((prev) => prev.filter((t) => t.id !== id));
-        if (selected?.id === id) {
-          setOpenEditProfile(false);
-        }
-      } catch (e) {
-        console.error('Failed to delete teacher', e);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+
+  const handleDelete = useCallback((id) => {
+    setPendingDeleteId(id);
+    setOpenDeleteDialog(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!pendingDeleteId) return;
+    try {
+      const teacherToDelete = teachers.find((t) => t.id === pendingDeleteId);
+      const teacherName = teacherToDelete
+        ? `${teacherToDelete.firstName ?? ''} ${
+            teacherToDelete.lastName ?? ''
+          }`.trim()
+        : 'Docent';
+
+      const loadingToast = toast.loading('Docent wordt verwijderd...');
+      await teachersAPI.delete_teacher(pendingDeleteId);
+      setTeachers((prev) => prev.filter((t) => t.id !== pendingDeleteId));
+      if (selected?.id === pendingDeleteId) {
+        setOpenEditProfile(false);
       }
-    },
-    [selected?.id]
-  );
+      toast.dismiss(loadingToast);
+      toast.success(`${teacherName} is succesvol verwijderd.`);
+    } catch (e) {
+      console.error('Failed to delete teacher', e);
+      toast.error(
+        'Er is een fout opgetreden bij het verwijderen van de docent. Probeer het opnieuw.'
+      );
+    } finally {
+      setOpenDeleteDialog(false);
+      setPendingDeleteId(null);
+    }
+  }, [pendingDeleteId, selected?.id, teachers]);
 
   const columns = useMemo(
     () =>
@@ -256,6 +279,16 @@ export default function TeachersPage() {
         classes={classes}
         onSave={handleSave}
         onDelete={handleDelete}
+      />
+
+      <DeleteTeacherDialog
+        isOpen={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
+        teacherName={(() => {
+          const t = teachers.find((x) => x.id === pendingDeleteId);
+          return t ? `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() : '';
+        })()}
       />
     </>
   );
