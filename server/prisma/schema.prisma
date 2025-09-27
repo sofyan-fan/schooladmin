@@ -46,6 +46,8 @@ model student {
   results  result[]
 
   student_log student_log[]
+
+  financial_log financial_log[]
 }
 
 model teacher {
@@ -249,6 +251,8 @@ model courses {
   subjects         subject[]                @relation("course_subjects")
   class_layout     class_layout[]
   course_modules   course_module_relation[]
+
+  financial_log financial_log[]
 }
 
 model course_module {
@@ -382,4 +386,39 @@ model student_log {
   created_at DateTime @default(now())
 
   @@index([student_id, date])
+}
+model financial_type {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+
+  logs financial_log[]
+}
+
+model financial_log {
+  id               Int             @id @default(autoincrement())
+  type             financial_type  @relation(fields: [type_id], references: [id])
+  type_id          Int
+
+  // student and course are optional
+  student          student?        @relation(fields: [student_id], references: [id])
+  student_id       Int?
+
+  course           courses?        @relation(fields: [course_id], references: [id])
+  course_id        Int?
+
+  amount           Float
+  method           String
+  notes            String?
+
+  // "income" or "expense"
+  transaction_type String
+
+  date             DateTime @default(now())
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@index([type_id])
 }
