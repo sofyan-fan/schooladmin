@@ -74,6 +74,17 @@ const {
   assign_mentor,
 } = require('../controllers/general/class_layout');
 
+const {
+  create_financial_type,
+  get_financial_types,
+  update_financial_type,
+  delete_financial_type,
+  create_financial_log,
+  get_financial_logs,
+  update_financial_log,
+  delete_financial_log,
+} = require('../controllers/general/finance');
+
 // ==============================
 // Students routes
 // ==============================
@@ -168,5 +179,21 @@ router.put('/class_layouts/:id', update_class_layout);
 router.delete('/class_layouts/:id', delete_class_layout);
 router.post('/class_layouts/:class_id/students', add_students_to_class);
 router.put('/class_layouts/:class_id/mentor', assign_mentor);
+
+// ==============================
+// Financial Types routes
+// ==============================
+router.post('/financial_types', create_financial_type);
+router.get('/financial_types', get_financial_types);
+router.put('/financial_types/:id', update_financial_type);
+router.delete('/financial_types/:id', delete_financial_type);
+
+// ==============================
+// Financial Logs routes
+// ==============================
+router.post('/financial_logs', create_financial_log);
+router.get('/financial_logs', get_financial_logs);
+router.put('/financial_logs/:id', update_financial_log);
+router.delete('/financial_logs/:id', delete_financial_log);
 
 module.exports = router;
