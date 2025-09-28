@@ -1,7 +1,10 @@
+import courseApi from '@/apis/courseAPI';
 import financeAPI from '@/apis/financeAPI';
+import studentAPI from '@/apis/studentAPI';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import ComboboxField from '@/components/ui/combobox';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Trash2, CircleDollarSign } from 'lucide-react';
+import { CircleDollarSign, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -44,6 +47,9 @@ export default function FinancePage() {
   const [loading, setLoading] = useState(true);
   const [openTypeDialog, setOpenTypeDialog] = useState(false);
   const [openLogDialog, setOpenLogDialog] = useState(false);
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [studentIdToCourseId, setStudentIdToCourseId] = useState(new Map());
 
   const typeForm = useForm({
     defaultValues: { name: '', description: '' },
@@ -67,12 +73,35 @@ export default function FinancePage() {
     const load = async () => {
       setLoading(true);
       try {
-        const [t, l] = await Promise.all([
+        const [t, l, s, cs] = await Promise.all([
           financeAPI.get_financial_types(),
           financeAPI.get_financial_logs(),
+          studentAPI.get_students(),
+          courseApi.get_courses(),
         ]);
         setTypes(t || []);
         setLogs(l || []);
+        const mappedStudents = Array.isArray(s)
+          ? s.map((st) => ({
+              value: String(st.id),
+              label: `${st.first_name} ${st.last_name}`,
+            }))
+          : [];
+        setStudents(mappedStudents);
+        const idToCourse = new Map();
+        if (Array.isArray(s)) {
+          for (const st of s) {
+            if (st.class_layout && st.class_layout.course_id) {
+              idToCourse.set(String(st.id), String(st.class_layout.course_id));
+            }
+          }
+        }
+        setStudentIdToCourseId(idToCourse);
+        setCourses(
+          Array.isArray(cs)
+            ? cs.map((c) => ({ value: String(c.id), label: c.name }))
+            : []
+        );
       } catch (e) {
         console.error('Failed to load finance data', e);
         toast.error('Kon financiën niet laden.');
@@ -156,6 +185,18 @@ export default function FinancePage() {
     }
   };
 
+  const formatDateNl = (value) => {
+    try {
+      return new Date(value).toLocaleDateString('nl-NL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    } catch {
+      return String(value ?? '');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -233,7 +274,7 @@ export default function FinancePage() {
             <TableBody>
               {logs.map((l) => (
                 <TableRow key={l.id}>
-                  <TableCell>{new Date(l.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatDateNl(l.date)}</TableCell>
                   <TableCell>
                     {l.transaction_type === 'income' ? 'Inkomen' : 'Uitgave'}
                   </TableCell>
@@ -379,6 +420,46 @@ export default function FinancePage() {
                 />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
+                <FormField
+                  control={logForm.control}
+                  name="student_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Leerling (optioneel)</FormLabel>
+                      <FormControl>
+                        <ComboboxField
+                          items={students}
+                          value={field.value}
+                          onChange={(v) => {
+                            field.onChange(v);
+                            const detected = studentIdToCourseId.get(String(v));
+                            if (detected) {
+                              logForm.setValue('course_id', detected);
+                            }
+                          }}
+                          placeholder="Kies leerling"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={logForm.control}
+                  name="course_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lespakket (optioneel)</FormLabel>
+                      <FormControl>
+                        <ComboboxField
+                          items={courses}
+                          value={field.value}
+                          onChange={(v) => field.onChange(v)}
+                          placeholder="Kies lespakket"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={logForm.control}
                   name="method"

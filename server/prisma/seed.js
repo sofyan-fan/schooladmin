@@ -149,6 +149,8 @@ function makeEmail(first, last, domain = 'school.com') {
 async function cleanDatabase() {
   console.log('🧹 Database wordt opgeschoond...');
   // Delete records in an order that respects foreign key constraints.
+  await prisma.financial_log.deleteMany();
+  await prisma.financial_type.deleteMany();
   await prisma.result.deleteMany();
   await prisma.assessment.deleteMany();
   await prisma.course_module_subject.deleteMany();
@@ -306,7 +308,23 @@ async function main() {
   );
   console.log(`✅ ${courses.length} lespakketten aangemaakt.`);
 
-  // 5. Gebruikers (Admin, Docenten, Leerlingen)
+  // 5. Financiële types
+  console.log('Financiële types worden aangemaakt...');
+  const FINANCIAL_TYPES = [
+    { name: 'Lesgeld', description: 'Maandelijks lesgeld' },
+    { name: 'Donaties', description: 'Vrijwillige bijdragen' },
+    { name: 'Kantoorartikelen', description: 'Verbruiksmaterialen' },
+    { name: 'Boodschappen', description: 'Boodschappen en verbruik' },
+    { name: 'Materiaal', description: 'Lesmaterialen' },
+  ];
+  const createdTypes = [];
+  for (const t of FINANCIAL_TYPES) {
+    createdTypes.push(await prisma.financial_type.create({ data: t }));
+  }
+  const typeByName = new Map(createdTypes.map((t) => [t.name, t]));
+  console.log(`✅ ${createdTypes.length} financiële types aangemaakt.`);
+
+  // 6. Gebruikers (Admin, Docenten, Leerlingen)
   console.log('Gebruikers worden aangemaakt...');
   const adminUser = await prisma.user.create({
     data: {
@@ -418,6 +436,61 @@ async function main() {
     )
   );
   console.log(`✅ ${students.length} leerlingen aangemaakt.`);
+
+  // 7. Financiële transacties (inkomsten & uitgaven)
+  console.log('Financiële transacties worden aangemaakt...');
+  const paymentMethods = ['iDEAL', 'SEPA incasso', 'Contant', 'Creditcard'];
+
+  // Inkomsten: lesgeld voor willekeurige leerlingen en cursussen
+  const incomeCount = Math.min(20, students.length);
+  for (let i = 0; i < incomeCount; i++) {
+    // kies een leerling en vind zijn klas; selecteer een gerelateerd course_id via class_layout.course_id
+    const s = faker.helpers.arrayElement(students);
+    const sWithClass = await prisma.student.findUnique({
+      where: { id: s.id },
+      include: { class_layout: true },
+    });
+    const courseId =
+      sWithClass?.class_layout?.course_id ||
+      faker.helpers.arrayElement(courses).id;
+
+    await prisma.financial_log.create({
+      data: {
+        type_id: typeByName.get('Lesgeld').id,
+        student_id: s.id,
+        course_id: courseId,
+        amount: faker.number.float({ min: 50, max: 200, multipleOf: 0.5 }),
+        method: faker.helpers.arrayElement(paymentMethods),
+        notes: 'Automatisch gegenereerde lesgeldbetaling',
+        transaction_type: 'income',
+      },
+    });
+  }
+
+  // Uitgaven: kantoorartikelen/boodschappen/materiaal
+  const expenseTypes = ['Kantoorartikelen', 'Boodschappen', 'Materiaal'];
+  for (let i = 0; i < 10; i++) {
+    const t = faker.helpers.arrayElement(expenseTypes);
+    await prisma.financial_log.create({
+      data: {
+        type_id: typeByName.get(t).id,
+        student_id: null,
+        // Koppel materiaal-uitgaven aan een willekeurige cursus
+        course_id:
+          t === 'Materiaal' ? faker.helpers.arrayElement(courses).id : null,
+        amount: faker.number.float({ min: 20, max: 400, multipleOf: 0.5 }),
+        method: faker.helpers.arrayElement(['Contant', 'Bankoverschrijving']),
+        notes:
+          t === 'Kantoorartikelen'
+            ? 'Kantoorartikelen aankoop'
+            : t === 'Boodschappen'
+            ? 'Boodschappen voor keuken'
+            : 'Aanschaf lesmateriaal',
+        transaction_type: 'expense',
+      },
+    });
+  }
+  console.log('✅ Financiële transacties aangemaakt.');
 
   // 8. Lokalen
   console.log('Lokalen worden aangemaakt...');
