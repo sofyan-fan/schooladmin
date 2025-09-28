@@ -312,30 +312,38 @@ CREATE TABLE `student_log` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+-- CreateTable
 CREATE TABLE `_absenceToteacher` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `A` INTEGER NOT NULL,
     `B` INTEGER NOT NULL,
 
     UNIQUE INDEX `_absenceToteacher_AB_unique`(`A`, `B`),
-    INDEX `_absenceToteacher_B_index`(`B`)
+    INDEX `_absenceToteacher_B_index`(`B`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+-- CreateTable
 CREATE TABLE `_absenceTostudent` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `A` INTEGER NOT NULL,
     `B` INTEGER NOT NULL,
 
     UNIQUE INDEX `_absenceTostudent_AB_unique`(`A`, `B`),
-    INDEX `_absenceTostudent_B_index`(`B`)
+    INDEX `_absenceTostudent_B_index`(`B`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `_course_subjects` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `A` INTEGER NOT NULL,
     `B` INTEGER NOT NULL,
 
     UNIQUE INDEX `_course_subjects_AB_unique`(`A`, `B`),
-    INDEX `_course_subjects_B_index`(`B`)
+    INDEX `_course_subjects_B_index`(`B`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
