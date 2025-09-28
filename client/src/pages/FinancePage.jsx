@@ -33,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, CircleDollarSign } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -160,7 +160,7 @@ export default function FinancePage() {
     <div className="space-y-6">
       <PageHeader
         title="Financiën"
-        icon={<Plus className="size-9 opacity-0" />}
+        icon={<CircleDollarSign className="size-9" />}
         description="Beheer financiële types en transacties."
       >
         <div className="flex gap-2">
