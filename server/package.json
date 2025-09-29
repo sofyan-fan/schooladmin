@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nodemon -r dotenv/config server.js",
     "start": "node server.js",
+    "build": "echo 'no build step'",
     "cleanup:mentors": "node -r dotenv/config prisma/scripts/cleanup-duplicate-mentors.js"
   },
   "keywords": [],
@@ -15,7 +16,7 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
-    "@faker-js/faker": "^9.0.0",
+    "@faker-js/faker": "10.0.0",
     "@prisma/client": "4.16.2",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
