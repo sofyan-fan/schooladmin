@@ -376,7 +376,7 @@ model student_log {
 
   student    student @relation(fields: [student_id], references: [id])
   student_id Int
-
+  subject   String
   date      DateTime
   start_log String
   end_log   String
@@ -387,12 +387,11 @@ model student_log {
 
   @@index([student_id, date])
 }
+
 model financial_type {
   id          Int              @id @default(autoincrement())
   name        String           @unique
   description String?
-  created_at  DateTime         @default(now())
-  updated_at  DateTime         @updatedAt
 
   logs financial_log[]
 }
