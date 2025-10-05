@@ -1,0 +1,136 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-09-27T00:00:00.000Z",
+  "__export_source": "schooladmin-alpha:generated",
+  "resources": [
+    {
+      "_id": "wrk_schooladmin_finance",
+      "_type": "workspace",
+      "name": "Schooladmin Finance",
+      "parentId": null
+    },
+    {
+      "_id": "fld_financial_types",
+      "_type": "request_group",
+      "name": "Finance Types",
+      "parentId": "wrk_schooladmin_finance"
+    },
+    {
+      "_id": "req_fin_type_create",
+      "_type": "request",
+      "parentId": "fld_financial_types",
+      "name": "Create Financial Type",
+      "method": "POST",
+      "url": "http://localhost:3000/general/financial_types",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Lesgeld\",\n  \"description\": \"Maandelijks lesgeld\"\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": []
+    },
+    {
+      "_id": "req_fin_type_list",
+      "_type": "request",
+      "parentId": "fld_financial_types",
+      "name": "Get Financial Types",
+      "method": "GET",
+      "url": "http://localhost:3000/general/financial_types",
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "req_fin_type_update",
+      "_type": "request",
+      "parentId": "fld_financial_types",
+      "name": "Update Financial Type",
+      "method": "PUT",
+      "url": "http://localhost:3000/general/financial_types/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Lesgeld (bijgewerkt)\",\n  \"description\": \"Bijgewerkte omschrijving\"\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": []
+    },
+    {
+      "_id": "req_fin_type_delete",
+      "_type": "request",
+      "parentId": "fld_financial_types",
+      "name": "Delete Financial Type",
+      "method": "DELETE",
+      "url": "http://localhost:3000/general/financial_types/1",
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "fld_financial_logs",
+      "_type": "request_group",
+      "name": "Finance Logs",
+      "parentId": "wrk_schooladmin_finance"
+    },
+    {
+      "_id": "req_fin_log_create_income",
+      "_type": "request",
+      "parentId": "fld_financial_logs",
+      "name": "Create Financial Log",
+      "method": "POST",
+      "url": "http://localhost:3000/general/financial_logs",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type_id\": 1,\n  \"student_id\": null,\n  \"course_id\": null,\n  \"amount\": 125.5,\n  \"method\": \"iDEAL\",\n  \"notes\": \"Lesgeld oktober\",\n  \"transaction_type\": \"income\"\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": []
+    },
+    {
+      "_id": "req_fin_log_create_expense",
+      "_type": "request",
+      "parentId": "fld_financial_logs",
+      "name": "Create Expense",
+      "method": "POST",
+      "url": "http://localhost:3000/general/financial_logs",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type_id\": 1,\n  \"student_id\": null,\n  \"course_id\": null,\n  \"amount\": 45.0,\n  \"method\": \"Contant\",\n  \"notes\": \"Kantoorartikelen\",\n  \"transaction_type\": \"expense\"\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": []
+    },
+    {
+      "_id": "req_fin_log_list",
+      "_type": "request",
+      "parentId": "fld_financial_logs",
+      "name": "Get Financial Logs",
+      "method": "GET",
+      "url": "http://localhost:3000/general/financial_logs",
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "req_fin_log_update",
+      "_type": "request",
+      "parentId": "fld_financial_logs",
+      "name": "Update Financial Log",
+      "method": "PUT",
+      "url": "http://localhost:3000/general/financial_logs/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"notes\": \"Lesgeld oktober (te laat betaald)\"\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": []
+    },
+    {
+      "_id": "req_fin_log_delete",
+      "_type": "request",
+      "parentId": "fld_financial_logs",
+      "name": "Delete Financial Log",
+      "method": "DELETE",
+      "url": "http://localhost:3000/general/financial_logs/1",
+      "parameters": [],
+      "headers": []
+    }
+  ]
+}

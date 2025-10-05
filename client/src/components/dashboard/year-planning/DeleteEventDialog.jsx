@@ -1,35 +1,36 @@
-import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const DeleteEventDialog = ({ isOpen, onClose, onConfirm }) => {
-  if (!isOpen) return null;
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Weet je het zeker?</DialogTitle>
-          <DialogDescription>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+          <AlertDialogDescription>
             Deze actie kan niet ongedaan worden gemaakt. Dit zal de activiteit
-            permanent verwijderen.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
-            Annuleren
-          </Button>
-          <Button type="submit" onClick={onConfirm}>
+            permanent verwijderen uit de jaarplanning.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/90" onClick={onClose}>Annuleren</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             Verwijderen
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

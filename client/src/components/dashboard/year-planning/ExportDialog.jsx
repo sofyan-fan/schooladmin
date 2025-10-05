@@ -3,30 +3,51 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { FileSpreadsheet, FileText } from 'lucide-react';
 
-const ExportDialog = ({ isOpen, onClose, onConfirm }) => {
+const ExportDialog = ({ isOpen, onClose, onExportExcel, onExportPDF }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Exporteren naar Excel</DialogTitle>
+          <DialogTitle>Exporteer gegevens</DialogTitle>
           <DialogDescription>
-            Weet je zeker dat je de jaarplanning wilt exporteren naar een
-            Excel-bestand?
+            Kies een bestandsformaat voor het exporteren van de jaarplanning.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
-            Annuleren
+        <div className="grid grid-cols-2 gap-4 py-6">
+          <Button
+            variant="outline"
+            className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
+            onClick={() => {
+              onExportExcel();
+              onClose();
+            }}
+          >
+            <FileSpreadsheet className="size-16 text-green-600" />
+            <div className="text-center">
+              <div className="font-semibold text-lg">Excel</div>
+              {/* <div className="text-xs text-muted-foreground">.xlsx</div> */}
+            </div>
           </Button>
-          <Button type="submit" onClick={onConfirm}>
-            Exporteren
+          <Button
+            variant="outline"
+            className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
+            onClick={() => {
+              onExportPDF();
+              onClose();
+            }}
+          >
+            <FileText className="size-16 text-red-600" />
+            <div className="text-center">
+              <div className="font-semibold text-lg">PDF</div>
+              {/* <div className="text-xs text-muted-foreground">.pdf</div> */}
+            </div>
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

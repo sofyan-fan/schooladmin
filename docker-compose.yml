@@ -52,13 +52,13 @@ services:
     working_dir: /usr/src/app
     volumes:
       - ./server:/usr/src/app
-    command: npx prisma studio \
-               --schema=./prisma/schema.prisma \
-               --hostname=0.0.0.0
+    command: npx prisma studio --schema=./prisma/schema.prisma --hostname=0.0.0.0
     ports:
       - "5555:5555"
     depends_on:
-      - server
+      - db
+    env_file:
+      - ./server/.env
     restart: "no"
 
 volumes:

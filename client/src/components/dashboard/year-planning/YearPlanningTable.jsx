@@ -1,13 +1,31 @@
 import { Button } from '@/components/ui/button';
+import { TableCell, TableRow } from '@/components/ui/table';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { FileDown, Pencil, Plus, Trash2 } from 'lucide-react';
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { Calendar, FileDown, Plus } from 'lucide-react';
+import { useMemo } from 'react';
+import { getColumns } from './columns';
+import SearchBar from './SearchBar';
+import YearPlanningDataTable from './YearPlanningDataTable';
+
+const NoData = (
+  <TableRow>
+    <TableCell colSpan={4} className="h-48 text-center">
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <Calendar className="size-12 text-gray-400" />
+        <h3 className="text-xl font-semibold">Geen activiteiten gevonden</h3>
+        <p className="text-muted-foreground">
+          Voeg je eerste activiteit toe aan de jaarplanning.
+        </p>
+      </div>
+    </TableCell>
+  </TableRow>
+);
 
 const YearPlanningTable = ({
   items,
@@ -15,71 +33,65 @@ const YearPlanningTable = ({
   onDeleteClick,
   onAddClick,
   onExportClick,
+  loading = false,
 }) => {
+  const columns = useMemo(
+    () => getColumns(onEditClick, onDeleteClick),
+    [onEditClick, onDeleteClick]
+  );
+
+  const table = useReactTable({
+    data: items || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 4,
+      },
+    },
+  });
+
   return (
-    <Table>
-      <TableHeader className="sticky top-0 z-10 bg-white text-xs uppercase tracking-wide text-neutral-600">
-        <TableRow>
-          <TableHead>Activiteit</TableHead>
-          <TableHead>Datum</TableHead>
-          {/* <TableHead>Tijd</TableHead> */}
-          <TableHead className="text-right">
-            <div className="flex items-center justify-end">
-              {/* <span>Acties</span> */}
-              <Button
-                variant="default"
-                size="sm"
-                className="ml-4 bg-primary text-white hover:cursor-pointer hover:bg-lime-500"
-                onClick={onAddClick}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Toevoegen
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-2 cursor-pointer hover:bg-primary hover:text-white"
-                onClick={onExportClick}
-              >
-                <FileDown className="size-8 cursor-pointer" />
-              </Button>
-            </div>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.map((item, index) => (
-          <TableRow
-            key={index}
-            className="border-b border-neutral-200 hover:bg-neutral-50 text-lg text-neutral-700"
-          >
-            <TableCell className="font-medium">{item.name}</TableCell>
-            <TableCell> {item.date.split('T')[0]}</TableCell>
-            {/* <TableCell>{item.time}</TableCell> */}
-            <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-x-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="cursor-pointer hover:bg-primary hover:text-white rounded-full"
-                  onClick={() => onEditClick(item)}
-                >
-                  <Pencil className="size-6 " />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="cursor-pointer hover:bg-primary hover:text-white rounded-full"
-                  onClick={() => onDeleteClick(item)}
-                >
-                  <Trash2 className="size-6 " />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="space-y-4">
+      {/* Toolbar with Search and Action buttons */}
+      <div className="flex items-center justify-between">
+        {/* Search/Filter Toolbar */}
+        <div className="flex items-center w-full justify-between space-x-4">
+          <SearchBar table={table} filterColumn="name" />
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-primary text-white hover:bg-primary/90 text-base"
+              onClick={onAddClick}
+            >
+              <Plus className="size-[1.5rem] mr-2" />
+              Toevoegen
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExportClick}
+              className="hover:text-regular text-base"
+            >
+              <FileDown className="size-[1.5rem] mr-2" />
+              Exporteren
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* DataTable */}
+      <YearPlanningDataTable
+        table={table}
+        loading={loading}
+        columns={columns}
+        NoDataComponent={NoData}
+      />
+    </div>
   );
 };
 

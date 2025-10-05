@@ -4,7 +4,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon -r dotenv/config server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "echo 'no build step'",
+    "cleanup:mentors": "node -r dotenv/config prisma/scripts/cleanup-duplicate-mentors.js"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +16,8 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
-    "@prisma/client": "^4.9.0",
+    "@faker-js/faker": "10.0.0",
+    "@prisma/client": "4.16.2",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "bootstrap": "^5.3.3",
@@ -25,8 +28,8 @@
     "ejs": "^3.1.10",
     "express": "^4.21.1",
     "express-session": "^1.18.1",
-    "jspdf": "^2.5.2",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^2.5.2",
     "nodemon": "^3.1.7",
     "path": "^0.12.7",
     "router": "^2.0.0",
@@ -34,6 +37,6 @@
     "superheroes": "^4.0.0"
   },
   "devDependencies": {
-    "prisma": "^4.9.0"
+    "prisma": "4.16.2"
   }
 }

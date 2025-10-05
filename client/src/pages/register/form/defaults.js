@@ -1,0 +1,16 @@
+export const defaultValues = {
+  email: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  birthDate: undefined,
+  gender: undefined,
+  address: '',
+  city: '',
+  postalCode: '',
+  phone: '',
+  sosnumber: '',
+  parentName: '',
+  lesson_package: '',
+  payment_method: 'iDEAL',
+};

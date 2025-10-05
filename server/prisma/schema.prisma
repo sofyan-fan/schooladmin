@@ -8,16 +8,16 @@ datasource db {
 }
 
 model user {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  password     String
-  role         String
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  role       String
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
 }
 
 model student {
-  id                Int       @id @default(autoincrement())
+  id                Int      @id @default(autoincrement())
   first_name        String
   last_name         String
   birth_date        DateTime
@@ -29,193 +29,303 @@ model student {
   parent_name       String
   parent_email      String
   lesson_package    String
-  enrollment_status Boolean   @default(true)
+  payment_method    String
+  sosnumber         String
+  enrollment_status Boolean  @default(true)
 
-  class_layout      class_layout? @relation(fields: [class_id], references: [id])
-  class_id          Int?
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
 
-  progress          progress[]
-  absences          absence[]
-  payments          tuition_payment[]
-  results           result[]
+  class_layout class_layout? @relation(fields: [class_id], references: [id])
+  class_id     Int?
+
+  active   Boolean           @default(true)
+  progress progress[]
+  absences absence[]
+  payments tuition_payment[]
+  results  result[]
+
+  student_log student_log[]
+
+  financial_log financial_log[]
 }
 
 model teacher {
-  id            Int      @id @default(autoincrement())
-  first_name    String
-  last_name     String
-  email         String
-  phone         String
-  address       String
-  is_active     Boolean  @default(true)
-  compensation  Float?
-  cv_url        String?
-  vog_url       String?
-  id_document   String?
+  id           Int     @id @default(autoincrement())
+  first_name   String
+  last_name    String
+  email        String
+  phone        String
+  address      String
+  is_active    Boolean @default(true)
+  compensation Float?
+  sosnumber    String?
+  cv_url       String?
+  vog_url      String?
+  id_document  String?
+  active       Boolean @default(true)
 
-  absences      absence[]
+  absences     absence[]
+  roster       roster[]
+  class_layout class_layout[]
 
-  roster roster[]
+  time_registration time_registration[]
 }
 
 model admin {
-  id            Int      @id @default(autoincrement())
-  first_name    String
-  last_name     String
-  email         String
-  phone         String
-  address       String
-  is_active     Boolean  @default(true)
+  id         Int     @id @default(autoincrement())
+  first_name String
+  last_name  String
+  email      String
+  phone      String
+  address    String
+  is_active  Boolean @default(true)
 }
 
 model class_layout {
-  id         Int       @id @default(autoincrement())
-  name       String
-  students   student[]
-  tests      test[]
-  exams      exam[]
-  schedules  schedule[]
+  id   Int    @id @default(autoincrement())
+  name String
 
-  roster roster[]
+  mentor_id Int?     @unique
+  mentor    teacher? @relation(fields: [mentor_id], references: [id])
+
+  course_id Int?
+  course    courses? @relation(fields: [course_id], references: [id])
+
+  students    student[]
+  assessments assessment[]
+  schedules   schedule[]
+  roster      roster[]
+}
+
+model assessment {
+  id           Int          @id @default(autoincrement())
+  type         String // e.g. "test", "exam", "quiz"
+  name         String
+  class_layout class_layout @relation(fields: [class_id], references: [id])
+  class_id     Int
+
+  subject    course_module_subject @relation(fields: [subject_id], references: [id])
+  subject_id Int
+
+  leverage    Float    @default(1)
+  date        DateTime
+  is_central  Boolean  @default(false)
+  description String?
+
+  results result[]
 }
 
 model progress {
-  id           Int      @id @default(autoincrement())
-  student      student  @relation(fields: [student_id], references: [id])
-  student_id   Int
-  subject_id   Int
-  date         DateTime
-  start_verse  String
-  end_verse    String
-  completed    Boolean
-  notes        String?
-}
-
-model absence {
-  id          Int      @id @default(autoincrement())
-  student     student? @relation(fields: [student_id], references: [id])
-  student_id  Int?
-  teacher     teacher? @relation(fields: [teacher_id], references: [id])
-  teacher_id  Int?
-  date        DateTime
-  reason      String
-}
-
-model test {
-  id           Int         @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
-  class_id     Int
-  subject      subject      @relation(fields: [subject_id], references: [id])
-  subject_id   Int
-  date         DateTime
-  description  String?
-}
-
-model exam {
-  id           Int         @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
-  class_id     Int
-  subject      subject      @relation(fields: [subject_id], references: [id])
-  subject_id   Int
-  date         DateTime
-  is_central   Boolean
-}
-
-model result {
   id          Int      @id @default(autoincrement())
   student     student  @relation(fields: [student_id], references: [id])
   student_id  Int
   subject_id  Int
-  grade       Float
   date        DateTime
-}
-
-model schedule {
-  id           Int         @id @default(autoincrement())
-  class_layout class_layout @relation(fields: [class_id], references: [id])
-  class_id     Int
-  day          String
-  start_time   String
-  end_time     String
-  classroom    String
-}
-
-model tuition_payment {
-  id          Int      @id @default(autoincrement())
-  student     student  @relation(fields: [student_id], references: [id])
-  student_id  Int
-
-  course      courses  @relation(fields: [course_id], references: [id])
-  course_id   Int
-
-  amount      Float
-  date        DateTime
-  status      String
+  start_verse String
+  end_verse   String
+  completed   Boolean
   notes       String?
 }
 
+model absence {
+  id         Int      @id @default(autoincrement())
+  // Exactly one of student_id or teacher_id should be set based on role
+  student    student? @relation(fields: [student_id], references: [id])
+  student_id Int?
+  teacher    teacher? @relation(fields: [teacher_id], references: [id])
+  teacher_id Int?
+  role       String // "student" or "teacher"
+  roster     roster   @relation(fields: [roster_id], references: [id])
+  roster_id  Int
+  reason     String
+  date       DateTime
+  created_at DateTime @default(now())
+}
+
+// model test {
+//   id           Int          @id @default(autoincrement())
+//   class_layout class_layout @relation(fields: [class_id], references: [id])
+//   class_id     Int
+//   subject      subject      @relation(fields: [subject_id], references: [id])
+//   subject_id   Int
+//   date         DateTime
+//   description  String?
+// }
+
+// model exam {
+//   id           Int          @id @default(autoincrement())
+//   class_layout class_layout @relation(fields: [class_id], references: [id])
+//   class_id     Int
+//   subject      subject      @relation(fields: [subject_id], references: [id])
+//   subject_id   Int
+//   date         DateTime
+//   is_central   Boolean
+// }
+
+model result {
+  id         Int     @id @default(autoincrement())
+  student    student @relation(fields: [student_id], references: [id])
+  student_id Int
+
+  assessment    assessment @relation(fields: [assessment_id], references: [id])
+  assessment_id Int
+
+  grade Float
+  date  DateTime
+}
+
+model classroom {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  capacity    Int
+  description String?
+
+  schedules schedule[]
+  rosters   roster[]
+}
+
+model schedule {
+  id           Int          @id @default(autoincrement())
+  class_layout class_layout @relation(fields: [class_id], references: [id])
+  class_id     Int
+
+  day        String
+  start_time String
+  end_time   String
+
+  classroom    classroom @relation(fields: [classroom_id], references: [id])
+  classroom_id Int
+}
+
+model roster {
+  id           Int          @id @default(autoincrement())
+  class_layout class_layout @relation(fields: [class_id], references: [id])
+  class_id     Int
+
+  subject    subject @relation(fields: [subject_id], references: [id])
+  subject_id Int
+
+  teacher    teacher @relation(fields: [teacher_id], references: [id])
+  teacher_id Int
+
+  day_of_week String
+  start_time  String
+  end_time    String
+
+  classroom    classroom @relation(fields: [classroom_id], references: [id])
+  classroom_id Int
+
+  created_at DateTime  @default(now())
+  absence    absence[]
+}
+
+model tuition_payment {
+  id         Int     @id @default(autoincrement())
+  student    student @relation(fields: [student_id], references: [id])
+  student_id Int
+
+  course    courses @relation(fields: [course_id], references: [id])
+  course_id Int
+
+  amount Float
+  date   DateTime
+  status String
+  notes  String?
+}
+
 model book_inventory {
-  id        Int    @id @default(autoincrement())
-  name      String
-  stock     Int
-  price     Int
+  id    Int    @id @default(autoincrement())
+  name  String
+  stock Int
+  price Int
 }
 
 model courses {
-  id              Int              @id @default(autoincrement())
-  name            String
-  description     String
-  price           Float
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
 
   tuition_payments tuition_payment[]
-  subjects        subject[]        @relation("course_subjects")
+  subjects         subject[]                @relation("course_subjects")
+  class_layout     class_layout[]
+  course_modules   course_module_relation[]
+
+  financial_log financial_log[]
 }
 
 model course_module {
-  id       Int                      @id @default(autoincrement())
-  name     String
+  id   Int    @id @default(autoincrement())
+  name String
+
   subjects course_module_subject[]
+  courses  course_module_relation[]
+}
+
+model course_module_relation {
+  id        Int           @id @default(autoincrement())
+  course    courses       @relation(fields: [course_id], references: [id])
+  course_id Int
+  module    course_module @relation(fields: [module_id], references: [id])
+  module_id Int
+
+  @@unique([course_id, module_id])
 }
 
 model course_module_subject {
-  id               Int            @id @default(autoincrement())
-  course_module    course_module  @relation(fields: [course_module_id], references: [id])
+  id               Int           @id @default(autoincrement())
+  course_module    course_module @relation(fields: [course_module_id], references: [id])
   course_module_id Int
 
-  subject          subject        @relation(fields: [subject_id], references: [id])
-  subject_id       Int
+  subject    subject @relation(fields: [subject_id], references: [id])
+  subject_id Int
 
-  level            String
-  material         String
+  level    String
+  material String
+
+  assessments assessment[]
 
   @@unique([course_module_id, subject_id, level, material])
 }
 
+// model subject {
+//   id   Int    @id @default(autoincrement())
+//   name String
+
+//   levels    subject_level[]
+//   materials subject_material[]
+
+//   tests           test[]
+//   exams           exam[]
+//   roster          roster[]
+//   courses         courses[]               @relation("course_subjects")
+//   module_subjects course_module_subject[]
+// }
+
 model subject {
-  id        Int                  @id @default(autoincrement())
-  name      String
+  id   Int    @id @default(autoincrement())
+  name String
 
   levels    subject_level[]
   materials subject_material[]
 
-  tests     test[]
-  exams     exam[]
-  roster    roster[]
-  courses   courses[]            @relation("course_subjects")
-  moduleSubjects course_module_subject[]
+  roster          roster[]
+  courses         courses[]               @relation("course_subjects")
+  module_subjects course_module_subject[]
 }
 
 model subject_level {
-  id         Int      @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   level      String
-  subject    subject  @relation(fields: [subject_id], references: [id])
+  subject    subject @relation(fields: [subject_id], references: [id])
   subject_id Int
 }
 
 model subject_material {
-  id         Int      @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   material   String
-  subject    subject  @relation(fields: [subject_id], references: [id])
+  subject    subject @relation(fields: [subject_id], references: [id])
   subject_id Int
 }
 
@@ -229,20 +339,86 @@ model events {
   location    String?
 }
 
-model roster {
-  id            Int          @id @default(autoincrement())
-  class_layout  class_layout @relation(fields: [class_id], references: [id])
-  class_id      Int
+model time_registration {
+  id Int @id @default(autoincrement())
 
-  subject       subject      @relation(fields: [subject_id], references: [id])
-  subject_id    Int
+  teacher    teacher @relation(fields: [teacher_id], references: [id])
+  teacher_id Int
 
-  teacher       teacher      @relation(fields: [teacher_id], references: [id])
-  teacher_id    Int
+  // Identify the week this record belongs to
+  week_start DateTime // e.g., Monday of the week
+  week_end   DateTime // Sunday of the week
 
-  day_of_week   String
-  start_time    String
-  end_time      String
+  // Hours worked for each day
+  monday    Float @default(0)
+  tuesday   Float @default(0)
+  wednesday Float @default(0)
+  thursday  Float @default(0)
+  friday    Float @default(0)
+  saturday  Float @default(0)
+  sunday    Float @default(0)
 
-  created_at    DateTime     @default(now())
+  total_hours Float @default(0)
+
+  // Approval by admin
+  approved    Boolean   @default(false)
+  approved_by Int? // admin id
+  approved_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([teacher_id, week_start, week_end])
+}
+
+model student_log {
+  id Int @id @default(autoincrement())
+
+  student    student @relation(fields: [student_id], references: [id])
+  student_id Int
+
+  date      DateTime
+  start_log String
+  end_log   String
+  completed Boolean  @default(false)
+  comment   String?
+
+  created_at DateTime @default(now())
+
+  @@index([student_id, date])
+}
+model financial_type {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+
+  logs financial_log[]
+}
+
+model financial_log {
+  id               Int             @id @default(autoincrement())
+  type             financial_type  @relation(fields: [type_id], references: [id])
+  type_id          Int
+
+  // student and course are optional
+  student          student?        @relation(fields: [student_id], references: [id])
+  student_id       Int?
+
+  course           courses?        @relation(fields: [course_id], references: [id])
+  course_id        Int?
+
+  amount           Float
+  method           String
+  notes            String?
+
+  // "income" or "expense"
+  transaction_type String
+
+  date             DateTime @default(now())
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@index([type_id])
 }

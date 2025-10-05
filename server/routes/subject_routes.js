@@ -6,7 +6,7 @@ const {
   get_subject_by_id,
   create_subject,
   update_subject,
-  delete_subject
+  delete_subject,
 } = require('../controllers/general/subject');
 
 // Subject routes
