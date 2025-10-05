@@ -11,3 +11,4 @@ server/prisma/dynamic-seeder.js
 server/prisma/seed.js/scripts/api-smoke-tests.sh
 
 .DS_Store
+DEPLOY_PLESK.md

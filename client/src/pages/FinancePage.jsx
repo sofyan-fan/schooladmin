@@ -44,7 +44,6 @@ import { toast } from 'sonner';
 export default function FinancePage() {
   const [types, setTypes] = useState([]);
   const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [openTypeDialog, setOpenTypeDialog] = useState(false);
   const [openLogDialog, setOpenLogDialog] = useState(false);
   const [students, setStudents] = useState([]);
@@ -71,7 +70,6 @@ export default function FinancePage() {
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
       try {
         const [t, l, s, cs] = await Promise.all([
           financeAPI.get_financial_types(),
@@ -106,7 +104,7 @@ export default function FinancePage() {
         console.error('Failed to load finance data', e);
         toast.error('Kon financiën niet laden.');
       } finally {
-        setLoading(false);
+        // no-op
       }
     };
     load();
@@ -435,7 +433,7 @@ export default function FinancePage() {
                           type="number"
                           step="0.01"
                           placeholder="0.00"
-                          className=""
+                          className="bg-white"
                           {...field}
                         />
                       </FormControl>
@@ -491,9 +489,18 @@ export default function FinancePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Methode</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Bijv. iDEAL / Contant" {...field} />
-                      </FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Kies methode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="iDEAL">iDEAL</SelectItem>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -527,7 +534,11 @@ export default function FinancePage() {
                   <FormItem>
                     <FormLabel>Opmerking</FormLabel>
                     <FormControl>
-                      <Input placeholder="Optioneel" {...field} />
+                      <Input
+                        className="bg-white"
+                        placeholder="Optioneel"
+                        {...field}
+                      />
                     </FormControl>
                   </FormItem>
                 )}

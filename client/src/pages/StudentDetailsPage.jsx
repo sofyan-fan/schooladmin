@@ -28,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -189,6 +190,44 @@ export default function StudentDetailsPage2() {
       },
     };
   }, [student, results, absences, klass]);
+
+  const quranProgress = {
+    summary: {
+      lastSurah: 'Al-Baqarah',
+      lastAyahRange: '1–5',
+      juz: 1,
+      pagesRead: 2,
+      memorizedVerses: 15,
+      reviewedVerses: 5,
+    },
+    recentLogs: [
+      {
+        date: '2025-09-25',
+        surah: 'Al-Fatiha',
+        from: 1,
+        to: 7,
+        type: 'memorization',
+      },
+      {
+        date: '2025-09-28',
+        surah: 'Al-Baqarah',
+        from: 1,
+        to: 5,
+        type: 'reading',
+      },
+      {
+        date: '2025-10-01',
+        surah: 'Al-Baqarah',
+        from: 6,
+        to: 10,
+        type: 'reading',
+      },
+    ],
+  };
+
+  const [quranLogs, setQuranLogs] = useState(() =>
+    (quranProgress.recentLogs || []).map((l) => ({ ...l, memorized: false }))
+  );
 
   // Using AttendanceCard's internal chart config; colors are provided via CSS vars per card usage.
 
@@ -393,6 +432,104 @@ export default function StudentDetailsPage2() {
                 tab="notities"
                 setTab={setTab}
               />
+            </div>
+
+            {/* Quran progression (dummy data) */}
+            <div className="lg:col-span-12">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                    <Notebook size={25} /> Koranvoortgang
+                  </CardTitle>
+                  <CardDescription>Voorbeeldgegevens (dummy)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Laatste soera
+                      </div>
+                      <div className="text-sm font-medium">
+                        {quranProgress.summary.lastSurah}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Laatste verzen
+                      </div>
+                      <div className="text-sm font-medium">
+                        {quranProgress.summary.lastAyahRange}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Juz / Pagina's
+                      </div>
+                      <div className="text-sm font-medium">
+                        {quranProgress.summary.juz} /{' '}
+                        {quranProgress.summary.pagesRead}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Geleerd (verzen)
+                      </div>
+                      <div className="text-sm font-medium">
+                        {quranProgress.summary.memorizedVerses}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Herhaald (verzen)
+                      </div>
+                      <div className="text-sm font-medium">
+                        {quranProgress.summary.reviewedVerses}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="text-sm font-medium mb-2">Recente logs</div>
+                    <div className="rounded-md border divide-y">
+                      {quranLogs.map((log, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 px-3 py-2 text-sm"
+                        >
+                          <div className="text-muted-foreground min-w-28">
+                            {fmtDate(log.date)}
+                          </div>
+                          <div className="font-medium flex-1">
+                            {log.surah} {log.from}–{log.to}
+                          </div>
+                          <div className="text-muted-foreground min-w-28 text-right">
+                            {log.type === 'memorization'
+                              ? 'Memorisatie'
+                              : 'Lezen'}
+                          </div>
+                          <div className="flex items-center gap-2 min-w-40 justify-end">
+                            <span className="text-xs text-muted-foreground">
+                              Geleerd?
+                            </span>
+                            <Checkbox
+                              checked={log.memorized}
+                              onCheckedChange={(v) =>
+                                setQuranLogs((arr) =>
+                                  arr.map((it, i) =>
+                                    i === idx
+                                      ? { ...it, memorized: Boolean(v) }
+                                      : it
+                                  )
+                                )
+                              }
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </TabsContent>

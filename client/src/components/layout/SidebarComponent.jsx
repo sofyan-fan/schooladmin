@@ -72,6 +72,7 @@ const SidebarComponent = () => {
     { name: 'Tijd Registratie', path: 'tijd-registratie', Icon: Clock },
     { name: 'Afwezigheid', path: 'afwezigheid', Icon: UserCheck },
     { name: 'Financiën', path: 'financien', Icon: CircleDollarSign },
+    { name: 'Qur\'an Log', path: 'quran-log', Icon: LibraryBig },
     { name: 'Instellingen', path: 'instellingen', Icon: Settings },
   ];
 

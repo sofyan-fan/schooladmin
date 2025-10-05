@@ -14,17 +14,18 @@ import DashboardPage from './pages/DashboardPage';
 import FinancePage from './pages/FinancePage';
 import LoginPage from './pages/LoginPage';
 import ModulesPage from './pages/ModulesPage';
+import QuranLogPage from './pages/QuranLogPage';
 import RegisterPage from './pages/RegisterPage';
 import ResultsPage from './pages/ResultsPage';
 // import WelcomePage from './pages/WelcomePage';
 // import RosterPage from './pages/RosterPage';
 import RostersPage from './pages/RostersPage';
 import SettingsPage from './pages/SettingsPage';
+import StudentDetailsPage from './pages/StudentDetailsPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
-import StudentDetailsPage from './pages/StudentDetailsPage';
 // import StudentDetailsPage from './pages/StudentDetailsPage';
 // import { useAuth } from './hooks/useAuth';
 
@@ -70,6 +71,7 @@ const App = () => {
         <Route path="/afwezigheid" element={<AbsencePage />} />
         {/* <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} /> */}
         <Route path="/financien" element={<FinancePage />} />
+        <Route path="/quran-log" element={<QuranLogPage />} />
         <Route path="/instellingen" element={<SettingsPage />} />
         <Route path="/leerlingen/:id" element={<StudentDetailsPage />} />
       </Route>
