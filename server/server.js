@@ -12,23 +12,32 @@ const cors = require('cors');
 const routes = require('./routes');
 
 const app = express();
-
-
 const PORT = process.env.PORT || 3000;
-
 
 app.set('trust proxy', 1);
 
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-const allowedOrigins = ['http://localhost:5173', /\.vercel\.app$/];
+const allowedOrigins = [
+  'http://localhost:5173',
+  /\.netlify\.app$/,
+  ...FRONTEND_ORIGINS,
+];
+
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true); 
+      if (!origin) return cb(null, true);
+
       const ok = allowedOrigins.some((o) =>
-        o.test ? o.test(origin) : o === origin
+        o instanceof RegExp ? o.test(origin) : o === origin
       );
-      return cb(ok ? null : new Error('Not allowed by CORS'), ok);
+
+      if (ok) return cb(null, true);
+      return cb(new Error(`Not allowed by CORS: ${origin}`));
     },
     credentials: true,
   })
@@ -41,20 +50,23 @@ app.use(
   })
 );
 
+const USE_SECURE_COOKIES = process.env.USE_SECURE_COOKIES === 'true';
+const SESSION_SECRET =
+  process.env.SESSION_SECRET || 'dev-only-secret-change-this';
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'dev-only-secret-change-this',
+    name: 'sid',
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: USE_SECURE_COOKIES,
+      sameSite: USE_SECURE_COOKIES ? 'none' : 'lax',
     },
   })
 );
-
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
