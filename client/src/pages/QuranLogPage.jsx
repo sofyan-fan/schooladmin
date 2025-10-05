@@ -3,6 +3,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import QuranLogDialog from '@/components/students/QuranLogDialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import ComboboxField from '@/components/ui/combobox';
 import {
   Table,
@@ -120,6 +121,22 @@ export default function QuranLogPage() {
     }
   };
 
+  const toggleMemorized = async (id, nextValue) => {
+    const prev = logs.find((l) => l.id === id)?.memorized;
+    setLogs((curr) =>
+      curr.map((l) => (l.id === id ? { ...l, memorized: nextValue } : l))
+    );
+    try {
+      await studentLogAPI.update_log(id, { completed: Boolean(nextValue) });
+    } catch (e) {
+      console.error('Failed to update memorized state', e);
+      // revert on failure
+      setLogs((curr) =>
+        curr.map((l) => (l.id === id ? { ...l, memorized: prev } : l))
+      );
+    }
+  };
+
   const selectedStudent = useMemo(
     () => students.find((s) => s.value === filters.studentId)?.label || '-',
     [students, filters.studentId]
@@ -162,63 +179,6 @@ export default function QuranLogPage() {
             onChange={(v) => setFilters((s) => ({ ...s, studentId: v }))}
             placeholder="Kies leerling"
           />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-4 items-end ">
-          {/* <div className="grid gap-2">
-            <Label htmlFor="from">Begin</Label>
-            <Input
-              id="from"
-              value={newLog.from}
-              onChange={(e) =>
-                setNewLog((s) => ({ ...s, from: e.target.value }))
-              }
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="to">Einde</Label>
-            <Input
-              id="to"
-              value={newLog.to}
-              onChange={(e) => setNewLog((s) => ({ ...s, to: e.target.value }))}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="date">Datum</Label>
-            <Input
-              id="date"
-              type="date"
-              value={newLog.date}
-              onChange={(e) =>
-                setNewLog((s) => ({ ...s, date: e.target.value }))
-              }
-            />
-          </div>
-          <div className="grid gap-2 sm:col-span-1">
-            <Label htmlFor="memorized">Memorisatie</Label>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="memorized"
-                checked={newLog.memorized}
-                onCheckedChange={(v) =>
-                  setNewLog((s) => ({ ...s, memorized: Boolean(v) }))
-                }
-              />
-              <span className="text-sm text-muted-foreground">Geleerd</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="description">Omschrijving</Label>
-          <Input
-            id="description"
-            value={newLog.description}
-            onChange={(e) =>
-              setNewLog((s) => ({ ...s, description: e.target.value }))
-            }
-            placeholder="Optioneel"
-          />*/}
         </div>
 
         <div className="flex items-center">
@@ -268,7 +228,12 @@ export default function QuranLogPage() {
                   <TableCell>Vers {l.to}</TableCell>
                   <TableCell>{l.date || '-'}</TableCell>
                   <TableCell>{l.description || '-'}</TableCell>
-                  <TableCell>{l.memorized ? '✓' : '-'}</TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={Boolean(l.memorized)}
+                      onCheckedChange={(v) => toggleMemorized(l.id, Boolean(v))}
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             {logs.length === 0 && (
