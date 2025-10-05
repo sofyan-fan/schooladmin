@@ -166,7 +166,15 @@ export default function FinancePage() {
         ...prev,
       ]);
       setOpenLogDialog(false);
-      logForm.reset({ method: 'iDEAL', transaction_type: 'income' });
+      logForm.reset({
+        type_id: '',
+        student_id: '',
+        course_id: '',
+        amount: '',
+        method: 'iDEAL',
+        notes: '',
+        transaction_type: 'income',
+      });
       toast.success('Transactie toegevoegd');
     } catch (e) {
       console.error('Create log failed', e);
@@ -362,7 +370,23 @@ export default function FinancePage() {
       </Dialog>
 
       {/* Create Log Dialog */}
-      <Dialog open={openLogDialog} onOpenChange={setOpenLogDialog}>
+      <Dialog
+        open={openLogDialog}
+        onOpenChange={(v) => {
+          setOpenLogDialog(v);
+          if (v) {
+            logForm.reset({
+              type_id: '',
+              student_id: '',
+              course_id: '',
+              amount: '',
+              method: 'iDEAL',
+              notes: '',
+              transaction_type: 'income',
+            });
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nieuwe Transactie</DialogTitle>
@@ -411,6 +435,7 @@ export default function FinancePage() {
                           type="number"
                           step="0.01"
                           placeholder="0.00"
+                          className=""
                           {...field}
                         />
                       </FormControl>
