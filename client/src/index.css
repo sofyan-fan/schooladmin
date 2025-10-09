@@ -141,8 +141,18 @@ body[data-scroll-locked] {
     @apply border-border outline-ring/50;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
+    overflow: auto;
+    /* Single global scrollbar */
+    scrollbar-gutter: stable both-edges;
+    /* Prevent layout shift */
   }
 }
 
