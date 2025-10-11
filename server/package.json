@@ -6,6 +6,7 @@
     "dev": "nodemon -r dotenv/config server.js",
     "start": "node server.js",
     "build": "echo 'no build step'",
+    "buildv2": "cd client && npm install && npm run build",
     "cleanup:mentors": "node -r dotenv/config prisma/scripts/cleanup-duplicate-mentors.js"
   },
   "keywords": [],
@@ -29,7 +30,7 @@
     "express": "^4.21.1",
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
-    "jspdf": "^2.5.2",
+    "jspdf": "^3.0.3",
     "nodemon": "^3.1.7",
     "path": "^0.12.7",
     "router": "^2.0.0",

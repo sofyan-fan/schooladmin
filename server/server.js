@@ -10,6 +10,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors');
 const routes = require('./routes');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,6 +68,14 @@ app.use(
     },
   })
 );
+
+// Serve React static files
+app.use(express.static(path.join(__dirname, 'client', 'build')));
+
+// Catch-all route to serve React's index.html (after all API routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+});
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
