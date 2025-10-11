@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+// import ModuleAPI from '@/apis/moduleAPI';
 import {
   Card,
   CardContent,
@@ -13,9 +14,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Edit, Eye, Layers3, MoreVertical, Trash2 } from 'lucide-react';
+import {
+  Edit,
+  Eye,
+  Layers3,
+  MoreVertical,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 
-export const CourseCard = ({ course, onEdit, onDelete, onView }) => {
+export const CourseCard = ({
+  course,
+  onEdit,
+  onDelete,
+  onView,
+  onOpenSettings,
+}) => {
   if (!course) {
     return null;
   }
@@ -72,6 +86,15 @@ export const CourseCard = ({ course, onEdit, onDelete, onView }) => {
             >
               <Trash2 className="mr-2 h-4 w-4" />
               <span>Verwijderen</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenSettings();
+              }}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Instellingen</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

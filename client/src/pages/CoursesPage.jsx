@@ -1,6 +1,7 @@
 import courseApi from '@/apis/courseAPI';
 import moduleApi from '@/apis/moduleAPI';
 import { CourseCard } from '@/components/courses/CourseCard';
+import CourseSettingsModal from '@/components/courses/CourseSettingsModal';
 import CreateModal from '@/components/courses/CreateModal';
 import EditModal from '@/components/courses/EditModal';
 import ViewCourseDialog from '@/components/courses/ViewCourseDialog';
@@ -16,10 +17,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Layers3, Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
 const CoursesPage = () => {
+  // const [activeTab, setActiveTab] = useState('lespakketten');
+
   // State for data
   const [courses, setCourses] = useState([]);
   const [modules, setModules] = useState([]);
@@ -34,6 +36,45 @@ const CoursesPage = () => {
   const [courseToEdit, setCourseToEdit] = useState(null);
   const [courseToDelete, setCourseToDelete] = useState(null);
   const [courseToView, setCourseToView] = useState(null);
+  const [courseForSettings, setCourseForSettings] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // --- Passing criteria persistence (localStorage) ---
+  const STORAGE_KEY = 'course_module_passing_criteria_v1';
+
+  const readCriteriaFromStorage = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const writeCriteriaToStorage = useCallback((criteriaMap) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(criteriaMap));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const overlayPassingCriteria = useCallback(
+    (coursesList) => {
+      const criteriaMap = readCriteriaFromStorage();
+      return coursesList.map((course) => {
+        const courseCriteria = criteriaMap[course.id] || {};
+        const modulesWithCriteria = (course.modules || []).map((m) => ({
+          ...m,
+          passingCriteria: courseCriteria[m.id] || m.passingCriteria,
+        }));
+        return { ...course, modules: modulesWithCriteria };
+      });
+    },
+    [readCriteriaFromStorage]
+  );
 
   // Fetch initial data (both courses and modules)
   useEffect(() => {
@@ -53,7 +94,7 @@ const CoursesPage = () => {
           ...course,
           modules: course.course_module || [],
         }));
-        setCourses(enrichedCourses);
+        setCourses(overlayPassingCriteria(enrichedCourses));
         setModules(modulesData);
         console.log('Fetched courses data:', coursesData);
         console.log('Fetched modules data:', modulesData);
@@ -69,7 +110,7 @@ const CoursesPage = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [overlayPassingCriteria]);
 
   const refreshCourses = async () => {
     try {
@@ -79,7 +120,7 @@ const CoursesPage = () => {
         ...course,
         modules: course.course_module || [],
       }));
-      setCourses(enrichedCourses);
+      setCourses(overlayPassingCriteria(enrichedCourses));
     } catch (e) {
       setApiError(e.message || 'Kon de lespakketten niet vernieuwen.');
     }
@@ -91,14 +132,10 @@ const CoursesPage = () => {
     try {
       if (isEditModalOpen) {
         await courseApi.update_course({ ...courseData, id: courseToEdit.id });
-        toast.success(
-            `Lespakket "${courseData.name}" is bijgewerkt!`
-        );
+        toast.success(`Lespakket "${courseData.name}" is bijgewerkt!`);
       } else {
         await courseApi.add_course(courseData);
-        toast.success(
-          `Lespakket "${courseData.name}" is toegevoegd!`
-        );
+        toast.success(`Lespakket "${courseData.name}" is toegevoegd!`);
       }
       await refreshCourses();
       setIsCreateModalOpen(false);
@@ -114,9 +151,7 @@ const CoursesPage = () => {
     if (!courseToDelete) return;
     try {
       await courseApi.delete_course(courseToDelete.id);
-      toast.success(
-        `Lespakket "${courseToDelete.name}" is verwijderd!`
-      );
+      toast.success(`Lespakket "${courseToDelete.name}" is verwijderd!`);
       await refreshCourses();
       setCourseToDelete(null); // Close dialog on success
     } catch (e) {
@@ -133,6 +168,10 @@ const CoursesPage = () => {
   };
   const handleDeleteClick = (course) => setCourseToDelete(course);
   const handleViewClick = (course) => setCourseToView(course);
+  const handleOpenSettings = (course) => {
+    setCourseForSettings(course);
+    setIsSettingsOpen(true);
+  };
 
   // --- Render Logic ---
 
@@ -167,11 +206,23 @@ const CoursesPage = () => {
             onEdit={() => handleEditClick(course)}
             onDelete={() => handleDeleteClick(course)}
             onView={() => handleViewClick(course)}
+            onOpenSettings={() => handleOpenSettings(course)}
           />
         ))}
       </div>
     );
   };
+
+  // const renderModulesContent = () => {
+  //   return (
+  //     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+  //       {modules.map((module) => (
+  //         // <ModuleCard key={module.id} module={module} />
+  //         <div key={module.id}>{module.name}</div>
+  //       ))}
+  //     </div>
+  //   );
+  // };
 
   return (
     <>
@@ -227,6 +278,43 @@ const CoursesPage = () => {
         open={!!courseToView}
         onOpenChange={() => setCourseToView(null)}
         course={courseToView}
+      />
+
+      {/* Settings Modal */}
+      <CourseSettingsModal
+        open={isSettingsOpen}
+        onOpenChange={(open) => {
+          setIsSettingsOpen(open);
+          if (!open) setCourseForSettings(null);
+        }}
+        course={courseForSettings}
+        onSave={(moduleCriteria) => {
+          if (!courseForSettings) return;
+          const criteriaMap = readCriteriaFromStorage();
+          const updatedForCourse = {
+            ...(criteriaMap[courseForSettings.id] || {}),
+            ...moduleCriteria,
+          };
+          const mergedCriteriaMap = {
+            ...criteriaMap,
+            [courseForSettings.id]: updatedForCourse,
+          };
+          writeCriteriaToStorage(mergedCriteriaMap);
+
+          // Reflect immediately in UI
+          setCourses((prev) => {
+            const updated = prev.map((c) => {
+              if (c.id !== courseForSettings.id) return c;
+              const modulesWithCriteria = (c.modules || []).map((m) => ({
+                ...m,
+                passingCriteria: updatedForCourse[m.id] || undefined,
+              }));
+              return { ...c, modules: modulesWithCriteria };
+            });
+            return updated;
+          });
+          toast.success('Instellingen opgeslagen.');
+        }}
       />
 
       {/* Delete Confirmation Dialog */}

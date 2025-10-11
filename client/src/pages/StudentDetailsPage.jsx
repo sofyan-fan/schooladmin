@@ -27,6 +27,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import format from 'date-fns/format';
 import { nl } from 'date-fns/locale';
+import { X } from 'lucide-react';
+
 
 import classAPI from '@/apis/classAPI';
 import enrollmentAPI from '@/apis/enrollmentAPI';
