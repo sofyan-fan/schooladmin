@@ -29,13 +29,17 @@ import format from 'date-fns/format';
 import { nl } from 'date-fns/locale';
 import { X } from 'lucide-react';
 
-
 import classAPI from '@/apis/classAPI';
 import enrollmentAPI from '@/apis/enrollmentAPI';
 import moduleAPI from '@/apis/moduleAPI';
 import resultAPI from '@/apis/resultAPI';
 import studentAPI from '@/apis/studentAPI';
 import { absenceAPI } from '@/apis/timeregisterAPI';
+import ExportDialog from '@/utils/ExportDialog';
+import exportScheduleToPDF from '@/utils/exportScheduleToPDF';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { toast } from 'sonner';
 
 // const fmtDate = (d) =>
 //   d
@@ -63,6 +67,7 @@ export default function StudentDetailsPage2() {
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' });
   const [tab, setTab] = useState('overzicht');
   const [savingEnroll, setSavingEnroll] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -264,45 +269,186 @@ export default function StudentDetailsPage2() {
     );
   };
 
-  const quranProgress = {
-    summary: {
-      lastSurah: 'Al-Baqarah',
-      lastAyahRange: '1–5',
-      juz: 1,
-      pagesRead: 2,
-      memorizedVerses: 15,
-      reviewedVerses: 5,
-    },
-    recentLogs: [
-      {
-        date: '2025-09-25',
-        surah: 'Al-Fatiha',
-        from: 1,
-        to: 7,
-        type: 'memorization',
-      },
-      {
-        date: '2025-09-28',
-        surah: 'Al-Baqarah',
-        from: 1,
-        to: 5,
-        type: 'reading',
-      },
-      {
-        date: '2025-10-01',
-        surah: 'Al-Baqarah',
-        from: 6,
-        to: 10,
-        type: 'reading',
-      },
-    ],
+  const exportResultsToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Resultaten');
+
+    workbook.creator = 'School Admin System';
+    workbook.lastModifiedBy = 'School Admin System';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    worksheet.getColumn(1).width = 28; // Vak
+    worksheet.getColumn(2).width = 14; // Type
+    worksheet.getColumn(3).width = 36; // Naam
+    worksheet.getColumn(4).width = 16; // Datum
+    worksheet.getColumn(5).width = 10; // Cijfer
+
+    worksheet.mergeCells('A1:E1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = `RESULTATEN – ${studentStats.fullName}`;
+    titleCell.font = {
+      bold: true,
+      size: 18,
+      color: { argb: 'FF1E3A8A' },
+      name: 'Calibri',
+    };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF8F9FA' },
+    };
+    worksheet.getRow(1).height = 30;
+    worksheet.getRow(2).height = 10;
+
+    const headerRow = worksheet.getRow(3);
+    headerRow.values = ['Vak', 'Type', 'Naam', 'Datum', 'Cijfer'];
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.font = {
+        bold: true,
+        color: { argb: 'FFFFFFFF' },
+        size: 12,
+        name: 'Calibri',
+      };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E3A8A' },
+      };
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+        left: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+        bottom: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+        right: { style: 'medium', color: { argb: 'FF1E3A8A' } },
+      };
+    });
+
+    const exportRows = filteredSortedResults.map((r) => ({
+      module: getModuleName(r),
+      type: r?.assessment?.type === 'test' ? 'Toets' : 'Examen',
+      name: r?.assessment?.name || '',
+      date: r?.date ? new Date(r.date) : null,
+      grade: r?.grade ?? '',
+    }));
+
+    exportRows.forEach((row, index) => {
+      const rowIndex = index + 4;
+      const dataRow = worksheet.getRow(rowIndex);
+      const formattedDate = row.date
+        ? format(row.date, 'dd-MM-yyyy', { locale: nl })
+        : '';
+      dataRow.values = [
+        row.module,
+        row.type,
+        row.name,
+        formattedDate,
+        row.grade,
+      ];
+      dataRow.height = 20;
+
+      const isEvenRow = index % 2 === 0;
+      dataRow.eachCell((cell, colNumber) => {
+        cell.font = { size: 11, name: 'Calibri' };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEvenRow ? 'FFFFFFFF' : 'FFF8F9FA' },
+        };
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: 'left',
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          right: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        };
+        if (colNumber === 1) {
+          cell.font = { ...cell.font, bold: true };
+        }
+      });
+    });
+
+    worksheet.views = [{ state: 'frozen', ySplit: 3 }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const studentSlug = (studentStats.fullName || 'student')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gi, '_')
+      .replace(/^_+|_+$/g, '');
+    const fileName = `resultaten_${studentSlug}_${
+      new Date().toISOString().split('T')[0]
+    }.xlsx`;
+    saveAs(blob, fileName);
   };
 
-  const [quranLogs, setQuranLogs] = useState(() =>
-    (quranProgress.recentLogs || []).map((l) => ({ ...l, memorized: false }))
-  );
+  const handleExportExcelResults = async () => {
+    try {
+      await exportResultsToExcel();
+      toast.success('Resultaten succesvol geëxporteerd naar Excel!');
+    } catch (e) {
+      console.error(e);
+      toast.error(
+        'Kon de resultaten niet exporteren naar Excel. Probeer het opnieuw.'
+      );
+    }
+  };
 
-  // Using AttendanceCard's internal chart config; colors are provided via CSS vars per card usage.
+  const handleExportPDFResults = () => {
+    try {
+      const columns = [
+        { header: 'Vak', accessorKey: 'module', displayName: 'Vak' },
+        { header: 'Type', accessorKey: 'type', displayName: 'Type' },
+        { header: 'Naam', accessorKey: 'name', displayName: 'Naam' },
+        { header: 'Datum', accessorKey: 'date', displayName: 'Datum' },
+        { header: 'Cijfer', accessorKey: 'grade', displayName: 'Cijfer' },
+      ];
+
+      const rows = filteredSortedResults.map((r) => ({
+        module: getModuleName(r),
+        type: r?.assessment?.type === 'test' ? 'Toets' : 'Examen',
+        name: r?.assessment?.name || '',
+        date: r?.date || '',
+        grade: r?.grade ?? '',
+      }));
+
+      const studentSlug = (studentStats.fullName || 'student')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/gi, '_')
+        .replace(/^_+|_+$/g, '');
+
+      exportScheduleToPDF({
+        columns,
+        rows,
+        options: {
+          title: `Resultaten – ${studentStats.fullName}`,
+          fileName: `resultaten_${studentSlug}_${
+            new Date().toISOString().split('T')[0]
+          }.pdf`,
+        },
+      });
+      toast.success('Resultaten succesvol geëxporteerd naar PDF!');
+    } catch (e) {
+      console.error(e);
+      toast.error(
+        'Kon de resultaten niet exporteren naar PDF. Probeer het opnieuw.'
+      );
+    }
+  };
+
+  // Placeholder removed: Quran progress state and logs were unused
 
   const handleToggleEnrollment = async () => {
     if (!student) return;
@@ -511,6 +657,14 @@ export default function StudentDetailsPage2() {
                   </div>
                 </div>
               )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsExportDialogOpen(true)}
+                >
+                  Exporteren
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -599,6 +753,14 @@ export default function StudentDetailsPage2() {
               </Table>
             </CardContent>
           </Card>
+          <ExportDialog
+            isOpen={isExportDialogOpen}
+            onClose={() => setIsExportDialogOpen(false)}
+            onExportExcel={handleExportExcelResults}
+            onExportPDF={handleExportPDFResults}
+            title="Exporteer resultaten"
+            description="Kies een bestandsformaat voor het exporteren van de resultaten."
+          />
         </TabsContent>
 
         {/* AANWEZIGHEID */}

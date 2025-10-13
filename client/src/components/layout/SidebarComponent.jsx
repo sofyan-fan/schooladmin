@@ -44,39 +44,117 @@ import { useAuth } from '@/hooks/useAuth';
 // console.log('user_role', user_role);
 
 const SidebarComponent = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { pathname } = useLocation();
   const { toggleSidebar } = useSidebar();
   const firstSegment = pathname.split('/')[1] || '';
   const navigate = useNavigate();
 
-  const menuItems = [
-    { name: 'Dashboard', path: 'dashboard', Icon: Home },
-    { name: 'Leerlingen', path: 'leerlingen', Icon: GraduationCap },
-    { name: 'Docenten', path: 'docenten', Icon: Presentation },
+  const role = (user?.role || '').toLowerCase();
+  const hasRole = (roles) => {
+    if (!Array.isArray(roles) || roles.length === 0) return true;
+    return roles.map((r) => String(r).toLowerCase()).includes(role);
+  };
+
+  const allMenuItems = [
+    {
+      name: 'Dashboard',
+      path: 'dashboard',
+      Icon: Home,
+      roles: ['admin', 'teacher', 'student'],
+    },
+    {
+      name: 'Leerlingen',
+      path: 'leerlingen',
+      Icon: GraduationCap,
+      roles: ['admin'],
+    },
+    {
+      name: 'Docenten',
+      path: 'docenten',
+      Icon: Presentation,
+      roles: ['admin'],
+    },
     {
       name: 'Onderwijs',
       Icon: LayoutDashboard,
       subItems: [
-        { name: 'Klassen', path: 'klassen' },
-        { name: 'Leslokalen', path: 'lokalen' },
-        { name: 'Roosters', path: 'roosters' },
-        { name: 'Klas Planning', path: 'class-schedule' },
+        { name: 'Klassen', path: 'klassen', roles: ['admin'] },
+        { name: 'Leslokalen', path: 'lokalen', roles: ['admin'] },
+        { name: 'Roosters', path: 'roosters', roles: ['admin'] },
+        { name: 'Klas Planning', path: 'class-schedule', roles: ['admin'] },
       ],
     },
-    { name: 'Vakken', path: 'vakken', Icon: LibraryBig },
-    { name: 'Modules', path: 'modules', Icon: Component },
-    { name: 'Lespakketten', path: 'lespakketten', Icon: Layers },
-    { name: 'Toetsen & Examens', path: 'toetsen-en-examens', Icon: BookCheck },
-    { name: 'Resultaten', path: 'resultaten', Icon: BarChart },
-    { name: 'Tijd Registratie', path: 'tijd-registratie', Icon: Clock },
-    { name: 'Afwezigheid', path: 'afwezigheid', Icon: UserCheck },
-    { name: 'Financiën', path: 'financien', Icon: CircleDollarSign },
-    { name: 'Qur\'an Log', path: 'quran-log', Icon: LibraryBig },
-    { name: 'Instellingen', path: 'instellingen', Icon: Settings },
+    { name: 'Vakken', path: 'vakken', Icon: LibraryBig, roles: ['admin'] },
+    { name: 'Modules', path: 'modules', Icon: Component, roles: ['admin'] },
+    {
+      name: 'Lespakketten',
+      path: 'lespakketten',
+      Icon: Layers,
+      roles: ['admin'],
+    },
+    {
+      name: 'Toetsen & Examens',
+      path: 'toetsen-en-examens',
+      Icon: BookCheck,
+      roles: ['admin', 'teacher'],
+    },
+    {
+      name: 'Resultaten',
+      path: 'resultaten',
+      Icon: BarChart,
+      roles: ['admin', 'teacher'],
+    },
+    {
+      name: 'Tijd Registratie',
+      path: 'tijd-registratie',
+      Icon: Clock,
+      roles: ['admin', 'teacher'],
+    },
+    {
+      name: 'Afwezigheid',
+      path: 'afwezigheid',
+      Icon: UserCheck,
+      roles: ['admin', 'teacher'],
+    },
+    {
+      name: 'Financiën',
+      path: 'financien',
+      Icon: CircleDollarSign,
+      roles: ['admin'],
+    },
+    {
+      name: "Qur'an Log",
+      path: 'quran-log',
+      Icon: LibraryBig,
+      roles: ['admin', 'teacher'],
+    },
+    {
+      name: 'Instellingen',
+      path: 'instellingen',
+      Icon: Settings,
+      roles: ['admin', 'teacher', 'student'],
+    },
   ];
 
+  const filterItemsForRole = (items) => {
+    return items.reduce((acc, item) => {
+      if (Array.isArray(item.subItems) && item.subItems.length > 0) {
+        const visibleSub = item.subItems.filter((s) => hasRole(s.roles));
+        if (visibleSub.length > 0) {
+          acc.push({ ...item, subItems: visibleSub });
+        }
+      } else if (hasRole(item.roles)) {
+        acc.push(item);
+      }
+      return acc;
+    }, []);
+  };
+
+  const menuItems = filterItemsForRole(allMenuItems);
+
   const getActiveItemName = () => {
+    if (!Array.isArray(menuItems) || menuItems.length === 0) return '';
     const parentMatch = menuItems.find((item) =>
       item.subItems?.some((sub) => sub.path.toLowerCase() === firstSegment)
     );
@@ -117,6 +195,34 @@ const SidebarComponent = () => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
+            {(user?.role || '').toLowerCase() === 'student' ? (
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={firstSegment === 'mijn-profiel'}
+                  variant={
+                    firstSegment === 'mijn-profiel' ? 'collapse' : 'default'
+                  }
+                  tooltip="Mijn Gegevens"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(`/mijn-profiel`);
+                  }}
+                >
+                  <Link to={`/mijn-profiel`}>
+                    <GraduationCap />
+                    <span
+                      className={cn(
+                        'transition-opacity duration-150 ease-in-out',
+                        'group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden'
+                      )}
+                    >
+                      Mijn Gegevens
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ) : null}
             {menuItems.map((item) =>
               item.subItems ? (
                 <SidebarMenuItem key={item.name}>
