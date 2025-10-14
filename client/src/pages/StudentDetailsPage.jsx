@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/card';
 import GegevensTab from '@/pages/students/GegevensTab';
 import OverviewTab from '@/pages/students/OverviewTab';
-import { ArrowLeft, ArrowUpDown, User } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, User, Download } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -613,6 +613,15 @@ export default function StudentDetailsPage2() {
                     placeholder="Filter op vak"
                   />
                 </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    onClick={() => setIsExportDialogOpen(true)}   
+                  >
+                    <Download className="size-4" />
+                    Exporteren
+                  </Button>
+                </div>
               </div>
               {(search?.trim() || (moduleFilters || []).length > 0) && (
                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-1.5">
@@ -657,14 +666,6 @@ export default function StudentDetailsPage2() {
                   </div>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsExportDialogOpen(true)}
-                >
-                  Exporteren
-                </Button>
-              </div>
             </CardHeader>
             <CardContent>
               <Table>
