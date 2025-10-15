@@ -22,6 +22,7 @@ const exportScheduleToPDF = ({ columns, rows, options = {} }) => {
     fileName = `jaarplanning_${new Date().toISOString().split('T')[0]}.pdf`,
     orientation = 'landscape',
     format = 'a4',
+    headAlign = 'center',
   } = options;
 
   // Create new PDF document
@@ -120,7 +121,7 @@ const exportScheduleToPDF = ({ columns, rows, options = {} }) => {
       textColor: [255, 255, 255],
       fontSize: 11,
       fontStyle: 'bold',
-      halign: 'center',
+      halign: headAlign,
     },
     bodyStyles: {
       fontSize: 10,
