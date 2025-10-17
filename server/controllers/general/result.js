@@ -28,7 +28,17 @@ exports.get_all_results = async (req, res) => {
     const results = await prisma.result.findMany({
       include: {
         student: true,
-        assessment: true,
+        assessment: {
+          include: {
+            class_layout: true,
+            subject: {
+              include: {
+                subject: true, 
+                course_module: true, 
+              },
+            },
+          },
+        },
       },
     });
 
@@ -48,7 +58,17 @@ exports.get_result_by_id = async (req, res) => {
       where: { id: parseInt(id) },
       include: {
         student: true,
-        assessment: true,
+        assessment: {
+          include: {
+            class_layout: true,
+            subject: {
+              include: {
+                subject: true,
+                course_module: true,
+              },
+            },
+          },
+        },
       },
     });
 

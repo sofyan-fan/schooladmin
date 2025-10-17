@@ -1,5 +1,6 @@
 import classAPI from '@/apis/classAPI';
 import resultAPI from '@/apis/resultAPI';
+import AssessmentResultsExport from '@/components/results/AssessmentResultsExport';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -31,6 +33,7 @@ export default function ManageResultsModal({
   const [results, setResults] = useState({}); // studentId -> result mapping
   const [originalResults, setOriginalResults] = useState({}); // Track original results for deletion
   const [isLoading, setIsLoading] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,7 +146,10 @@ export default function ManageResultsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+      <DialogContent
+        maxWidth="500px"
+        className="h-[80vh] flex flex-col overflow-visible"
+      >
         <DialogHeader>
           <DialogTitle>Resultaten voor: {assessment.name}</DialogTitle>
           <DialogDescription>
@@ -153,80 +159,91 @@ export default function ManageResultsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-grow overflow-y-auto">
-          <Table>
-            <TableHeader>
+        <Table
+          containerClassName="flex-grow min-h-0 overflow-y-auto overflow-x-auto will-change-scroll
+    [scrollbar-width:thin]
+    [scrollbar-color:theme(colors.muted.DEFAULT)_theme(colors.primary)]
+    [&::-webkit-scrollbar]:w-2
+    [&::-webkit-scrollbar-track]:bg-transparent
+    [&::-webkit-scrollbar-thumb]:rounded-full
+    [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
+    hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50
+  "
+        >
+          <TableHeader className="sticky top-0 z-30 bg-background">
+            <TableRow>
+              <TableHead className="text-base">Leerling</TableHead>
+              <TableHead className="w-40 text-center text-base ">
+                Cijfer
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
               <TableRow>
-                <TableHead>Leerling</TableHead>
-                <TableHead className="w-40">Cijfer</TableHead>
-                <TableHead className="w-48">Status</TableHead>
-                <TableHead className="text-right w-40">Acties</TableHead>
+                <TableCell colSpan={4} className="h-48 text-center">
+                  Laden...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan="4" className="h-48 text-center">
-                    Laden...
-                  </TableCell>
-                </TableRow>
-              ) : (
-                students.map((student) => {
-                  const result = results[student.id];
-                  return (
-                    <TableRow key={student.id}>
-                      <TableCell className="font-medium">
-                        {student.first_name} {student.last_name}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          min="1"
-                          max="10"
-                          className="w-24"
-                          placeholder="-"
-                          value={result?.grade ?? ''}
-                          onChange={(e) =>
-                            handleGradeChange(student.id, e.target.value)
-                          }
-                          disabled={isLoading}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`text-sm ${
-                            result?.grade
-                              ? 'text-green-600'
-                              : 'text-muted-foreground'
-                          }`}
-                        >
-                          {result?.grade ? 'Ingevoerd' : 'Nog niet ingevoerd'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {/* TODO: Edit/Delete buttons */}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+            ) : (
+              students.map((student) => {
+                const result = results[student.id];
+                return (
+                  <TableRow key={student.id}>
+                    <TableCell className="font-medium">
+                      {student.first_name} {student.last_name}
+                    </TableCell>
+                    <TableCell className="py-2 px-0">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        max="10"
+                        className="w-24 flex justify-self-end"
+                        placeholder="-"
+                        value={result?.grade ?? ''}
+                        onChange={(e) =>
+                          handleGradeChange(student.id, e.target.value)
+                        }
+                        disabled={isLoading}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
 
         <DialogFooter>
           <Button
-            variant="outline"
+            variant="cancel"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
             Annuleren
           </Button>
+
           <Button onClick={handleSave} disabled={isLoading}>
             {isLoading ? 'Opslaan...' : 'Wijzigingen Opslaan'}
           </Button>
+          <div className="flex items-center justify-end gap-2 pb-2">
+            <Button
+              variant="default"
+              onClick={() => setIsExportDialogOpen(true)}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogFooter>
+
+        <AssessmentResultsExport
+          assessment={assessment}
+          open={isExportDialogOpen}
+          onOpenChange={(v) => setIsExportDialogOpen(v)}
+          students={students}
+          resultsMap={results}
+        />
       </DialogContent>
     </Dialog>
   );

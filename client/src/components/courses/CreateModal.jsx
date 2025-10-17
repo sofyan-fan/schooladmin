@@ -102,6 +102,8 @@ export default function CreateModal({
             <div className="space-y-2">
               <Label htmlFor="courseDescription">Omschrijving</Label>
               <Textarea
+
+              className="bg-white"
                 id="courseDescription"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

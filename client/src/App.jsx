@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import LayoutWrapper from './components/layout/LayoutWrapper';
+import RequireRole from './components/layout/RequireRole';
 import { useAuth } from './hooks/useAuth';
 
 import AssessmentsPage from './pages/AssessmentsPage';
@@ -22,6 +23,7 @@ import ResultsPage from './pages/ResultsPage';
 import RostersPage from './pages/RostersPage';
 import SettingsPage from './pages/SettingsPage';
 import StudentDetailsPage from './pages/StudentDetailsPage';
+import StudentSelfPage from './pages/StudentSelfPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeachersPage from './pages/TeachersPage';
@@ -53,27 +55,45 @@ const App = () => {
       <Route
         element={isAuthenticated ? <LayoutWrapper /> : <Navigate to="/login" />}
       >
-        {/* <Route path="/welcome" element={<WelcomePage />} /> */}
+        {/* Common (all authenticated roles) */}
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/klassen" element={<ClassesPage />} />
-        {/* <Route path="/rooster" element={<RosterPage />} /> */}
-        <Route path="/roosters" element={<RostersPage />} />
-        <Route path="/class-schedule" element={<ClassSchedulePage />} />
-        <Route path="/toetsen-en-examens" element={<AssessmentsPage />} />
-        <Route path="/resultaten" element={<ResultsPage />} />
-        <Route path="/leerlingen" element={<StudentsPage />} />
-        <Route path="/docenten" element={<TeachersPage />} />
-        <Route path="/vakken" element={<SubjectsPage />} />
-        <Route path="/modules" element={<ModulesPage />} />
-        <Route path="/lespakketten" element={<CoursesPage />} />
-        <Route path="/lokalen" element={<ClassroomsPage />} />
-        <Route path="/tijd-registratie" element={<TimeRegisterPage />} />
-        <Route path="/afwezigheid" element={<AbsencePage />} />
-        {/* <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} /> */}
-        <Route path="/financien" element={<FinancePage />} />
-        <Route path="/quran-log" element={<QuranLogPage />} />
         <Route path="/instellingen" element={<SettingsPage />} />
-        <Route path="/leerlingen/:id" element={<StudentDetailsPage />} />
+        <Route
+          path="/mijn-profiel"
+          element={
+            <RequireRole allowedRoles={['student']}>
+              <StudentSelfPage />
+            </RequireRole>
+          }
+        />
+
+        {/* Admin-only */}
+        <Route element={<RequireRole allowedRoles={['admin']} />}>
+          <Route path="/klassen" element={<ClassesPage />} />
+          <Route path="/roosters" element={<RostersPage />} />
+          <Route path="/class-schedule" element={<ClassSchedulePage />} />
+          <Route path="/vakken" element={<SubjectsPage />} />
+          <Route path="/modules" element={<ModulesPage />} />
+          <Route path="/lespakketten" element={<CoursesPage />} />
+          <Route path="/lokalen" element={<ClassroomsPage />} />
+          <Route path="/financien" element={<FinancePage />} />
+          <Route path="/leerlingen" element={<StudentsPage />} />
+          <Route path="/docenten" element={<TeachersPage />} />
+          <Route path="/leerlingen/:id" element={<StudentDetailsPage />} />
+        </Route>
+
+        {/* Admin + Teacher */}
+        <Route element={<RequireRole allowedRoles={['admin', 'teacher']} />}>
+          <Route path="/toetsen-en-examens" element={<AssessmentsPage />} />
+          <Route path="/resultaten" element={<ResultsPage />} />
+          <Route path="/afwezigheid" element={<AbsencePage />} />
+          <Route path="/tijd-registratie" element={<TimeRegisterPage />} />
+          <Route path="/quran-log" element={<QuranLogPage />} />
+        </Route>
+
+        {/* <Route path="/welcome" element={<WelcomePage />} /> */}
+        {/* <Route path="/rooster" element={<RosterPage />} /> */}
+        {/* <Route path="/onderwijsindeling" element={<ClassLayoutsPage />} /> */}
       </Route>
     </Routes>
   );

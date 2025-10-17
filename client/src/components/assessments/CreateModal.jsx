@@ -204,7 +204,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 w-full">
               <Label>Klas</Label>
               <Controller
                 name="class_id"
@@ -214,7 +214,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Kies een klas" />
                     </SelectTrigger>
                     <SelectContent>
@@ -243,7 +243,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Kies een vak" />
                     </SelectTrigger>
                     <SelectContent>
@@ -277,7 +277,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                       <Button
                         variant="outline"
                         className={cn(
-                          'w-full justify-start text-left font-normal',
+                          'w-full justify-start text-left font-normal bg-white',
                           !field.value && 'text-muted-foreground'
                         )}
                       >
@@ -335,6 +335,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                 render={({ field }) => (
                   <Textarea
                     id="description"
+                    className="bg-white"
                     placeholder="Beschrijf kort de inhoud van de toets of het examen..."
                     {...field}
                   />

@@ -17,27 +17,14 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { BookOpen, GraduationCap } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-const NoData = (
-  <TableRow>
-    <TableCell colSpan={6} className="h-48 text-center">
-      <div className="flex flex-col items-center justify-center space-y-4">
-        <BookOpen className="size-12 text-gray-400" />
-        <h3 className="text-xl font-semibold">No Students Found</h3>
-        <p className="text-muted-foreground">
-          Get started by adding a new student.
-        </p>
-      </div>
-    </TableCell>
-  </TableRow>
-);
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rowSelection, setRowSelection] = useState({});
   const [selected, setSelected] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
   const [openViewProfile, setOpenViewProfile] = useState(false);
@@ -92,15 +79,15 @@ export default function StudentsPage() {
     };
   }, []);
 
-  const handleEdit = (record) => {
+  const handleEdit = useCallback((record) => {
     setSelected(record);
     setOpenEditProfile(true);
-  };
+  }, []);
 
-  const handleView = (record) => {
+  const handleView = useCallback((record) => {
     setSelected(record);
     setOpenViewProfile(true);
-  };
+  }, []);
 
   const handleSave = async (updated) => {
     // Show loading toast
@@ -186,11 +173,11 @@ export default function StudentsPage() {
 
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
-  const handleDelete = (id) => {
+  const handleDelete = useCallback((id) => {
     if (!id) return;
     setPendingDeleteId(id);
     setOpenDeleteDialog(true);
-  };
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (!pendingDeleteId) return;
@@ -233,6 +220,20 @@ export default function StudentsPage() {
     [handleView, handleEdit, handleDelete]
   );
 
+  const NoDataRow = (
+    <TableRow>
+      <TableCell colSpan={columns.length} className="h-48 text-center">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <BookOpen className="size-12 text-gray-400" />
+          <h3 className="text-xl font-semibold">No Students Found</h3>
+          <p className="text-muted-foreground">
+            Get started by adding a new student.
+          </p>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+
   const table = useReactTable({
     data: students,
     columns,
@@ -241,11 +242,15 @@ export default function StudentsPage() {
       columnVisibility,
       pagination,
       columnFilters,
+      rowSelection,
     },
+    onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    enableRowSelection: true,
+    getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -266,7 +271,7 @@ export default function StudentsPage() {
         table={table}
         loading={loading}
         columns={columns}
-        NoDataComponent={NoData}
+        NoDataComponent={NoDataRow}
       />
 
       <RegisterWizardDialog

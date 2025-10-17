@@ -5,8 +5,8 @@ import resultAPI from '@/apis/resultAPI';
 import { createColumns } from '@/components/assessments/columns';
 import CreateModal from '@/components/assessments/CreateModal';
 import EditModal from '@/components/assessments/EditModal';
-import ManageResultsModal from '@/components/assessments/ManageResultsModal';
 import ViewModal from '@/components/assessments/ViewModal';
+import ManageResultsModal from '@/components/results/ManageResultsModal';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
@@ -314,17 +314,17 @@ export default function AssessmentsPage() {
         defaultValue="tests"
         className="space-y-4"
       >
-        <div className="flex justify-between items-center mb-0">
-          <TabsList>
+        <div className="flex justify-between items-center mb-0 ">
+          <TabsList className="gap-2">
             <TabsTrigger
               value="tests"
-              className="px-4 py-2 rounded-md text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted"
+              className="px-4 py-2 hover:cursor-pointer rounded-md text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted"
             >
               Toetsen
             </TabsTrigger>
             <TabsTrigger
               value="exams"
-              className="px-4 py-2 rounded-md text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted"
+              className="px-4 py-2 hover:cursor-pointer rounded-md text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted"
             >
               Examens
             </TabsTrigger>
