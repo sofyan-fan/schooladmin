@@ -35,14 +35,18 @@ import TimeRegisterPage from './pages/TimeRegisterPage';
 // console.log('user_role', user_role);
 
 const App = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   return (
     <Routes>
       <Route
         path="/"
         element={
           isAuthenticated ? (
-            <Navigate to="/dashboard" />
+            user?.role?.toLowerCase() === 'student' ? (
+              <Navigate to="/mijn-profiel" />
+            ) : (
+              <Navigate to="/dashboard" />
+            )
           ) : (
             <Navigate to="/login" />
           )
@@ -63,6 +67,14 @@ const App = () => {
           element={
             <RequireRole allowedRoles={['student']}>
               <StudentSelfPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/mijn-profiel/leerling/:id"
+          element={
+            <RequireRole allowedRoles={['student']}>
+              <StudentDetailsPage />
             </RequireRole>
           }
         />

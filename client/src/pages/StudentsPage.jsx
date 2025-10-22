@@ -1,4 +1,5 @@
 import classAPI from '@/apis/classAPI';
+import resultAPI from '@/apis/resultAPI';
 import studentAPI from '@/apis/studentAPI';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
@@ -7,6 +8,7 @@ import { createColumns } from '@/components/students/columns';
 import DeleteStudentDialog from '@/components/students/DeleteDialog';
 import EditModal from '@/components/students/EditModal';
 import ViewModal from '@/components/students/ViewModal';
+import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import RegisterWizardDialog from '@/pages/register/RegisterWizardDialog';
 import {
@@ -16,7 +18,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { BookOpen, GraduationCap } from 'lucide-react';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { BookOpen, Download, GraduationCap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -257,6 +261,94 @@ export default function StudentsPage() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  const handleExportSelectedResults = async () => {
+    const selectedRows = table.getSelectedRowModel().rows || [];
+    if (selectedRows.length === 0) return;
+
+    const loadingToast = toast.loading('Resultaten worden verzameld...');
+    try {
+      const allResults = await resultAPI.get_results();
+
+      const selectedIds = new Set(
+        selectedRows.map((r) => Number(r.original.id))
+      );
+
+      const resultsByStudent = Object.create(null);
+      (allResults || []).forEach((r) => {
+        const sid = Number(r.student_id);
+        if (!selectedIds.has(sid)) return;
+        if (!resultsByStudent[sid]) resultsByStudent[sid] = [];
+        resultsByStudent[sid].push(r);
+      });
+
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'School Admin System';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      const sanitizeSheetName = (name) => {
+        const invalid = /[\\/*?:[\]]/g; // Excel invalid characters
+        const trimmed = (name || '').replace(invalid, ' ').trim();
+        return trimmed.length > 31
+          ? trimmed.slice(0, 31)
+          : trimmed || 'Leerling';
+      };
+
+      selectedRows.forEach((row) => {
+        const s = row.original;
+        const sid = Number(s.id);
+        const results = resultsByStudent[sid] || [];
+
+        const fullName = [s.firstName, s.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        const sheetName = sanitizeSheetName(fullName || `Student_${sid}`);
+        const ws = workbook.addWorksheet(sheetName);
+
+        ws.columns = [
+          { header: 'Vak', key: 'module', width: 28 },
+          { header: 'Type', key: 'type', width: 12 },
+          { header: 'Naam', key: 'name', width: 36 },
+          { header: 'Datum', key: 'date', width: 16 },
+          { header: 'Cijfer', key: 'grade', width: 10 },
+        ];
+
+        const rows = results.map((r) => ({
+          module:
+            r?.assessment?.subject?.course_module?.name ||
+            r?.assessment?.subject?.subject?.name ||
+            '—',
+          type: r?.assessment?.type === 'test' ? 'Toets' : 'Examen',
+          name: r?.assessment?.name || '',
+          date: r?.date ? new Date(r.date).toLocaleDateString('nl-NL') : '',
+          grade: r?.grade ?? '',
+        }));
+        ws.addRows(rows);
+
+        const headerRow = ws.getRow(1);
+        headerRow.font = { bold: true };
+        ws.views = [{ state: 'frozen', ySplit: 1 }];
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const fileName = `resultaten_geselecteerde_leerlingen_${
+        new Date().toISOString().split('T')[0]
+      }.xlsx`;
+      saveAs(blob, fileName);
+
+      toast.dismiss(loadingToast);
+      toast.success('Download gestart.');
+    } catch (e) {
+      console.error(e);
+      toast.dismiss(loadingToast);
+      toast.error('Kon de resultaten niet exporteren. Probeer het opnieuw.');
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -267,6 +359,17 @@ export default function StudentsPage() {
         onAdd={() => setOpenCreateDialog(true)}
       />
       <Toolbar table={table} filterColumn="firstName" />
+      {table.getSelectedRowModel().rows.length > 0 && (
+        <div className="mb-2 flex items-center justify-between rounded-md border bg-muted/40 p-2">
+          <div className="text-sm text-muted-foreground">
+            {table.getSelectedRowModel().rows.length} geselecteerd
+          </div>
+          <Button onClick={handleExportSelectedResults}>
+            <Download className="mr-2 h-4 w-4" />
+            Download resultaten
+          </Button>
+        </div>
+      )}
       <DataTable
         table={table}
         loading={loading}

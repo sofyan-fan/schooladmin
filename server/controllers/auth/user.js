@@ -1,48 +1,75 @@
 const { prisma } = require('../../prisma/connection');
 
 exports.get_users = async (req, res) => {
-	try {
-		const users = await prisma.user.findMany();
-		res.status(200).json(users);
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({
-			message: 'Internal Server Error'
-		});
-	}
+  try {
+    const users = await prisma.user.findMany();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Internal Server Error',
+    });
+  }
 };
 
 exports.get_user = async (req, res) => {
-	res.status(200).json(req.user);
+  res.status(200).json(req.user);
+};
+
+// Resolve the current logged-in student profile using session user email
+// For student accounts, we store parent_email in the student table and use that to find the student
+exports.get_current_student = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user || req.user;
+    if (!sessionUser || !sessionUser.email) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    // Only allow for student role; teachers/admins have no associated student
+    if ((sessionUser.role || '').toLowerCase() !== 'student') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const student = await prisma.student.findFirst({
+      where: { parent_email: sessionUser.email },
+    });
+
+    if (!student) {
+      return res
+        .status(404)
+        .json({ message: 'Student not found for this user' });
+    }
+
+    return res.status(200).json(student);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
 
 exports.update_enrollment = async (req, res) => {
-	const {
-		student_id
-	} = req.params;
-	
-	const {
-		enrollment_status
-	} = req.body;
+  const { student_id } = req.params;
 
-	try {
-		const student = await prisma.student.update({
-			where: {
-				id: parseInt(student_id)
-			},
-			data: {
-				enrollment_status
-			},
-		});
+  const { enrollment_status } = req.body;
 
-		res.status(200).json({
-			message: 'Enrollment status updated successfully',
-			student,
-		});
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({
-			message: 'Internal Server Error',
-		});
-	}
+  try {
+    const student = await prisma.student.update({
+      where: {
+        id: parseInt(student_id),
+      },
+      data: {
+        enrollment_status,
+      },
+    });
+
+    res.status(200).json({
+      message: 'Enrollment status updated successfully',
+      student,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Internal Server Error',
+    });
+  }
 };

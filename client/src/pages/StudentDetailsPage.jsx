@@ -6,9 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
 import GegevensTab from '@/pages/students/GegevensTab';
 import OverviewTab from '@/pages/students/OverviewTab';
-import { ArrowLeft, ArrowUpDown, User, Download } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Download, User } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -55,6 +56,8 @@ import { toast } from 'sonner';
 export default function StudentDetailsPage2() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = (user?.role || '').toLowerCase() === 'admin';
 
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState(null);
@@ -532,18 +535,20 @@ export default function StudentDetailsPage2() {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleToggleEnrollment}
-            disabled={savingEnroll}
-          >
-            {student.enrollment_status ? 'Uitschrijven' : 'Inschrijven'}
-          </Button>
-          <Link to={`/students/${student.id}/edit`}>
-            <Button>Bewerken</Button>
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleToggleEnrollment}
+              disabled={savingEnroll}
+            >
+              {student.enrollment_status ? 'Uitschrijven' : 'Inschrijven'}
+            </Button>
+            <Link to={`/students/${student.id}/edit`}>
+              <Button>Bewerken</Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Sticky sub-nav (styled TabsList) */}
@@ -616,7 +621,7 @@ export default function StudentDetailsPage2() {
                 <div className="flex items-center gap-2">
                   <Button
                     variant="default"
-                    onClick={() => setIsExportDialogOpen(true)}   
+                    onClick={() => setIsExportDialogOpen(true)}
                   >
                     <Download className="size-4" />
                     Exporteren

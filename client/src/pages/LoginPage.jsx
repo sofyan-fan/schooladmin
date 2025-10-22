@@ -47,12 +47,10 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 w-full ">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Wachtwoord</Label>
-                  <Link to="#" className="text-sm underline">
-                    Wachtwoord vergeten?
-                  </Link>
+                 
                 </div>
                 <Input
                   id="password"
@@ -64,6 +62,9 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                 <Link to="#" className="flex w-full justify-end text-[0.80rem] underline">
+                    Wachtwoord vergeten?
+                  </Link>
               </div>
               <Button type="submit" className="w-full cursor-pointer">
                 Login

@@ -6,12 +6,19 @@ import EditQuranLogModal from '@/components/quranlog/EditModal';
 import ViewQuranLogDialog from '@/components/quranlog/ViewModal';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
-import Toolbar from '@/components/shared/Toolbar';
 import QuranLogDialog from '@/components/students/QuranLogDialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import ComboboxField from '@/components/ui/combobox';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { useQuranRelations } from '@/hooks/useQuranRelations';
 import { parsePoint } from '@/utils/quran';
 import {
   getCoreRowModel,
@@ -20,11 +27,15 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { BookCheck, FileDown, Plus } from 'lucide-react';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { BookCheck, ChevronDown, FileDown, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function QuranLogPage() {
+  // Quran relations (for hizb computation)
+  const { hizbFor } = useQuranRelations();
   const STORAGE_KEY = 'quranLogs';
 
   function readLocalLogs() {
@@ -174,7 +185,7 @@ export default function QuranLogPage() {
 
   const toggleMemorized = useCallback(
     async (id, nextValue) => {
-      const prev = logs.find((l) => l.id === id)?.memorized;
+      // Optimistic UI update
       setLogs((curr) => {
         const next = curr.map((l) =>
           l.id === id ? { ...l, memorized: nextValue } : l
@@ -182,18 +193,18 @@ export default function QuranLogPage() {
         saveLocalLogs(next);
         return next;
       });
+
+      // Skip backend for local/non-numeric ids
+      const target = logs.find((l) => l.id === id);
+      const isLocal = target && String(target.studentId).startsWith('local:');
+      const numericId = typeof id === 'number' || /^\d+$/.test(String(id));
+      if (!numericId || isLocal) return;
+
       try {
         await studentLogAPI.update_log(id, { completed: Boolean(nextValue) });
       } catch (e) {
         console.error('Failed to update memorized state', e);
-        // revert on failure
-        setLogs((curr) => {
-          const next = curr.map((l) =>
-            l.id === id ? { ...l, memorized: prev } : l
-          );
-          saveLocalLogs(next);
-          return next;
-        });
+        // Keep optimistic state (do not revert)
       }
     },
     [logs]
@@ -210,13 +221,21 @@ export default function QuranLogPage() {
     () => new Map(chapters.map((c) => [String(c.id), c])),
     [chapters]
   );
-  const formatPointShort = useCallback((raw) => {
-    if (!raw) return '—';
-    const p = parsePoint(String(raw));
-    if (p.hizb) return `Hizb ${p.hizb}`;
-    if (p.surahId && p.ayah) return `${p.surahId} - ${p.ayah}`;
-    return String(raw);
-  }, []);
+  const formatPointShort = useCallback(
+    (raw) => {
+      if (!raw) return '—';
+      const p = parsePoint(String(raw));
+      const s = p.surahId;
+      const a = p.ayah;
+      const h = p.hizb || hizbFor(s, a);
+      // New short format: H{hizb} - {surah}:{ayah}
+      if (h && (s || a)) return `H${h} - ${s || '—'}:${a || '—'}`;
+      if (h) return `H${h}`;
+      if (s || a) return `${s || '—'}:${a || '—'}`;
+      return String(raw);
+    },
+    [hizbFor]
+  );
   const renderPointTooltip = useCallback(
     (raw) => {
       if (!raw) return '—';
@@ -228,7 +247,8 @@ export default function QuranLogPage() {
           `Surah ${p.surahId}`;
         segs.push(name);
       }
-      if (p.hizb) segs.push(`Hizb ${p.hizb}`);
+      const h = p.hizb || hizbFor(p.surahId, p.ayah);
+      if (h) segs.push(`Hizb ${h}`);
       if (p.ayah) segs.push(`Ayah ${p.ayah}`);
       if (!segs.length) return '—';
       return (
@@ -239,7 +259,7 @@ export default function QuranLogPage() {
         </div>
       );
     },
-    [chapterById]
+    [chapterById, hizbFor]
   );
 
   // CRUD handlers
@@ -380,42 +400,114 @@ export default function QuranLogPage() {
         description="Registreer en beheer Qur'an-logs voor leerlingen."
         icon={<BookCheck className="size-9" />}
       >
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button variant="outline">
             <FileDown className="mr-2 h-4 w-4" /> PDF
           </Button>
-        </div>
+        </div> */}
       </PageHeader>
 
-      <Card className=" space-y-4 flex flex-row bg-transparent shadow-none border-none  ">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <ComboboxField
-            label="Type"
-            items={subjectTypes}
-            value={filters.subjectType}
-            onChange={(v) => setFilters((s) => ({ ...s, subjectType: v }))}
-            placeholder="Kies type"
-          />
-          <ComboboxField
-            label="Vak"
-            items={subjects}
-            value={filters.subject}
-            onChange={(v) => setFilters((s) => ({ ...s, subject: v }))}
-            placeholder="Kies vak"
-          />
-          <ComboboxField
-            label="Leerling"
-            items={students}
-            value={filters.studentId}
-            onChange={(v) => setFilters((s) => ({ ...s, studentId: v }))}
-            placeholder="Kies leerling"
-          />
-        </div>
+      <Card className="bg-transparent shadow-none border-none py-1">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex gap-3">
+            {/* {(() => {
+              const column = table.getColumn('studentLabel');
+              return (
+                <Input
+                  placeholder="Zoek op Leerling"
+                  value={column?.getFilterValue() ?? ''}
+                  onChange={(e) => column?.setFilterValue(e.target.value)}
+                  className="max-w-sm bg-card placeholder:italic"
+                />
+              );
+            })()} */}
+            <ComboboxField
+              label="Vak"
+              items={subjects}
+              value={filters.subject}
+              onChange={(v) => setFilters((s) => ({ ...s, subject: v }))}
+              placeholder="Kies vak"
+            />
+            <ComboboxField
+              label="Leerling"
+              items={students}
+              value={filters.studentId}
+              onChange={(v) => setFilters((s) => ({ ...s, studentId: v }))}
+              placeholder="Kies leerling"
+            />
+          </div>
 
-        <div className="flex items-center">
-          <Button onClick={() => setOpenAddDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Log toevoegen
-          </Button>
+          <div className="ml-auto flex items-end gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="bg-white">
+                  Kolommen <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((col) => col.getCanHide())
+                  .map((col) => (
+                    <DropdownMenuCheckboxItem
+                      key={col.id}
+                      className="capitalize cursor-pointer hover:text-white hover:bg-primary data-[highlighted]:text-white data-[highlighted]:bg-primary"
+                      checked={col.getIsVisible()}
+                      onCheckedChange={(value) => col.toggleVisibility(!!value)}
+                    >
+                      {col.columnDef.displayName ?? col.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rowsToExport = table.getFilteredRowModel().rows || [];
+                  const workbook = new ExcelJS.Workbook();
+                  const ws = workbook.addWorksheet('Quran Logs');
+                  ws.columns = [
+                    { header: 'Leerling', key: 'student', width: 28 },
+                    { header: 'Begin', key: 'from', width: 22 },
+                    { header: 'Einde', key: 'to', width: 22 },
+                    { header: 'Datum', key: 'date', width: 14 },
+                    { header: 'Memo', key: 'memo', width: 10 },
+                  ];
+                  rowsToExport.forEach((r) => {
+                    const o = r.original;
+                    ws.addRow({
+                      student: o.studentLabel,
+                      from: formatPointShort(o.from),
+                      to: formatPointShort(o.to),
+                      date: o.date || '',
+                      memo: o.memorized ? 'Ja' : 'Nee',
+                    });
+                  });
+                  ws.getRow(1).font = { bold: true };
+                  const buffer = await workbook.xlsx.writeBuffer();
+                  const blob = new Blob([buffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  });
+                  const fname = `quran_logs_${
+                    new Date().toISOString().split('T')[0]
+                  }.xlsx`;
+                  saveAs(blob, fname);
+                  toast.success('Excel export gestart.');
+                } catch (e) {
+                  console.error(e);
+                  toast.error('Export mislukt.');
+                }
+              }}
+            >
+              <FileDown className="mr-2 h-4 w-4" /> Export
+            </Button>
+
+            <Button onClick={() => setOpenAddDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Log toevoegen
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -430,7 +522,7 @@ export default function QuranLogPage() {
         }}
       />
 
-      <Toolbar table={table} filterColumn="studentLabel" />
+      {/* Toolbar replaced by consolidated controls above */}
       <DataTable
         table={table}
         loading={false}

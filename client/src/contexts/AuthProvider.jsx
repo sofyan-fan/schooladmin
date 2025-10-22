@@ -40,7 +40,10 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         localStorage.setItem('token', token); // Storing session identifier
         localStorage.setItem('user', JSON.stringify(userData));
-        const redirectTo = options?.redirectTo || '/dashboard';
+        const role = (userData?.role || '').toLowerCase();
+        const defaultRedirect =
+          role === 'student' ? '/mijn-profiel' : '/dashboard';
+        const redirectTo = options?.redirectTo || defaultRedirect;
         navigate(redirectTo);
         return true;
       }
@@ -92,7 +95,7 @@ export const AuthProvider = ({ children }) => {
         // Mark as just registered and automatically log in the user
         setJustRegistered(true);
         const loginSuccess = await login(email, password, {
-          redirectTo: '/dashboard',
+          redirectTo: '/mijn-profiel',
         });
         if (loginSuccess) {
           // Merge known profile fields into the lightweight session user

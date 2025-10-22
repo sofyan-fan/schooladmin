@@ -59,7 +59,7 @@ export const createColumns = ({
     accessorKey: 'from',
     header: ({ column }) => (
       <Button
-        className="hover:bg-transparent hover:text-primary text-lg"
+        className="hover:bg-transparent hover:text-primary text-lg px-0 has-[>svg]:px-0"
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
@@ -97,7 +97,7 @@ export const createColumns = ({
     accessorKey: 'to',
     header: ({ column }) => (
       <Button
-        className="hover:bg-transparent hover:text-primary text-lg"
+        className="hover:bg-transparent hover:text-primary text-lg px-0 has-[>svg]:px-0"
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
@@ -145,33 +145,20 @@ export const createColumns = ({
     ),
     displayName: 'Datum',
     size: 160,
-    cell: ({ row }) => row.getValue('date') || '—',
-  },
-  {
-    accessorKey: 'description',
-    header: ({ column }) => (
-      <Button
-        className="hover:bg-transparent hover:text-primary text-lg"
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      >
-        Omschrijving
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    displayName: 'Omschrijving',
-    size: 320,
     cell: ({ row }) => {
-      const value = row.getValue('description') ?? '';
-      if (!value) return '—';
-      return (
-        <span
-          className="inline-block max-w-[300px] truncate align-middle"
-          title={value}
-        >
-          {value}
-        </span>
-      );
+      const raw = row.getValue('date');
+      if (!raw) return '—';
+      try {
+        if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+          const [y, m, d] = raw.split('-');
+          return `${d}-${m}-${y}`; // dd-mm-yyyy
+        }
+        const d = new Date(raw);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('nl-NL');
+      } catch {
+        // ignore
+      }
+      return String(raw);
     },
   },
   {
