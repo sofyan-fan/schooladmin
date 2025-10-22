@@ -4,8 +4,21 @@ import RequestHandler from '../apis/RequestHandler';
 import { AuthContext } from './auth';
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(() => {
+    try {
+      return localStorage.getItem('token');
+    } catch {
+      return null;
+    }
+  });
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [justRegistered, setJustRegistered] = useState(false);
   const [pendingStudentId, setPendingStudentId] = useState(null);
   const navigate = useNavigate();
