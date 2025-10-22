@@ -179,7 +179,11 @@ export default function QuranLogDialog({
             {/* Begin */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Begin</h2>
-              <Button variant="ghost" className="bg-white border" onClick={clearBegin}>
+              <Button
+                variant="ghost"
+                className="bg-white border"
+                onClick={clearBegin}
+              >
                 Wissen
               </Button>
             </div>
@@ -224,7 +228,11 @@ export default function QuranLogDialog({
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Einde</h2>
-              <Button variant="ghost" className="bg-white border" onClick={clearEnd}>
+              <Button
+                variant="ghost"
+                className="bg-white border"
+                onClick={clearEnd}
+              >
                 Wissen
               </Button>
             </div>
@@ -273,12 +281,20 @@ export default function QuranLogDialog({
               <DatePicker
                 buttonClassName="bg-white py-5"
                 value={newLog.date}
-                onChange={(date) =>
+                toYear={new Date().getFullYear()}
+                onChange={(date) => {
+                  const toLocalYMD = (d) => {
+                    if (!d) return '';
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`; // nl-friendly YYYY-MM-DD
+                  };
                   setNewLog((s) => ({
                     ...s,
-                    date: date ? date.toISOString().slice(0, 10) : '',
-                  }))
-                }
+                    date: date ? toLocalYMD(date) : '',
+                  }));
+                }}
               />
             </div>
             {/* Description */}
