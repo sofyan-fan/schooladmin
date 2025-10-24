@@ -11,6 +11,7 @@ const session = require('express-session');
 const cors = require('cors');
 const routes = require('./routes');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -69,17 +70,29 @@ app.use(
   })
 );
 
-// Serve React static files
-app.use(express.static(path.join(__dirname, 'client', 'build')));
+// API routes first
+app.get('/health', (req, res) => res.json({ ok: true }));
+app.use('/', routes);
 
-// Catch-all route to serve React's index.html (after all API routes)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+// Optionally serve the client build if it exists (prod-like envs)
+const candidateDirs = [
+  path.join(__dirname, 'client', 'build'), // CRA-style builds if ever copied in
+  path.join(__dirname, '..', 'client', 'dist'), // Vite build location
+];
+const staticDir = candidateDirs.find((p) => {
+  try {
+    return fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
+  } catch {
+    return false;
+  }
 });
 
-app.get('/health', (req, res) => res.json({ ok: true }));
-
-app.use('/', routes);
+if (staticDir) {
+  app.use(express.static(staticDir));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}.`);

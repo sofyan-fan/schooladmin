@@ -12,14 +12,12 @@ export default defineConfig({
     },
   },
   // Optional: local proxy for API during dev
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://85.215.181.159',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (p) => p.replace(/^\/api/, ''), // strip /api → your Express routes
-      },
-    },
-  },
+  // server: {
+  //   proxy: {
+  //     target: 'http://localhost:3000',
+  //     changeOrigin: true,
+  //     secure: false,
+  //     rewrite: (p) => p.replace(/^\/api/, ''), // strip /api → your Express routes
+  //   },
+  // },
 });

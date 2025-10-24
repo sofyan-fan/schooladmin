@@ -8,11 +8,11 @@ import axios from 'axios';
  * Optional: allow an override for local experiments by setting VITE_API_BASE_URL,
  * but DO NOT set that env var on Netlify (to avoid HTTPS→HTTP mixed-content).
  */
-const baseURL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
-
+// const baseURL =
+//   import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
+const baseURL = 'http://localhost:3000/';
 const connection = axios.create({
-  baseURL,                     // << key: '/api' in prod, optional override in local
+  baseURL, // << key: '/api' in prod, optional override in local
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
   timeout: 15000,
