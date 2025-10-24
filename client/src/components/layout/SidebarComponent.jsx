@@ -165,7 +165,8 @@ const SidebarComponent = () => {
     );
     if (directMatch) return directMatch.name;
 
-    return menuItems[0].name;
+    // No default highlight when on routes outside the main menu (e.g., student "Mijn Gegevens")
+    return '';
   };
 
   const activeItemName = getActiveItemName();
