@@ -1,18 +1,16 @@
 import axios from 'axios';
 
 /**
- * Use a relative base so it works everywhere:
- * - Local dev: Vite proxies /api → http://localhost:3000 (and strips /api)
- * - Netlify:   _redirects proxies /api → http://85.215.181.159 (and strips /api)
+ * Default to a relative base so it works across LAN/dev/prod without CORS:
+ * - Dev: Vite proxies /api → http://localhost:3000 (and strips /api)
+ * - Prod: Netlify/_redirects (or reverse proxy) maps /api → backend
  *
- * Optional: allow an override for local experiments by setting VITE_API_BASE_URL,
- * but DO NOT set that env var on Netlify (to avoid HTTPS→HTTP mixed-content).
+ * You can override via VITE_API_BASE_URL for special cases.
  */
-// const baseURL =
-//   import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
-const baseURL = 'http://localhost:3000/';
+const baseURL = import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
+
 const connection = axios.create({
-  baseURL, // << key: '/api' in prod, optional override in local
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
   timeout: 15000,
