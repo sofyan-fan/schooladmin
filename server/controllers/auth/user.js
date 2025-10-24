@@ -30,9 +30,35 @@ exports.get_current_student = async (req, res) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
-    const student = await prisma.student.findFirst({
+    // 1) Primary lookup: student linked by parent_email === user email (manual registrations)
+    let student = await prisma.student.findFirst({
       where: { parent_email: sessionUser.email },
     });
+
+    // 2) Fallback for seeded users: derive first/last name from email pattern `first.last####@...`
+    if (!student) {
+      try {
+        const localPart = String(sessionUser.email).split('@')[0] || '';
+        const withoutDigits = localPart.replace(/\d+$/, '');
+        const parts = withoutDigits.split('.').filter(Boolean);
+        if (parts.length >= 2) {
+          const firstName = parts[0].replace(/\b\w/g, (c) => c.toUpperCase());
+          const lastName = parts
+            .slice(1)
+            .map((seg) => seg.replace(/\b\w/g, (c) => c.toUpperCase()))
+            .join(' ');
+
+          student = await prisma.student.findFirst({
+            where: {
+              first_name: firstName,
+              last_name: lastName,
+            },
+          });
+        }
+      } catch {
+        // ignore fallback parsing errors
+      }
+    }
 
     if (!student) {
       return res

@@ -2,17 +2,17 @@
   "name": "project-el-fath",
   "version": "1.0.0",
   "main": "server.js",
+  "description": "SchoolAdmin / El-Fath backend server",
+  "license": "ISC",
   "scripts": {
     "dev": "nodemon -r dotenv/config server.js",
     "start": "node server.js",
-    "build": "echo 'no build step'",
-    "buildv2": "cd client && npm install && npm run build",
+    "postinstall": "npx prisma generate",
     "cleanup:mentors": "node -r dotenv/config prisma/scripts/cleanup-duplicate-mentors.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "engines": {
+    "node": ">=18 <20"
+  },
   "prisma": {
     "seed": "node prisma/seed.js"
   },
@@ -31,13 +31,20 @@
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.3",
-    "nodemon": "^3.1.7",
     "path": "^0.12.7",
     "router": "^2.0.0",
     "sillyname": "^0.1.0",
     "superheroes": "^4.0.0"
   },
   "devDependencies": {
+    "nodemon": "^3.1.7",
     "prisma": "4.16.2"
-  }
+  },
+  "keywords": [
+    "node",
+    "express",
+    "prisma",
+    "schooladmin",
+    "backend"
+  ]
 }

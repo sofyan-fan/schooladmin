@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 const RequireRole = ({
   allowedRoles = [],
@@ -7,6 +7,13 @@ const RequireRole = ({
   children,
 }) => {
   const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
+
+  // While auth is known to be authenticated but user not yet loaded from storage,
+  // render nothing to preserve the current route without redirect flicker.
+  if (isAuthenticated && !user) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -22,7 +29,7 @@ const RequireRole = ({
     return children ? children : <Outlet />;
   }
 
-  return <Navigate to={redirectTo} replace />;
+  return <Navigate to={redirectTo} replace state={{ from: location }} />;
 };
 
 export default RequireRole;

@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+
 // faker v10 is ESM-only; use dynamic import inside main()
 const bcrypt = require('bcrypt');
 
@@ -61,6 +62,7 @@ const MOROCCAN_MALE_FIRST_NAMES = [
   'Mostafa',
   'Anass',
 ];
+
 const MOROCCAN_FEMALE_FIRST_NAMES = [
   'Fatima',
   'Aicha',
@@ -88,6 +90,7 @@ const MOROCCAN_FEMALE_FIRST_NAMES = [
   'Dounia',
   'Chaimae',
 ];
+
 const MOROCCAN_SURNAMES = [
   'El Amrani',
   'El Idrissi',
@@ -245,6 +248,7 @@ async function main() {
     }
     subjectIdToMaterials.set(s.id, createdMaterials);
   }
+
   console.log('✅ Niveaus en materialen aangemaakt.');
 
   // 3. Modules (1 per vak; naam = vak + niveau) en koppeling module-vak
@@ -306,6 +310,7 @@ async function main() {
       return createdCourse;
     })
   );
+  
   console.log(`✅ ${courses.length} lespakketten aangemaakt.`);
 
   // 5. Financiële types
