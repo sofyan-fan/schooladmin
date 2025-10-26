@@ -8,15 +8,18 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), svgr()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
-    host: true,
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000', 
-        changeOrigin: true,
-        secure: false,
-        rewrite: (p) => p.replace(/^\/api/, ''),
-      },
+  host: true, 
+  port: 5173,
+  allowedHosts: [
+    'school-admin.nl',
+    'www.school-admin.nl' 
+  ],
+  proxy: {
+    '/api': {
+      target: 'http://server:3000', 
+      changeOrigin: true,
+      secure: false,
     },
   },
+},
 });
