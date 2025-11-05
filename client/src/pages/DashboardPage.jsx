@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatHijri } from '@/utils/hijri';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Clock, Presentation, Users, UserX } from 'lucide-react';
+import { TrendingDown, TrendingUp, Clock, Presentation, UserX } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Label, Pie, PieChart } from 'recharts';
 import StatCard from '../components/dashboard/StatCard';
@@ -17,6 +17,7 @@ import { UpcomingLessons } from '../components/dashboard/UpcomingLessons';
 import YearPlanning from '../components/dashboard/YearPlanning';
 
 import eventAPI from '@/apis/eventAPI';
+import financeAPI from '@/apis/financeAPI';
 import rosterAPI from '@/apis/rosterAPI';
 import { get_students } from '@/apis/studentAPI';
 import { get_teachers } from '@/apis/teachersAPI';
@@ -52,6 +53,8 @@ const DashboardPage = () => {
         setLoading(true);
         // Always load events for YearPlanning
         const eventsPromise = eventAPI.get_events();
+        // Always load finance logs for saldo (all roles)
+        const financialLogsPromise = financeAPI.get_financial_logs();
 
         if (isAdmin) {
           const [
@@ -61,6 +64,7 @@ const DashboardPage = () => {
             absencesRes,
             timeRegsRes,
             rosters,
+            financialLogs,
           ] = await Promise.all([
             eventsPromise,
             get_students(),
@@ -68,6 +72,7 @@ const DashboardPage = () => {
             absenceAPI.getAllAbsences(),
             timeRegisterAPI.getAllTimeRegistrations(),
             rosterAPI.get_rosters(),
+            financialLogsPromise,
           ]);
 
           setJaarplanning(events || []);
@@ -117,6 +122,47 @@ const DashboardPage = () => {
           setLessons(lessonItems);
           setTeacherAbsencesToday(teacherAbsToday);
 
+          // Finance metrics for current month
+          const startOfMonth = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            1
+          );
+          const monthLogs = Array.isArray(financialLogs)
+            ? financialLogs.filter((log) => {
+              const d = new Date(log.date);
+              return d >= startOfMonth && d <= today;
+            })
+            : [];
+          const incomeMonth = monthLogs.reduce(
+            (sum, l) =>
+              sum + (l.transaction_type === 'income' ? Number(l.amount || 0) : 0),
+            0
+          );
+          const expenseMonth = monthLogs.reduce(
+            (sum, l) =>
+              sum + (l.transaction_type === 'expense' ? Number(l.amount || 0) : 0),
+            0
+          );
+          const netMonth = incomeMonth - expenseMonth;
+
+          // Finance metrics for all-time saldo
+          const incomeAllTime = Array.isArray(financialLogs)
+            ? financialLogs.reduce(
+              (sum, l) =>
+                sum + (l.transaction_type === 'income' ? Number(l.amount || 0) : 0),
+              0
+            )
+            : 0;
+          const expenseAllTime = Array.isArray(financialLogs)
+            ? financialLogs.reduce(
+              (sum, l) =>
+                sum + (l.transaction_type === 'expense' ? Number(l.amount || 0) : 0),
+              0
+            )
+            : 0;
+          const netAllTime = incomeAllTime - expenseAllTime;
+
           const totalStudents = Array.isArray(students) ? students.length : 0;
           const totalTeachers = Array.isArray(teachers) ? teachers.length : 0;
           setStats({
@@ -126,11 +172,61 @@ const DashboardPage = () => {
             teachersPresent: totalTeachers - teacherAbsToday.length,
             pendingTimeRegs,
             absentTotal: studentAbsencesToday.length + teacherAbsToday.length,
+            financeIncomeMonth: incomeMonth,
+            financeExpenseMonth: expenseMonth,
+            financeNetMonth: netMonth,
+            financeIncomeAllTime: incomeAllTime,
+            financeExpenseAllTime: expenseAllTime,
+            financeNetAllTime: netAllTime,
           });
         } else {
-          // Non-admin: only load events and keep placeholders
-          const events = await eventsPromise;
+          // Non-admin: load events and finance logs to compute saldo
+          const [events, financialLogs] = await Promise.all([
+            eventsPromise,
+            financialLogsPromise,
+          ]);
           setJaarplanning(events || []);
+
+          const today = new Date();
+          const startOfMonth = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            1
+          );
+          const monthLogs = Array.isArray(financialLogs)
+            ? financialLogs.filter((log) => {
+              const d = new Date(log.date);
+              return d >= startOfMonth && d <= today;
+            })
+            : [];
+          const incomeMonth = monthLogs.reduce(
+            (sum, l) =>
+              sum + (l.transaction_type === 'income' ? Number(l.amount || 0) : 0),
+            0
+          );
+          const expenseMonth = monthLogs.reduce(
+            (sum, l) =>
+              sum + (l.transaction_type === 'expense' ? Number(l.amount || 0) : 0),
+            0
+          );
+          const netMonth = incomeMonth - expenseMonth;
+
+          const incomeAllTime = Array.isArray(financialLogs)
+            ? financialLogs.reduce(
+              (sum, l) =>
+                sum + (l.transaction_type === 'income' ? Number(l.amount || 0) : 0),
+              0
+            )
+            : 0;
+          const expenseAllTime = Array.isArray(financialLogs)
+            ? financialLogs.reduce(
+              (sum, l) =>
+                sum + (l.transaction_type === 'expense' ? Number(l.amount || 0) : 0),
+              0
+            )
+            : 0;
+          const netAllTime = incomeAllTime - expenseAllTime;
+
           setStats({
             totalStudents: 0,
             studentsPresent: 0,
@@ -138,6 +234,12 @@ const DashboardPage = () => {
             teachersPresent: 0,
             pendingTimeRegs: 0,
             absentTotal: 0,
+            financeIncomeMonth: incomeMonth,
+            financeExpenseMonth: expenseMonth,
+            financeNetMonth: netMonth,
+            financeIncomeAllTime: incomeAllTime,
+            financeExpenseAllTime: expenseAllTime,
+            financeNetAllTime: netAllTime,
           });
           setLessons([]);
           setTeacherAbsencesToday([]);
@@ -270,12 +372,32 @@ const DashboardPage = () => {
             variant="danger"
           />
         )}
+        {/* Finance Stat Card (replaces Leerlingen) */}
         <StatCard
-          title="Leerlingen"
-          value={stats.totalStudents}
-          link="/leerlingen"
-          icon={<Users className="h-8 w-8" />}
-          variant="success"
+          title="Saldo (totaal)"
+          value={new Intl.NumberFormat('nl-NL', {
+            style: 'currency',
+            currency: 'EUR',
+          }).format(
+            typeof stats.financeNetAllTime === 'number'
+              ? stats.financeNetAllTime
+              : 0
+          )}
+          link="/financien"
+          icon={
+            (stats.financeNetAllTime || 0) > 0 ? (
+              <TrendingUp className="h-8 w-8" />
+            ) : (
+              <TrendingDown className="h-8 w-8" />
+            )
+          }
+          variant={
+            (stats.financeNetAllTime || 0) > 0
+              ? 'success'
+              : (stats.financeNetAllTime || 0) < 0
+                ? 'danger'
+                : 'default'
+          }
         />
         {isAdmin && (
           <StatCard
@@ -286,6 +408,7 @@ const DashboardPage = () => {
             variant="warning"
           />
         )}
+        {/* Leraren Stat Card */}
         <StatCard
           title="Leraren"
           value={stats.totalTeachers}

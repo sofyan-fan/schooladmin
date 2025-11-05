@@ -10,10 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Eye, EyeOff } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { strength } from '../form/helpers';
 
 function StepAccount({ control }) {
   const [show, setShow] = useState(false);
+  const { formState } = useFormContext();
 
   return (
     <div className="space-y-6">
@@ -32,7 +34,9 @@ function StepAccount({ control }) {
                 autoComplete="email"
               />
             </FormControl>
-            <FormMessage />
+            {(formState.submitCount > 0 || fieldState.isTouched || fieldState.isDirty) && (
+              <FormMessage />
+            )}
           </FormItem>
         )}
       />
@@ -87,7 +91,9 @@ function StepAccount({ control }) {
                 </FormDescription>
               </>
             )}
-            <FormMessage />
+            {(formState.submitCount > 0 || fieldState.isTouched || fieldState.isDirty) && (
+              <FormMessage />
+            )}
           </FormItem>
         )}
       />
