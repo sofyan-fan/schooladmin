@@ -1,6 +1,7 @@
 import courseApi from '@/apis/courseAPI';
 import financeAPI from '@/apis/financeAPI';
 import studentAPI from '@/apis/studentAPI';
+import ExpensesByTypeDonut from '@/components/finance/ExpensesByTypeDonut';
 import FinanceStatCard from '@/components/finance/FinanceStatCard';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
@@ -41,10 +42,10 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { Calculator, CircleDollarSign, Edit, Eye, BriefcaseMedical, GraduationCap, HeartHandshake, Home, Plus, ReceiptText, Repeat, ShoppingCart, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { BriefcaseMedical, Calculator, CircleDollarSign, Edit, Eye, GraduationCap, HeartHandshake, Home, Plus, ReceiptText, Repeat, ShoppingCart, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { CartesianGrid, Cell, Line, LineChart, Pie, PieChart, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { toast } from 'sonner';
 
 // Icon and color utilities for financial types
@@ -581,43 +582,7 @@ export default function FinancePage() {
               </Card>
             </div>
             <div>
-              <Card className="p-4">
-                <h4 className="text-lg font-medium mb-3">Uitgaven per type</h4>
-                <div className="grid grid-cols-1 md:grid-cols-7 gap-6 items-center">
-                  <div className="md:col-span-3 order-2 md:order-1 mt-2 md:mt-0 self-center">
-                    <div className="flex flex-col gap-2 min-w-0">
-                      {expenseByType.map((entry, idx) => {
-                        const color = donutColors[idx % donutColors.length];
-                        const pct = donutTotal ? Math.round((Number(entry.value) / donutTotal) * 100) : 0;
-                        return (
-                          <div key={entry.name + idx} className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
-                              <span className="text-base font-medium truncate">{entry.name}</span>
-                            </div>
-                            <span className="text-base text-muted-foreground tabular-nums w-12 text-right">{pct}%</span>
-                          </div>
-                        );
-                      })}
-                      {expenseByType.length === 0 && (
-                        <div className="text-sm text-muted-foreground">Geen gegevens</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="md:col-span-4 order-1 md:order-2">
-                    <ChartContainer className="h-[200px] md:h-[220px] aspect-auto items-center" config={{}}>
-                      <PieChart>
-                        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                        <Pie data={expenseByType} dataKey="value" nameKey="name" innerRadius={48} outerRadius={78}>
-                          {expenseByType.map((entry, idx) => (
-                            <Cell key={`cell-${idx}`} fill={donutColors[idx % donutColors.length]} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ChartContainer>
-                  </div>
-                </div>
-              </Card>
+              <ExpensesByTypeDonut title="Uitgaven per type" expenseByType={expenseByType} donutColors={donutColors} />
             </div>
           </div>
 

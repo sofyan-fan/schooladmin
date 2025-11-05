@@ -189,7 +189,7 @@ const SidebarComponent = () => {
               'group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden'
             )}
           >
-            Maktab
+            MaktApp
           </span>
         </div>
       </SidebarHeader>
