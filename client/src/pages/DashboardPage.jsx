@@ -288,12 +288,7 @@ const DashboardPage = () => {
         onAction={(action) => {
           clearJustRegistered();
           if (action === 'profile') {
-            const studentId = user?.studentId || user?.data?.id || null;
-            if (studentId) {
-              window.location.href = `/leerlingen/${studentId}`;
-            } else {
-              window.location.href = '/leerlingen';
-            }
+            window.location.href = '/mijn-profiel';
           }
         }}
       />
