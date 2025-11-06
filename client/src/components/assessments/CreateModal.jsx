@@ -78,7 +78,7 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
       try {
         const [classData, modulesData] = await Promise.all([
           classAPI.get_classes(),
-          moduleAPI.get_modules(),
+          moduleAPI.get_modules(true),
         ]);
         console.log('Class Data', classData);
         setClasses(classData);
@@ -87,9 +87,8 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
         const flattenedSubjects = modulesData.flatMap((module) =>
           module.subjects.map((subject) => ({
             id: subject.id, // This is the course_module_subject ID
-            name: `${subject.subject?.name || 'Vak onbekend'} - ${
-              subject.level
-            }`,
+            name: `${subject.subject?.name || 'Vak onbekend'} - ${subject.level
+              }`,
             subject: subject.subject,
             level: subject.level,
             material: subject.material,

@@ -3,8 +3,11 @@ import RequestHandler from './RequestHandler';
 const baseUrl = '/courses/modules';
 
 const moduleAPI = {
-  async get_modules() {
-    const response = await RequestHandler.get(baseUrl);
+  async get_modules(forceFresh = false) {
+    const url = forceFresh ? `${baseUrl}?_=${Date.now()}` : baseUrl;
+    const response = await RequestHandler.get(url, {
+      headers: { 'Cache-Control': 'no-cache' },
+    });
     return response.data;
   },
 
