@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,12 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
   const [name, setName] = useState('');
-  const [moduleItems, setModuleItems] = useState([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('');
   const [selectedMaterial, setSelectedMaterial] = useState('');
@@ -32,7 +29,6 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
   useEffect(() => {
     if (open) {
       setName('');
-      setModuleItems([]);
       setError('');
       resetComboInputs();
     }
@@ -60,7 +56,9 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
     return raw.map((mat, idx) => {
       if (mat && typeof mat === 'object') {
         const id = String(mat.id ?? idx);
-        const label = String(mat.material ?? mat.name ?? mat.title ?? id);
+        const label = String(
+          mat.material ?? mat.name ?? mat.title ?? mat.label ?? id
+        );
         return { id, label };
       }
       return { id: String(mat), label: String(mat) };
@@ -73,32 +71,7 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
     setSelectedMaterial('');
   };
 
-  const handleAddCombo = () => {
-    if (!selectedSubjectId || !selectedLevel || !selectedMaterial) return;
-
-    const levelObj = normalizedLevels.find(
-      (l) => String(l.id) === String(selectedLevel)
-    );
-    const materialObj = normalizedMaterials.find(
-      (m) => String(m.id) === String(selectedMaterial)
-    );
-
-    // Enforce single subject per module: replace any existing item
-    setModuleItems([
-      {
-        subjectId: Number(selectedSubjectId),
-        subjectName: selectedSubject?.name || '',
-        levelId: levelObj?.id || '',
-        levelLabel: levelObj?.label || '',
-        materialId: materialObj?.id || '',
-        materialLabel: materialObj?.label || '',
-      },
-    ]);
-    resetComboInputs();
-  };
-
-  const removeCombo = (idx) =>
-    setModuleItems((prev) => prev.filter((_, i) => i !== idx));
+  // No add/remove combo; we save directly from the selected fields
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -107,20 +80,26 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
       setError('Geef de module een naam.');
       return;
     }
-    if (moduleItems.length === 0) {
-      setError('Voeg ten minste één vak toe aan deze module.');
+    if (!selectedSubjectId || !selectedLevel || !selectedMaterial) {
+      setError('Kies een vak, niveau en literatuur.');
       return;
     }
 
     setLoading(true);
     try {
+      const levelObj = normalizedLevels.find(
+        (l) => String(l.id) === String(selectedLevel)
+      );
+      const materialObj = normalizedMaterials.find(
+        (m) => String(m.id) === String(selectedMaterial)
+      );
       await onSave({
         name: name.trim(),
         subjects: [
           {
-            subject_id: Number(moduleItems[0].subjectId),
-            level: String(moduleItems[0].levelLabel),
-            material: String(moduleItems[0].materialLabel),
+            subject_id: Number(selectedSubjectId),
+            level: String(levelObj?.label || ''),
+            material: String(materialObj?.label || ''),
           },
         ],
       });
@@ -155,7 +134,7 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] gap-3 items-end">
             <div className="space-y-2">
               <Label htmlFor="subject">Vak</Label>
               <Select
@@ -217,54 +196,8 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              type="button"
-              onClick={handleAddCombo}
-              variant="outline"
-              size="icon"
-              disabled={
-                !selectedSubjectId ||
-                !selectedLevel ||
-                !selectedMaterial ||
-                loading
-              }
-            >
-              <Plus className="h-4 w-4" />
-              <span className="sr-only">Voeg toe</span>
-            </Button>
           </div>
 
-          <div className="space-y-2">
-            <Label>Toegevoegde vakken</Label>
-            <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-muted/50">
-              {moduleItems.length > 0 ? (
-                moduleItems.map((item, i) => (
-                  <Badge
-                    key={`${item.subjectId}-${item.levelId}-${item.materialId}-${i}`}
-                    variant="secondary"
-                    className="flex items-center gap-2 py-1.5 px-3 text-sm"
-                  >
-                    <span>
-                      {item.subjectName} – {item.levelLabel} –{' '}
-                      {item.materialLabel}
-                    </span>
-                    <button
-                      type="button"
-                      className="rounded-full p-0.5 hover:bg-background/50"
-                      onClick={() => removeCombo(i)}
-                      aria-label="Remove item"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground italic px-2">
-                  Nog geen vakken toegevoegd.
-                </p>
-              )}
-            </div>
-          </div>
 
           {error && (
             <p className="text-sm font-medium text-destructive">{error}</p>
@@ -279,7 +212,16 @@ export default function CreateModal({ open, onOpenChange, onSave, subjects }) {
             >
               Annuleren
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={
+                loading ||
+                !name.trim() ||
+                !selectedSubjectId ||
+                !selectedLevel ||
+                !selectedMaterial
+              }
+            >
               {loading ? 'Opslaan...' : 'Module Opslaan'}
             </Button>
           </DialogFooter>
