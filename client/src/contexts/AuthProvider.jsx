@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   });
-  
+
   const [user, setUser] = useState(() => {
     try {
       const storedUser = localStorage.getItem('user');
@@ -129,7 +129,8 @@ export const AuthProvider = ({ children }) => {
         // Mark as just registered and automatically log in the user
         setJustRegistered(true);
         const loginSuccess = await login(email, password, {
-          redirectTo: '/mijn-profiel',
+          // Ensure the welcome dialog on Dashboard is the first thing shown
+          redirectTo: '/dashboard',
         });
         if (loginSuccess) {
           // Merge known profile fields into the lightweight session user

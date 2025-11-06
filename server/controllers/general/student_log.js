@@ -68,22 +68,23 @@ exports.get_student_log_by_id = async (req, res) => {
 };
 
 
-// Update
+// Update (supports partial updates)
 exports.update_student_log = async (req, res) => {
   try {
     const { id } = req.params;
     const { student_id, date, start_log, end_log, completed, comment } = req.body;
 
+    const data = {};
+    if (student_id !== undefined) data.student_id = student_id;
+    if (date !== undefined) data.date = new Date(date);
+    if (start_log !== undefined) data.start_log = start_log;
+    if (end_log !== undefined) data.end_log = end_log;
+    if (completed !== undefined) data.completed = completed;
+    if (comment !== undefined) data.comment = comment;
+
     const updated_log = await prisma.student_log.update({
       where: { id: Number(id) },
-      data: {
-        student_id,
-        date: new Date(date),
-        start_log,
-        end_log,
-        completed,
-        comment,
-      },
+      data,
     });
 
     res.status(200).json(updated_log);

@@ -9,10 +9,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { X } from 'lucide-react';
 
 import ComboboxField from '@/components/ui/combobox';
 import { useEffect, useMemo, useState } from 'react';
 
+import studentAPI from '@/apis/studentAPI';
 import { useQuranRelations } from '@/hooks/useQuranRelations';
 import { parsePoint, serializePoint } from '@/utils/quran';
 
@@ -35,15 +37,37 @@ export default function QuranLogDialog({
   const {
     loading,
     surahItems: allSurahItems,
-    hizbItemsAll,
-    hizbsForSurah,
-    surahsForHizb,
     ayahsFor,
+    endSurahsAfter,
+    endAyahsAfter,
+    hizbFor,
   } = useQuranRelations();
 
   // geordende Begin en Einde; behoud als strings om te matchen met ComboboxField
   const [begin, setBegin] = useState(asPointStrings(parsePoint(newLog.from)));
   const [end, setEnd] = useState(asPointStrings(parsePoint(newLog.to)));
+  const [studentItems, setStudentItems] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const all = await studentAPI.get_students();
+        if (cancelled) return;
+        const mapped = (all || []).map((s) => ({
+          value: String(s.id),
+          label: `${s.first_name || ''} ${s.last_name || ''}`.trim() || `Student ${s.id}`,
+        }));
+        setStudentItems(mapped);
+      } catch (e) {
+        // fail silently; creation can still proceed with temporary student
+        // and will be saved locally by the caller
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // beveiligde synchronisatie om feedbacklus op Ayah verandering te voorkomen
   useEffect(() => {
@@ -59,83 +83,78 @@ export default function QuranLogDialog({
 
   // gefilterde items; elke lijst respecteert de andere selectie
   const beginSurahItems = useMemo(
-    () => (begin.hizb ? surahsForHizb(begin.hizb) : allSurahItems),
-    [begin.hizb, surahsForHizb, allSurahItems]
-  );
-  const beginHizbItems = useMemo(
-    () => (begin.surahId ? hizbsForSurah(begin.surahId) : hizbItemsAll),
-    [begin.surahId, hizbsForSurah, hizbItemsAll]
+    () => allSurahItems,
+    [allSurahItems]
   );
   const beginAyahItems = useMemo(
-    () => ayahsFor(begin.surahId, begin.hizb),
-    [begin.surahId, begin.hizb, ayahsFor]
+    () => ayahsFor(begin.surahId, undefined),
+    [begin.surahId, ayahsFor]
   );
 
   const endSurahItems = useMemo(
-    () => (end.hizb ? surahsForHizb(end.hizb) : allSurahItems),
-    [end.hizb, surahsForHizb, allSurahItems]
-  );
-  const endHizbItems = useMemo(
-    () => (end.surahId ? hizbsForSurah(end.surahId) : hizbItemsAll),
-    [end.surahId, hizbsForSurah, hizbItemsAll]
+    () => endSurahsAfter(begin),
+    [begin, endSurahsAfter]
   );
   const endAyahItems = useMemo(
-    () => ayahsFor(end.surahId, end.hizb),
-    [end.surahId, end.hizb, ayahsFor]
+    () => endAyahsAfter(end.surahId, undefined, begin),
+    [end.surahId, begin, endAyahsAfter]
   );
 
-  // houd afhankelijke velden geldig
-  function ensureHizbValidForSurah(hizb, surahId) {
-    if (!surahId || !hizb) return hizb;
-    const allowed = hizbsForSurah(surahId);
-    return allowed.some((i) => String(i.value) === String(hizb)) ? hizb : '';
-  }
-  function ensureSurahValidForHizb(surahId, hizb) {
-    if (!hizb || !surahId) return surahId;
-    const allowed = surahsForHizb(hizb);
-    return allowed.some((i) => String(i.value) === String(surahId))
-      ? surahId
-      : '';
+  // Keep end selection valid as begin changes
+  useEffect(() => {
+    const allowedSurahs = endSurahsAfter(begin);
+    if (end.surahId && !allowedSurahs.some((o) => o.value === end.surahId)) {
+      const next = { ...end, surahId: '', ayah: '' };
+      setEnd(next);
+      setNewLog((s) => ({ ...s, to: serializePoint(next) }));
+      return;
+    }
+    if (end.surahId) {
+      const allowedAyahs = endAyahsAfter(end.surahId, undefined, begin);
+      if (end.ayah && !allowedAyahs.some((o) => o.value === end.ayah)) {
+        const next = { ...end, ayah: '' };
+        setEnd(next);
+        setNewLog((s) => ({ ...s, to: serializePoint(next) }));
+      }
+    }
+  }, [begin, end.surahId]);
+
+  // derive hizb automatically from surah+ayah
+  function deriveHizb(surahId, ayah) {
+    const h = hizbFor(surahId, ayah);
+    return h ? String(h) : '';
   }
 
   function pushBegin(patch) {
     let next = asPointStrings({ ...begin, ...patch });
-
     if (patch.surahId !== undefined) {
       next.surahId = String(patch.surahId);
-      next.hizb = ensureHizbValidForSurah(next.hizb, next.surahId);
-      next.ayah = ''; // ayah hangt af van surah en misschien hizb
-    }
-    if (patch.hizb !== undefined) {
-      next.hizb = String(patch.hizb);
-      next.surahId = ensureSurahValidForHizb(next.surahId, next.hizb);
       next.ayah = '';
+      next.hizb = '';
     }
     if (patch.ayah !== undefined) {
-      next.ayah = String(patch.ayah); // raak niet aan surah/hizb bij ayah verandering
+      next.ayah = String(patch.ayah);
     }
-
+    if (next.surahId && next.ayah) {
+      next.hizb = deriveHizb(next.surahId, next.ayah);
+    }
     setBegin(next);
     setNewLog((s) => ({ ...s, from: serializePoint(next) }));
   }
 
   function pushEnd(patch) {
     let next = asPointStrings({ ...end, ...patch });
-
     if (patch.surahId !== undefined) {
       next.surahId = String(patch.surahId);
-      next.hizb = ensureHizbValidForSurah(next.hizb, next.surahId);
       next.ayah = '';
-    }
-    if (patch.hizb !== undefined) {
-      next.hizb = String(patch.hizb);
-      next.surahId = ensureSurahValidForHizb(next.surahId, next.hizb);
-      next.ayah = '';
+      next.hizb = '';
     }
     if (patch.ayah !== undefined) {
       next.ayah = String(patch.ayah);
     }
-
+    if (next.surahId && next.ayah) {
+      next.hizb = deriveHizb(next.surahId, next.ayah);
+    }
     setEnd(next);
     setNewLog((s) => ({ ...s, to: serializePoint(next) }));
   }
@@ -158,14 +177,8 @@ export default function QuranLogDialog({
     return hasBegin && hasEnd && !loading;
   }, [begin, end, loading]);
 
-  const beginAyahHint =
-    begin.surahId && begin.hizb && beginAyahItems.length === 0
-      ? 'Geen ayah binnen deze combinatie'
-      : null;
-  const endAyahHint =
-    end.surahId && end.hizb && endAyahItems.length === 0
-      ? 'Geen ayah binnen deze combinatie'
-      : null;
+  const beginAyahHint = null;
+  const endAyahHint = null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -175,31 +188,26 @@ export default function QuranLogDialog({
         </DialogHeader>
 
         <div className="grid gap-4">
+          {/* Student */}
+          <div className="grid gap-2">
+            <ComboboxField
+              label="Leerling"
+              items={studentItems}
+              value={newLog.studentId || ''}
+              onChange={(v) => setNewLog((s) => ({ ...s, studentId: v }))}
+              placeholder="Kies leerling"
+            />
+          </div>
+
           <div className="grid gap-2">
             {/* Begin */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Begin</h2>
-              <Button
-                variant="ghost"
-                className="bg-white border"
-                onClick={clearBegin}
-              >
-                Wissen
-              </Button>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <h2 className="text-lg font-semibold">Begin</h2>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
               <ComboboxField
                 label="Surah"
                 items={beginSurahItems}
                 value={begin.surahId}
                 onChange={(v) => pushBegin({ surahId: v })}
-                placeholder="—"
-              />
-              <ComboboxField
-                label="Hizb"
-                items={beginHizbItems}
-                value={begin.hizb}
-                onChange={(v) => pushBegin({ hizb: v })}
                 placeholder="—"
               />
               <ComboboxField
@@ -211,13 +219,35 @@ export default function QuranLogDialog({
                   begin.surahId
                     ? beginAyahItems.length
                       ? 'Kies ayah'
-                      : 'Geen ayah in intersectie'
-                    : 'Kies eerst surah of hizb'
+                      : 'Geen ayah'
+                    : 'Kies eerst surah'
                 }
                 disabled={!begin.surahId || beginAyahItems.length === 0}
               />
+              <div className="flex flex-col">
+                <Label>Hizb</Label>
+                <div className={
+                  `h-10 flex items-center px-3 rounded-md border ` +
+                  (begin.surahId && begin.ayah
+                    ? 'bg-white text-muted-foreground'
+                    : 'bg-muted/30 text-muted-foreground')
+                }>
+                  {begin.surahId && begin.ayah ? `Hizb ${hizbFor(begin.surahId, begin.ayah) || '—'}` : '—'}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label>&nbsp;</Label>
+                <Button
+                  variant="ghost"
+                  className="bg-white border h-10 w-10 rounded-full p-0 justify-center"
+                  onClick={clearBegin}
+                  aria-label="Begin wissen"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               {beginAyahHint ? (
-                <div className="sm:col-span-3 text-sm text-muted-foreground">
+                <div className="sm:col-span-4 text-sm text-muted-foreground">
                   {beginAyahHint}
                 </div>
               ) : null}
@@ -226,29 +256,13 @@ export default function QuranLogDialog({
 
           {/* Einde */}
           <div className="grid gap-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Einde</h2>
-              <Button
-                variant="ghost"
-                className="bg-white border"
-                onClick={clearEnd}
-              >
-                Wissen
-              </Button>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <h2 className="text-lg font-semibold">Einde</h2>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
               <ComboboxField
                 label="Surah"
                 items={endSurahItems}
                 value={end.surahId}
                 onChange={(v) => pushEnd({ surahId: v })}
-                placeholder="—"
-              />
-              <ComboboxField
-                label="Hizb"
-                items={endHizbItems}
-                value={end.hizb}
-                onChange={(v) => pushEnd({ hizb: v })}
                 placeholder="—"
               />
               <ComboboxField
@@ -260,13 +274,35 @@ export default function QuranLogDialog({
                   end.surahId
                     ? endAyahItems.length
                       ? 'Kies ayah'
-                      : 'Geen ayah in intersectie'
-                    : 'Kies eerst surah of hizb'
+                      : 'Geen ayah'
+                    : 'Kies eerst surah'
                 }
                 disabled={!end.surahId || endAyahItems.length === 0}
               />
+              <div className="flex flex-col">
+                <Label>Hizb</Label>
+                <div className={
+                  `h-10 flex items-center px-3 rounded-md border ` +
+                  (end.surahId && end.ayah
+                    ? 'bg-white text-muted-foreground'
+                    : 'bg-muted/30 text-muted-foreground')
+                }>
+                  {end.surahId && end.ayah ? `Hizb ${hizbFor(end.surahId, end.ayah) || '—'}` : '—'}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label>&nbsp;</Label>
+                <Button
+                  variant="ghost"
+                  className="bg-white border h-10 w-10 rounded-full p-0 justify-center"
+                  onClick={clearEnd}
+                  aria-label="Einde wissen"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               {endAyahHint ? (
-                <div className="sm:col-span-3 text-sm text-muted-foreground">
+                <div className="sm:col-span-4 text-sm text-muted-foreground">
                   {endAyahHint}
                 </div>
               ) : null}

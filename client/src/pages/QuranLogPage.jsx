@@ -1,4 +1,5 @@
 import { getChapters } from '@/apis/quranAPI';
+import studentAPI from '@/apis/studentAPI';
 import studentLogAPI from '@/apis/studentLogAPI';
 import { createColumns as createQuranColumns } from '@/components/quranlog/columns';
 import DeleteQuranLogDialog from '@/components/quranlog/DeleteDialog';
@@ -16,7 +17,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { useQuranRelations } from '@/hooks/useQuranRelations';
 import { parsePoint } from '@/utils/quran';
@@ -72,7 +72,9 @@ export default function QuranLogPage() {
   });
 
   const [logs, setLogs] = useState([]);
+  const [dbStudents, setDbStudents] = useState([]);
   const [newLog, setNewLog] = useState({
+    studentId: '',
     from: '',
     to: '',
     date: '',
@@ -129,16 +131,40 @@ export default function QuranLogPage() {
     };
   }, []);
 
+  // Load students from DB for the combobox
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const all = await studentAPI.get_students();
+        if (cancelled) return;
+        const mapped = (all || []).map((s) => ({
+          value: String(s.id),
+          label:
+            `${s.first_name || ''} ${s.last_name || ''}`.trim() ||
+            `Student ${s.id}`,
+        }));
+        setDbStudents(mapped);
+      } catch (e) {
+        console.error('Failed to load students', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const addLog = async () => {
     if (!newLog.from || !newLog.to) return false;
     try {
-      const hasSelectedStudent = Boolean(filters.studentId);
+      const selectedStudentId = newLog.studentId || '';
+      const hasSelectedStudent = Boolean(selectedStudentId);
       const studentIdForLog = hasSelectedStudent
-        ? String(filters.studentId)
+        ? String(selectedStudentId)
         : `local:${crypto.randomUUID()}`;
 
       const payload = {
-        student_id: hasSelectedStudent ? Number(filters.studentId) : undefined,
+        student_id: hasSelectedStudent ? Number(selectedStudentId) : undefined,
         date: newLog.date || new Date().toISOString().slice(0, 10),
         start_log: String(newLog.from),
         end_log: String(newLog.to),
@@ -170,6 +196,7 @@ export default function QuranLogPage() {
         return next;
       });
       setNewLog({
+        studentId: '',
         from: '',
         to: '',
         date: '',
@@ -215,7 +242,7 @@ export default function QuranLogPage() {
   useEffect(() => {
     getChapters()
       .then((c) => setChapters(c || []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   const chapterById = useMemo(
     () => new Map(chapters.map((c) => [String(c.id), c])),
@@ -317,19 +344,16 @@ export default function QuranLogPage() {
     }
   };
 
-  const students = useMemo(() => {
-    const unique = new Map();
+  const studentItems = useMemo(() => {
+    const byId = new Map((dbStudents || []).map((s) => [s.value, s]));
     for (const l of logs || []) {
       const id = String(l.studentId);
-      if (!unique.has(id)) {
-        const label = id.startsWith('local:')
-          ? 'Tijdelijke leerling'
-          : `Student ${id}`;
-        unique.set(id, { value: id, label });
+      if (id.startsWith('local:') && !byId.has(id)) {
+        byId.set(id, { value: id, label: 'Tijdelijke leerling' });
       }
     }
-    return Array.from(unique.values());
-  }, [logs]);
+    return Array.from(byId.values());
+  }, [dbStudents, logs]);
 
   // selectedStudent not needed in the new CRUD table
 
@@ -342,10 +366,10 @@ export default function QuranLogPage() {
         .map((l) => ({
           ...l,
           studentLabel:
-            students.find((s) => s.value === l.studentId)?.label ||
+            studentItems.find((s) => s.value === l.studentId)?.label ||
             (l.studentId ? `Student ${l.studentId}` : '-'),
         })),
-    [logs, students, filters.studentId]
+    [logs, studentItems, filters.studentId]
   );
 
   const columns = useMemo(
@@ -430,7 +454,7 @@ export default function QuranLogPage() {
             />
             <ComboboxField
               label="Leerling"
-              items={students}
+              items={studentItems}
               value={filters.studentId}
               onChange={(v) => setFilters((s) => ({ ...s, studentId: v }))}
               placeholder="Kies leerling"
@@ -490,9 +514,8 @@ export default function QuranLogPage() {
                   const blob = new Blob([buffer], {
                     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                   });
-                  const fname = `quran_logs_${
-                    new Date().toISOString().split('T')[0]
-                  }.xlsx`;
+                  const fname = `quran_logs_${new Date().toISOString().split('T')[0]
+                    }.xlsx`;
                   saveAs(blob, fname);
                   toast.success('Excel export gestart.');
                 } catch (e) {
@@ -536,8 +559,8 @@ export default function QuranLogPage() {
         log={viewLog}
         studentLabel={
           viewLog
-            ? students.find((s) => s.value === viewLog.studentId)?.label ||
-              (viewLog.studentId ? `Student ${viewLog.studentId}` : '-')
+            ? studentItems.find((s) => s.value === viewLog.studentId)?.label ||
+            (viewLog.studentId ? `Student ${viewLog.studentId}` : '-')
             : '-'
         }
       />

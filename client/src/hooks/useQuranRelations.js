@@ -149,6 +149,39 @@ export function useQuranRelations() {
     return found;
   }
 
+  // Compute a global starting index for a partial point
+  // Supports: { surahId, ayah, hizb }
+  function globalStartForPoint(p) {
+    if (!C || !HG) return 1;
+    const surahId = Number(p?.surahId || 0);
+    const ayah = Number(p?.ayah || 0);
+    const hizb = Number(p?.hizb || 0);
+    if (surahId && ayah) return toGlobal(surahId, ayah, C);
+    if (hizb) return HG.idx[hizb] || 1;
+    if (surahId) return surahRange(surahId, C)[0];
+    return 1;
+  }
+
+  // End-side surah options that occur at or after the given begin point
+  function endSurahsAfter(beginPoint, maybeHizb) {
+    const gBegin = globalStartForPoint(beginPoint);
+    const base = maybeHizb ? surahsForHizb(maybeHizb) : surahItems;
+    return base.filter((opt) => {
+      const s = Number(opt.value);
+      const [, g2] = surahRange(s, C);
+      return g2 >= gBegin; // has at least one ayah after the begin
+    });
+  }
+
+  // End-side ayah options for a surah/hizb, restricted to >= begin point
+  function endAyahsAfter(surahId, maybeHizb, beginPoint) {
+    const s = Number(surahId || 0);
+    if (!s) return [];
+    const gBegin = globalStartForPoint(beginPoint);
+    const base = ayahsFor(surahId, maybeHizb);
+    return base.filter((opt) => toGlobal(s, Number(opt.value), C) >= gBegin);
+  }
+
   return {
     loading,
     surahItems,
@@ -157,5 +190,8 @@ export function useQuranRelations() {
     surahsForHizb,
     ayahsFor,
     hizbFor,
+    globalStartForPoint,
+    endSurahsAfter,
+    endAyahsAfter,
   };
 }

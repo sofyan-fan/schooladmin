@@ -43,7 +43,7 @@ const App = () => {
         element={
           isAuthenticated ? (
             user?.role?.toLowerCase() === 'student' ? (
-              <Navigate to="/mijn-profiel" />
+              <Navigate to="/dashboard" />
             ) : (
               <Navigate to="/dashboard" />
             )
