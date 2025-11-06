@@ -4,8 +4,23 @@ import RequestHandler from '../apis/RequestHandler';
 import { AuthContext } from './auth';
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(() => {
+    try {
+      return localStorage.getItem('token');
+    } catch {
+      return null;
+    }
+  });
+
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [justRegistered, setJustRegistered] = useState(false);
   const [pendingStudentId, setPendingStudentId] = useState(null);
   const navigate = useNavigate();
@@ -35,12 +50,34 @@ export const AuthProvider = ({ children }) => {
       if (response?.status === 200 && userData && session) {
         // Assuming the session object contains the necessary token or session ID
         // If the server uses session cookies, this might be all that's needed
-        const token = session.cookie; // Or whatever uniquely identifies the session
-        setToken(token);
-        setUser(userData);
-        localStorage.setItem('token', token); // Storing session identifier
-        localStorage.setItem('user', JSON.stringify(userData));
-        const redirectTo = options?.redirectTo || '/dashboard';
+        const sessToken = session.cookie; // Or whatever uniquely identifies the session
+        setToken(sessToken);
+
+        // If student, resolve and attach their studentId immediately
+        let finalUser = userData;
+        const role = (userData?.role || '').toLowerCase();
+        if (role === 'student') {
+          try {
+            const meResp = await RequestHandler.get('/auth/me/student');
+            const student = meResp?.data;
+            if (student?.id) {
+              finalUser = { ...userData, studentId: student.id };
+            }
+          } catch {
+            // Silently ignore; StudentSelfPage will attempt resolving again
+          }
+        }
+
+        setUser(finalUser);
+        try {
+          localStorage.setItem('token', sessToken);
+          localStorage.setItem('user', JSON.stringify(finalUser));
+        } catch {
+          // ignore storage write errors
+        }
+
+        const defaultRedirect = role === 'student' ? '/mijn-profiel' : '/dashboard';
+        const redirectTo = options?.redirectTo || defaultRedirect;
         navigate(redirectTo);
         return true;
       }
@@ -92,6 +129,7 @@ export const AuthProvider = ({ children }) => {
         // Mark as just registered and automatically log in the user
         setJustRegistered(true);
         const loginSuccess = await login(email, password, {
+          // Ensure the welcome dialog on Dashboard is the first thing shown
           redirectTo: '/dashboard',
         });
         if (loginSuccess) {
@@ -187,6 +225,36 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAuthenticated = !!token;
+
+  // Fallback: if a stored student user lacks studentId, try resolving it once
+  useEffect(() => {
+    let cancelled = false;
+    async function ensureStudentId() {
+      const role = (user?.role || '').toLowerCase();
+      if (!isAuthenticated || !user || role !== 'student' || user?.studentId) {
+        return;
+      }
+      try {
+        const meResp = await RequestHandler.get('/auth/me/student');
+        const student = meResp?.data;
+        if (!cancelled && student?.id) {
+          const merged = { ...user, studentId: student.id };
+          setUser(merged);
+          try {
+            localStorage.setItem('user', JSON.stringify(merged));
+          } catch {
+            // ignore storage write errors
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    ensureStudentId();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user]);
 
   return (
     <AuthContext.Provider

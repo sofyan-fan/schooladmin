@@ -1,3 +1,4 @@
+import AssessmentResultsExport from '@/components/results/AssessmentResultsExport';
 import { Button } from '@/components/ui/button';
 import { Card, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -9,7 +10,10 @@ import {
 import { MoreVertical, Users } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
+import { useState } from 'react';
+
 const AssessmentResultCard = ({ assessment, onSelect }) => {
+  const [isExportOpen, setIsExportOpen] = useState(false);
   // Defensive check for nested properties
   const moduleName = assessment.moduleName || 'Onbekende Module';
   const className = assessment.class_layout?.name || 'Onbekende Klas';
@@ -40,8 +44,16 @@ const AssessmentResultCard = ({ assessment, onSelect }) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Bekijk Details</DropdownMenuItem>
-                <DropdownMenuItem>Exporteer Resultaten</DropdownMenuItem>
+                <DropdownMenuItem className=" cursor-pointer">Bekijk Details</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExportOpen(true);
+                  }}
+                  className="hover:text-white cursor-pointer"
+                >
+                  Exporteer Resultaten
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -62,6 +74,11 @@ const AssessmentResultCard = ({ assessment, onSelect }) => {
           </div>
         </CardFooter>
       </Card>
+      <AssessmentResultsExport
+        assessment={assessment}
+        open={isExportOpen}
+        onOpenChange={setIsExportOpen}
+      />
     </div>
   );
 };

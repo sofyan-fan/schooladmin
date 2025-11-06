@@ -6,7 +6,8 @@ services:
       dockerfile: Dockerfile
     container_name: schooladmin-client
     ports:
-      - "5173:5173" 
+      # Expose port only to localhost (for Nginx)
+      - "127.0.0.1:5173:5173" 
     volumes:
       - ./client:/usr/src/app:cached
       - /usr/src/app/node_modules
@@ -21,7 +22,8 @@ services:
       dockerfile: Dockerfile
     container_name: schooladmin-server
     ports:
-      - "3000:3000"
+      # Expose port only to localhost (for Nginx)
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./server:/usr/src/app:cached
       - /usr/src/app/node_modules
@@ -42,7 +44,11 @@ services:
       MYSQL_USER: admin
       MYSQL_PASSWORD: password
     ports:
-      - "3306:3306"
+      # NOTE: Database port is still public. 
+      # Consider removing this line if you don't need direct external access.
+      # If removed, Nginx cannot connect, you'd use 'db:3306' internally.
+      # For now, leaving it as is.
+      - "3306:3306" 
     volumes:
       - mysql-data:/var/lib/mysql
       
@@ -54,6 +60,7 @@ services:
       - ./server:/usr/src/app
     command: npx prisma studio --schema=./prisma/schema.prisma --hostname=0.0.0.0
     ports:
+      # This remains public so you can access it
       - "5555:5555"
     depends_on:
       - db
@@ -63,5 +70,3 @@ services:
 
 volumes:
   mysql-data:
-
-

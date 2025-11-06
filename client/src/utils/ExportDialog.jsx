@@ -8,15 +8,20 @@ import {
 } from '@/components/ui/dialog';
 import { FileSpreadsheet, FileText } from 'lucide-react';
 
-const ExportDialog = ({ isOpen, onClose, onExportExcel, onExportPDF }) => {
+const ExportDialog = ({
+  isOpen,
+  onClose,
+  onExportExcel,
+  onExportPDF,
+  title = 'Exporteer gegevens',
+  description = 'Kies een bestandsformaat voor het exporteren.',
+}) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Exporteer gegevens</DialogTitle>
-          <DialogDescription>
-            Kies een bestandsformaat voor het exporteren van de jaarplanning.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-6">
           <Button
@@ -30,7 +35,6 @@ const ExportDialog = ({ isOpen, onClose, onExportExcel, onExportPDF }) => {
             <FileSpreadsheet className="size-16 text-green-600" />
             <div className="text-center">
               <div className="font-semibold text-lg">Excel</div>
-              {/* <div className="text-xs text-muted-foreground">.xlsx</div> */}
             </div>
           </Button>
           <Button
@@ -44,7 +48,6 @@ const ExportDialog = ({ isOpen, onClose, onExportExcel, onExportPDF }) => {
             <FileText className="size-16 text-red-600" />
             <div className="text-center">
               <div className="font-semibold text-lg">PDF</div>
-              {/* <div className="text-xs text-muted-foreground">.pdf</div> */}
             </div>
           </Button>
         </div>

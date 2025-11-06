@@ -111,7 +111,8 @@ CREATE TABLE `progress` (
 -- CreateTable
 CREATE TABLE `absence` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `user_id` INTEGER NOT NULL,
+    `student_id` INTEGER NULL,
+    `teacher_id` INTEGER NULL,
     `role` VARCHAR(191) NOT NULL,
     `roster_id` INTEGER NOT NULL,
     `reason` VARCHAR(191) NOT NULL,
@@ -312,21 +313,33 @@ CREATE TABLE `student_log` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `_absenceToteacher` (
-    `A` INTEGER NOT NULL,
-    `B` INTEGER NOT NULL,
+CREATE TABLE `financial_type` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `_absenceToteacher_AB_unique`(`A`, `B`),
-    INDEX `_absenceToteacher_B_index`(`B`)
+    UNIQUE INDEX `financial_type_name_key`(`name`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `_absenceTostudent` (
-    `A` INTEGER NOT NULL,
-    `B` INTEGER NOT NULL,
+CREATE TABLE `financial_log` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `type_id` INTEGER NOT NULL,
+    `student_id` INTEGER NULL,
+    `course_id` INTEGER NULL,
+    `amount` DOUBLE NOT NULL,
+    `method` VARCHAR(191) NOT NULL,
+    `notes` VARCHAR(191) NULL,
+    `transaction_type` VARCHAR(191) NOT NULL,
+    `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `_absenceTostudent_AB_unique`(`A`, `B`),
-    INDEX `_absenceTostudent_B_index`(`B`)
+    INDEX `financial_log_type_id_idx`(`type_id`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -357,7 +370,10 @@ ALTER TABLE `assessment` ADD CONSTRAINT `assessment_subject_id_fkey` FOREIGN KEY
 ALTER TABLE `progress` ADD CONSTRAINT `progress_student_id_fkey` FOREIGN KEY (`student_id`) REFERENCES `student`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `absence` ADD CONSTRAINT `absence_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `absence` ADD CONSTRAINT `absence_student_id_fkey` FOREIGN KEY (`student_id`) REFERENCES `student`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `absence` ADD CONSTRAINT `absence_teacher_id_fkey` FOREIGN KEY (`teacher_id`) REFERENCES `teacher`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `absence` ADD CONSTRAINT `absence_roster_id_fkey` FOREIGN KEY (`roster_id`) REFERENCES `roster`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -417,16 +433,13 @@ ALTER TABLE `time_registration` ADD CONSTRAINT `time_registration_teacher_id_fke
 ALTER TABLE `student_log` ADD CONSTRAINT `student_log_student_id_fkey` FOREIGN KEY (`student_id`) REFERENCES `student`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `_absenceToteacher` ADD CONSTRAINT `_absenceToteacher_A_fkey` FOREIGN KEY (`A`) REFERENCES `absence`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `financial_log` ADD CONSTRAINT `financial_log_type_id_fkey` FOREIGN KEY (`type_id`) REFERENCES `financial_type`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `_absenceToteacher` ADD CONSTRAINT `_absenceToteacher_B_fkey` FOREIGN KEY (`B`) REFERENCES `teacher`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `financial_log` ADD CONSTRAINT `financial_log_student_id_fkey` FOREIGN KEY (`student_id`) REFERENCES `student`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `_absenceTostudent` ADD CONSTRAINT `_absenceTostudent_A_fkey` FOREIGN KEY (`A`) REFERENCES `absence`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `_absenceTostudent` ADD CONSTRAINT `_absenceTostudent_B_fkey` FOREIGN KEY (`B`) REFERENCES `student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `financial_log` ADD CONSTRAINT `financial_log_course_id_fkey` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_course_subjects` ADD CONSTRAINT `_course_subjects_A_fkey` FOREIGN KEY (`A`) REFERENCES `courses`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -32,7 +32,7 @@ export default function EditResultModal({
 
   const handleSave = async () => {
     if (!reason) {
-      toast.error('A reason for the change is required.');
+      toast.error('Een reden voor de wijziging is vereist.');
       return;
     }
 
@@ -43,12 +43,12 @@ export default function EditResultModal({
         grade: parseFloat(grade),
         // In a real scenario, we'd also send the 'reason' to a logging endpoint
       });
-      toast.success('Result updated successfully!');
+      toast.success('Resultaat bijgewerkt!');
       onSave(updatedResult); // Pass the updated result back to the parent
       onOpenChange(false);
     } catch (error) {
-      console.error('Failed to update result', error);
-      toast.error('Failed to update result.');
+      console.error('Kon het resultaat niet bijwerken', error);
+      toast.error('Kon het resultaat niet bijwerken.');
     } finally {
       setIsLoading(false);
     }
@@ -58,20 +58,20 @@ export default function EditResultModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent maxWidth="550px">
         <DialogHeader>
-          <DialogTitle>Edit Result</DialogTitle>
+          <DialogTitle>Wijzig Resultaat</DialogTitle>
           <DialogDescription>
-            Editing result for{' '}
+            Wijzig het cijfer voor{' '}
             <strong>
               {result.student.first_name} {result.student.last_name}
             </strong>{' '}
-            for the assessment <strong>{result.assessment_name}</strong>.
+            voor de toets <strong>{result.assessment.name}</strong>
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="grade">Grade</Label>
+            <Label htmlFor="grade">Cijfer</Label>
             <Input
               id="grade"
               type="number"
@@ -83,21 +83,24 @@ export default function EditResultModal({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reason">Reason for Change (Required)</Label>
+            <Label htmlFor="reason">Reden voor wijziging</Label>
             <Textarea
               id="reason"
-              placeholder="e.g., Correction of grading error."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+          <Button
+            className="bg-white"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Annuleren
           </Button>
           <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? 'Opslaan...' : 'Wijzigingen opslaan'}
           </Button>
         </DialogFooter>
       </DialogContent>

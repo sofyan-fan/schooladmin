@@ -9,8 +9,10 @@ import { RadioGroup } from '@/components/ui/radio-group';
 import PropTypes from 'prop-types';
 import FormText from './FormText';
 import LabelPill from './LabelPill';
+import { useFormContext } from 'react-hook-form';
 
 function StepPersonal({ control, role }) {
+  const { formState } = useFormContext();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -42,7 +44,9 @@ function StepPersonal({ control, role }) {
                 toYear={new Date().getFullYear() - 4}
                 fromYear={1900}
               />
-              <FormMessage />
+              {(formState.submitCount > 0 || fieldState.isTouched || fieldState.isDirty) && (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />
@@ -71,7 +75,9 @@ function StepPersonal({ control, role }) {
                   </LabelPill>
                 ))}
               </RadioGroup>
-              <FormMessage />
+              {(formState.submitCount > 0 || fieldState.isTouched || fieldState.isDirty) && (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />

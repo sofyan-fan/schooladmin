@@ -85,6 +85,14 @@ const {
   delete_financial_log,
 } = require('../controllers/general/finance');
 
+const {
+  create_student_log,
+  get_all_student_logs,
+  get_student_log_by_id,
+  update_student_log,
+  delete_student_log,
+} = require('../controllers/general/student_log');
+
 // ==============================
 // Students routes
 // ==============================
@@ -195,5 +203,14 @@ router.post('/financial_logs', create_financial_log);
 router.get('/financial_logs', get_financial_logs);
 router.put('/financial_logs/:id', update_financial_log);
 router.delete('/financial_logs/:id', delete_financial_log);
+
+// ==============================
+// Student Logs routes
+// ==============================
+router.post('/student-logs', create_student_log);
+router.get('/student-logs', get_all_student_logs);
+router.get('/student-logs/:id', get_student_log_by_id);
+router.put('/student-logs/:id', update_student_log);
+router.delete('/student-logs/:id', delete_student_log);
 
 module.exports = router;

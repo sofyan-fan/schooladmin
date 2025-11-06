@@ -1,5 +1,5 @@
 const { prisma } = require('../../prisma/connection');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 exports.register = async (req, res) => {
   try {
@@ -72,7 +72,6 @@ exports.register = async (req, res) => {
           message: 'Birth date is required for students.',
         });
       }
-
       profile = await prisma.student.create({
         data: {
           first_name: first_name || '',

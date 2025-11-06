@@ -1,10 +1,39 @@
 // src/components/students/columns.jsx
 import StatusIndicator from '@/components/shared/StatusIndicator';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowUpDown, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const createColumns = ({ onView, onEdit, onDelete }) => [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        aria-label="Select all"
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label={`Select student ${row.original.firstName} ${
+          row.original.lastName ?? ''
+        }`}
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        disabled={
+          typeof row.getCanSelect === 'function' ? !row.getCanSelect() : false
+        }
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 36,
+  },
   // First Name -> link to details page
   {
     accessorKey: 'firstName',

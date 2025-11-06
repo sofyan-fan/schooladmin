@@ -57,6 +57,7 @@ const YearPlanningTable = ({
   return (
     <div className="space-y-4">
       {/* Toolbar with Search and Action buttons */}
+        <h1 className="text-2xl font-semibold">Jaarplanning</h1>
       <div className="flex items-center justify-between">
         {/* Search/Filter Toolbar */}
         <div className="flex items-center w-full justify-between space-x-4">
