@@ -22,12 +22,12 @@ const ExportDialog = ({
   defaultScope = 'week', // 'day' | 'week'
   defaultDate,
 }) => {
-  const [scope, setScope] = useState(defaultScope === 'day' ? 'day' : 'week');
+  const [scope, setScope] = useState('week');
   const [selectedDate, setSelectedDate] = useState(defaultDate || new Date());
   const [step, setStep] = useState(1); // 1 = choose date/scope, 2 = choose format
 
   useEffect(() => {
-    setScope(defaultScope === 'day' ? 'day' : 'week');
+    setScope('week');
   }, [defaultScope]);
 
   useEffect(() => {
@@ -51,32 +51,10 @@ const ExportDialog = ({
           <>
             {step === 1 ? (
               <div className="space-y-4 mt-2">
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground">Bereik:</div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={scope === 'day' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setScope('day')}
-                    >
-                      Dag
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={scope === 'week' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setScope('week')}
-                    >
-                      Week
-                    </Button>
-                  </div>
-                </div>
+                <div className="text-sm text-muted-foreground">Bereik: Week</div>
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">
-                    {scope === 'day'
-                      ? 'Kies de datum van de dag'
-                      : 'Kies een datum binnen de week'}
+                    Kies een datum (start van de week)
                   </div>
                   <DatePicker
                     value={selectedDate}

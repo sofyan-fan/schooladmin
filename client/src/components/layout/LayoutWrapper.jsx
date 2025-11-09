@@ -11,9 +11,9 @@ const LayoutWrapper = ({ children }) => {
       <AppSidebar />
       <SidebarInset>
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6 bg-[#FDFBF7] ">
+        <div className="flex-1 overflow-y-auto p-6 bg-[#FDFBF7] ">
           {children ? children : <Outlet />}
-        </main>
+        </div>
       </SidebarInset>
       <Toaster
         position="top-right"

@@ -26,7 +26,7 @@ import RosterFilters from '@/components/rosters/RosterFilters';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import ExportDialog from '@/utils/ExportDialog';
-import exportScheduleToPDF from '@/utils/exportScheduleToPDF';
+import exportScheduleToPDF, { exportWeekScheduleToPDF } from '@/utils/exportScheduleToPDF';
 
 // Styles
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
@@ -750,66 +750,23 @@ export default function RostersPage() {
   );
 
   const handleExportPDF = useCallback(
-    (args) => {
+    async (args) => {
       try {
-        const scope = args?.scope === 'day' ? 'day' : 'week';
+        // Only week export is supported from the dialog for now
+        const scope = 'week';
         const anchorDate = args?.date ? new Date(args.date) : currentDate;
-        const events = getEventsForScope(scope, anchorDate);
+        const events = getEventsForScope('week', anchorDate);
         if (events.length === 0) {
           toast.info('Geen roosteritems gevonden voor het gekozen bereik.');
           return;
         }
-        if (scope === 'day') {
-          exportDayScheduleToPDF(
-            [...events].sort((a, b) => a.start - b.start),
-            anchorDate
-          );
-        } else {
-          const weekStart = anchorDate;
-          const weekEnd = addDays(weekStart, 6);
-          const title = (() => {
-            const startStr = weekStart.toLocaleDateString('nl-NL', {
-              day: 'numeric',
-              month: 'short',
-            });
-            const endStr = weekEnd.toLocaleDateString('nl-NL', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            });
-            return `Lesrooster – ${startStr} – ${endStr}`;
-          })();
-          const rows = events
-            .sort((a, b) => a.start - b.start)
-            .map((ev) => ({
-              date: ev.start, // formatter in util will handle date
-              start_time: format(ev.start, 'HH:mm'),
-              end_time: format(ev.end, 'HH:mm'),
-              title: ev.title || '',
-              teacher: ev.resource.teacherName || '',
-              class: ev.resource.className || '',
-              classroom: ev.resource.classroomName || '',
-            }));
-          const columns = [
-            { header: 'Datum', accessorKey: 'date', displayName: 'Datum' },
-            { header: 'Tijd', accessorKey: 'start_time', displayName: 'Tijd' },
-            { header: 'Vak', accessorKey: 'title', displayName: 'Vak' },
-            { header: 'Docent', accessorKey: 'teacher', displayName: 'Docent' },
-            { header: 'Klas', accessorKey: 'class', displayName: 'Klas' },
-            { header: 'Lokaal', accessorKey: 'classroom', displayName: 'Lokaal' },
-          ];
-          exportScheduleToPDF({
-            columns,
-            rows,
-            options: {
-              title,
-              subtitle: '',
-              headAlign: 'left',
-              accentColor: '#88BB18',
-              fileName: `rooster_week_${weekStart.toISOString().split('T')[0]}.pdf`,
-            },
-          });
-        }
+        await exportWeekScheduleToPDF({
+          events: [...events].sort((a, b) => a.start - b.start),
+          anchorDate,
+          options: {
+            accentColor: '#88BB18',
+          },
+        });
         toast.success('Rooster succesvol geëxporteerd naar PDF!');
       } catch (e) {
         console.error(e);
