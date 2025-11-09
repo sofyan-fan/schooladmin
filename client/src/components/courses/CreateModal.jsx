@@ -25,6 +25,7 @@ export default function CreateModal({
   const [selectedModuleIds, setSelectedModuleIds] = useState(new Set());
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [moduleSearch, setModuleSearch] = useState('');
 
   // Reset form when modal opens
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function CreateModal({
       setPrice('');
       setSelectedModuleIds(new Set());
       setError('');
+      setModuleSearch('');
     }
   }, [open]);
 
@@ -48,6 +50,13 @@ export default function CreateModal({
       return newSet;
     });
   };
+
+  const filteredModules =
+    moduleSearch.trim().length > 0
+      ? availableModules.filter((mod) =>
+        String(mod?.name || '').toLowerCase().includes(moduleSearch.trim().toLowerCase())
+      )
+      : availableModules;
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -103,7 +112,7 @@ export default function CreateModal({
               <Label htmlFor="courseDescription">Omschrijving</Label>
               <Textarea
 
-              className="bg-white"
+                className="bg-white"
                 id="courseDescription"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -127,9 +136,22 @@ export default function CreateModal({
 
           <div className="space-y-2">
             <Label>Selecteer Modules</Label>
+            <Input
+              id="moduleSearch"
+              placeholder="Zoek modules..."
+              value={moduleSearch}
+              onChange={(e) => setModuleSearch(e.target.value)}
+              disabled={loading || availableModules.length === 0}
+            />
             <div className="max-h-60 overflow-y-auto p-3 border rounded-md bg-muted/50 space-y-3">
-              {availableModules.length > 0 ? (
-                availableModules.map((module) => (
+              {availableModules.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Geen modules beschikbaar. Maak eerst een module aan.
+                </p>
+              ) : filteredModules.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">Geen resultaten.</p>
+              ) : (
+                filteredModules.map((module) => (
                   <div key={module.id} className="flex items-center gap-3">
                     <Checkbox
                       id={`module-${module.id}`}
@@ -145,10 +167,6 @@ export default function CreateModal({
                     </Label>
                   </div>
                 ))
-              ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  Geen modules beschikbaar. Maak eerst een module aan.
-                </p>
               )}
             </div>
           </div>

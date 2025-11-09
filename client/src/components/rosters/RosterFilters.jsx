@@ -1,13 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import ComboboxField from '@/components/ui/combobox';
 import { X } from 'lucide-react';
+import { useState } from 'react';
 
 const RosterFilters = ({
   classes,
@@ -15,6 +10,7 @@ const RosterFilters = ({
   classrooms,
   filters,
   onFiltersChange,
+  rightAction,
 }) => {
   const handleClassChange = (value) => {
     if (value && !filters.classIds.includes(parseInt(value))) {
@@ -58,65 +54,70 @@ const RosterFilters = ({
     });
   };
 
-  const hasFilters = 
-    filters.classIds.length > 0 || 
-    filters.teacherIds.length > 0 || 
+  const hasFilters =
+    filters.classIds.length > 0 ||
+    filters.teacherIds.length > 0 ||
     filters.classroomIds.length > 0;
+
+  // Local state to reset combobox after applying filter
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
+  const [selectedClassroomId, setSelectedClassroomId] = useState('');
 
   return (
     <Card className="bg-transparent shadow-none border-none rounded-b-none  pt-0">
       <CardContent className="px-0">
-        <div className="flex flex-wrap gap-4 items-center">
-          <Select onValueChange={handleClassChange} value="">
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter op klas" />
-            </SelectTrigger>
-            <SelectContent>
-              {classes
-                .filter((cls) => cls.id != null)
-                .map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id.toString()}>
-                    {cls.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <ComboboxField
+              className="w-[200px]"
+              placeholder="Filter op klas"
+              value={selectedClassId}
+              onChange={(val) => {
+                handleClassChange(val);
+                setSelectedClassId('');
+              }}
+              items={(classes ?? [])
+                .filter((cls) => cls?.id != null)
+                .map((cls) => ({ value: String(cls.id), label: cls.name }))}
+            />
 
-          <Select onValueChange={handleTeacherChange} value="">
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter op docent" />
-            </SelectTrigger>
-            <SelectContent>
-              {teachers
-                .filter((teacher) => teacher.id != null)
-                .map((teacher) => (
-                  <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                    {teacher.first_name} {teacher.last_name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+            <ComboboxField
+              className="w-[200px]"
+              placeholder="Filter op docent"
+              value={selectedTeacherId}
+              onChange={(val) => {
+                handleTeacherChange(val);
+                setSelectedTeacherId('');
+              }}
+              items={(teachers ?? [])
+                .filter((t) => t?.id != null)
+                .map((t) => ({
+                  value: String(t.id),
+                  label: `${t.first_name} ${t.last_name}`,
+                }))}
+            />
 
-          <Select onValueChange={handleClassroomChange} value="">
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter op lokaal" />
-            </SelectTrigger>
-            <SelectContent>
-              {classrooms
-                .filter((classroom) => classroom.id != null)
-                .map((classroom) => (
-                  <SelectItem key={classroom.id} value={classroom.id.toString()}>
-                    {classroom.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+            <ComboboxField
+              className="w-[200px]"
+              placeholder="Filter op lokaal"
+              value={selectedClassroomId}
+              onChange={(val) => {
+                handleClassroomChange(val);
+                setSelectedClassroomId('');
+              }}
+              items={(classrooms ?? [])
+                .filter((r) => r?.id != null)
+                .map((r) => ({ value: String(r.id), label: r.name }))}
+            />
 
-          {hasFilters && (
-            <Button variant="outline" onClick={clearFilters}>
-              Filters wissen
-            </Button>
-          )}
+            {hasFilters && (
+              <Button variant="outline" onClick={clearFilters}>
+                Filters wissen
+              </Button>
+            )}
+          </div>
+          {rightAction ? <div className="ml-auto">{rightAction}</div> : null}
         </div>
 
         {/* Active filters display */}
@@ -139,7 +140,7 @@ const RosterFilters = ({
                 </div>
               );
             })}
-            
+
             {filters.teacherIds.map((id) => {
               const teacher = teachers.find((t) => t.id === id);
               return (
@@ -159,7 +160,7 @@ const RosterFilters = ({
                 </div>
               );
             })}
-            
+
             {filters.classroomIds.map((id) => {
               const classroom = classrooms.find((c) => c.id === id);
               return (

@@ -17,9 +17,11 @@ import { get_subjects } from '@/apis/subjectAPI';
 import { get_teachers } from '@/apis/teachersAPI';
 
 // Components
+import CreateLessonModal from '@/components/rosters/CreateLessonModal';
 import LessonModal from '@/components/rosters/LessonModal';
 import RosterFilters from '@/components/rosters/RosterFilters';
 import PageHeader from '@/components/shared/PageHeader';
+import { Button } from '@/components/ui/button';
 
 // Styles
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
@@ -129,6 +131,7 @@ export default function RostersPage() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const eventsCacheRef = useRef([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // Fetch all rosters and store raw data
   const fetchRosters = useCallback(async () => {
@@ -391,6 +394,9 @@ export default function RostersPage() {
         classrooms={classrooms}
         filters={filters}
         onFiltersChange={setFilters}
+        rightAction={
+          <Button onClick={() => setCreateModalOpen(true)}>Les Inplannen</Button>
+        }
       />
 
       <div className="flex-1 bg-white rounded-lg shadow-sm p-4">
@@ -450,6 +456,15 @@ export default function RostersPage() {
         }}
         selectedEvent={selectedEvent}
         selectedSlot={selectedSlot}
+        classes={classes}
+        subjects={subjects}
+        teachers={teachers}
+        classrooms={classrooms}
+        onSave={handleSave}
+      />
+      <CreateLessonModal
+        open={createModalOpen}
+        onOpenChange={(open) => setCreateModalOpen(open)}
         classes={classes}
         subjects={subjects}
         teachers={teachers}

@@ -2,6 +2,7 @@
 import StatusIndicator from '@/components/shared/StatusIndicator';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const createColumns = ({ onView, onEdit, onDelete }) => [
   {
@@ -17,6 +18,18 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
       </Button>
     ),
     displayName: 'voornaam',
+    cell: ({ row }) => {
+      const t = row.original;
+      return (
+        <Link
+          to={`/docenten/${t.id}`}
+          className="text-primary hover:underline"
+          title="Bekijk details"
+        >
+          {t.firstName}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: 'lastName',

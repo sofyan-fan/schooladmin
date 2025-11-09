@@ -80,26 +80,28 @@ export default function CreateClassModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl min-h-[60vh] max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Add New Class</DialogTitle>
+          <DialogTitle>Nieuwe Klas Toevoegen</DialogTitle>
           <DialogDescription>
-            Create a new class by providing a name and selecting a teacher,
-            courses, and students.
+            Maak een nieuwe klas aan door een naam op te geven en een mentor,
+            lespakket en studenten te selecteren.
           </DialogDescription>
         </DialogHeader>
-        <ClassForm
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleSubmit}
-          loading={loading}
-          allTeachers={allTeachers}
-          allCourses={allCourses}
-          allStudents={allStudents}
-        />
-        {error && (
-          <p className="text-sm font-medium text-destructive">{error}</p>
-        )}
+        <div className="flex-1 overflow-y-auto">
+          <ClassForm
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            loading={loading}
+            allTeachers={allTeachers}
+            allCourses={allCourses}
+            allStudents={allStudents}
+          />
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
+        </div>
         <DialogFooter className="pt-4">
           <Button
             type="button"
@@ -107,10 +109,10 @@ export default function CreateClassModal({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancel
+            Annuleren
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Creating...' : 'Create Class'}
+            {loading ? 'Aanmaken...' : 'Klas Aanmaken'}
           </Button>
         </DialogFooter>
       </DialogContent>

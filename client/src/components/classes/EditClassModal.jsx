@@ -94,23 +94,25 @@ export default function EditClassModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl min-h-[60vh] max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Edit Class</DialogTitle>
-          <DialogDescription>Update the class details below.</DialogDescription>
+          <DialogTitle>Klas Bewerken</DialogTitle>
+          <DialogDescription>Werk hieronder de klasgegevens bij.</DialogDescription>
         </DialogHeader>
-        <ClassForm
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleSubmit}
-          loading={loading}
-          allTeachers={allTeachers}
-          allCourses={allCourses}
-          allStudents={allStudents}
-        />
-        {error && (
-          <p className="text-sm font-medium text-destructive">{error}</p>
-        )}
+        <div className="flex-1 overflow-y-auto">
+          <ClassForm
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            loading={loading}
+            allTeachers={allTeachers}
+            allCourses={allCourses}
+            allStudents={allStudents}
+          />
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
+        </div>
         <DialogFooter className="pt-4">
           <Button
             type="button"
@@ -118,10 +120,10 @@ export default function EditClassModal({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancel
+            Annuleren
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Updating...' : 'Update Class'}
+            {loading ? 'Bijwerken...' : 'Klas Bijwerken'}
           </Button>
         </DialogFooter>
       </DialogContent>

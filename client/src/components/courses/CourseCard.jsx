@@ -17,9 +17,9 @@ import {
 import {
   Edit,
   Eye,
+  ClipboardPen,
   Layers3,
   MoreVertical,
-  Settings,
   Trash2,
 } from 'lucide-react';
 
@@ -93,8 +93,8 @@ export const CourseCard = ({
                 onOpenSettings();
               }}
             >
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Instellingen</span>
+              <ClipboardPen className="mr-2 h-4 w-4" />
+              <span>Slagingsnormering</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

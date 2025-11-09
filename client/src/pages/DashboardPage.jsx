@@ -347,7 +347,8 @@ const DashboardPage = () => {
             </div>
             <CardContent className="p-0">
               <div className="text-xl font-medium text-regular mb-2">
-                Afwezigen
+          <h1>Leerlingen</h1>
+          <h2 className="text-base text-regular">Afwezig</h2>
               </div>
               <div className="text-3xl font-medium text-regular">
                 {stats.totalStudents - stats.studentsPresent}
@@ -370,6 +371,7 @@ const DashboardPage = () => {
         {/* Finance Stat Card (replaces Leerlingen) */}
         <StatCard
           title="Saldo (totaal)"
+          
           value={new Intl.NumberFormat('nl-NL', {
             style: 'currency',
             currency: 'EUR',
