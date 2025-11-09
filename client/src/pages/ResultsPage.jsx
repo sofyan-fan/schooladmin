@@ -12,21 +12,27 @@ import StudentsResultTable from '@/components/results/StudentsResultTable';
 import PageHeader from '@/components/shared/PageHeader';
 import { cn } from '@/lib/utils';
 import { BarChart } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const ResultsPage = () => {
   const [view, setView] = useState('assessments');
   const [assessments, setAssessments] = useState([]);
   const [allResults, setAllResults] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [filteredAssessments, setFilteredAssessments] = useState([]);
-  const [filteredResults, setFilteredResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [assessmentsLayout, setAssessmentsLayout] = useState('grid');
+  const [filters, setFilters] = useState({
+    search: '',
+    class: 'all',
+    subject: 'all',
+    assessment: 'all',
+    gradeRange: 'all',
+    status: 'all',
+  });
 
   useEffect(() => {
     const fetchResultsData = async () => {
@@ -69,7 +75,7 @@ const ResultsPage = () => {
           };
         });
         setAssessments(enrichedAssessments);
-        setFilteredAssessments(enrichedAssessments);
+        // filtered lists are derived via useMemo
 
         const studentsById = classData
           .flatMap((c) => c.students)
@@ -83,7 +89,7 @@ const ResultsPage = () => {
           student: studentsById[result.student_id] || result.student,
         }));
         setAllResults(enrichedResults);
-        setFilteredResults(enrichedResults);
+        // filtered lists are derived via useMemo
       } catch (error) {
         console.error('Error fetching results data:', error);
       } finally {
@@ -94,29 +100,21 @@ const ResultsPage = () => {
     fetchResultsData();
   }, []);
 
-  const handleAssessmentCardClick = (assessment) => {
+  const handleAssessmentCardClick = useCallback((assessment) => {
     setSelectedAssessment(assessment);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleStudentCardClick = (result) => {
+  const handleStudentCardClick = useCallback((result) => {
     setSelectedResult(result);
     setIsEditModalOpen(true);
-  };
+  }, []);
 
-  const handleViewChange = (newView) => {
+  const handleViewChange = useCallback((newView) => {
     if (newView) setView(newView);
-  };
+  }, []);
 
-  const handleFilterChange = useCallback(
-    ({ filteredAssessments, filteredResults }) => {
-      setFilteredAssessments(filteredAssessments);
-      setFilteredResults(filteredResults);
-    },
-    []
-  );
-
-  const handleResultSave = (updatedResult) => {
+  const handleResultSave = useCallback((updatedResult) => {
     // Instead of replacing the object, we merge the new data with the existing object
     // to preserve the nested 'student' information.
     const updateLogic = (results) =>
@@ -131,12 +129,9 @@ const ResultsPage = () => {
       });
 
     setAllResults((prevResults) => updateLogic(prevResults));
-    setFilteredResults((prevFilteredResults) =>
-      updateLogic(prevFilteredResults)
-    );
-  };
+  }, []);
 
-  const handleResultsSaved = async () => {
+  const handleResultsSaved = useCallback(async () => {
     // Refresh the results data after saving multiple results from ManageResultsModal
     try {
       const resultsData = await resultAPI.get_results();
@@ -160,7 +155,6 @@ const ResultsPage = () => {
       }));
 
       setAllResults(enrichedResults);
-      setFilteredResults(enrichedResults);
 
       // Also update the assessments to reflect the new result counts
       const enrichedAssessments = assessments.map((assessment) => {
@@ -180,18 +174,71 @@ const ResultsPage = () => {
       });
 
       setAssessments(enrichedAssessments);
-      setFilteredAssessments(enrichedAssessments);
     } catch (error) {
       console.error('Error refreshing results data:', error);
     }
-  };
+  }, [classes, assessments]);
+
+  // Derived filtering logic
+  const filteredAssessments = useMemo(() => {
+    if (view !== 'assessments') return assessments;
+    const searchTerm = filters.search.toLowerCase();
+    return assessments.filter((assessment) => {
+      const matchesSearch =
+        searchTerm === '' ||
+        assessment.name.toLowerCase().includes(searchTerm) ||
+        assessment.subject?.subject?.name.toLowerCase().includes(searchTerm);
+      const matchesClass =
+        filters.class === 'all' ||
+        assessment.class_layout?.name === filters.class;
+      const matchesSubject =
+        filters.subject === 'all' ||
+        assessment.subject?.subject?.name === filters.subject;
+      const gradedStudents = assessment.results?.length || 0;
+      const totalStudents = assessment.class_layout?.student_count || 0;
+      let matchesStatus = true;
+      if (filters.status === 'pending')
+        matchesStatus = gradedStudents < totalStudents && gradedStudents > 0;
+      else if (filters.status === 'not_started')
+        matchesStatus = gradedStudents === 0;
+      else if (filters.status === 'completed')
+        matchesStatus = gradedStudents === totalStudents;
+      return matchesSearch && matchesClass && matchesSubject && matchesStatus;
+    });
+  }, [assessments, filters, view]);
+
+  const filteredResults = useMemo(() => {
+    if (view !== 'students') return allResults;
+    const searchTerm = filters.search.toLowerCase();
+    return allResults.filter((result) => {
+      const studentName =
+        `${result.student.first_name} ${result.student.last_name}`.toLowerCase();
+      const matchesSearch = searchTerm === '' || studentName.includes(searchTerm);
+      const matchesClass =
+        filters.class === 'all' ||
+        result.student.class_layout?.name === filters.class;
+      const matchesAssessment =
+        filters.assessment === 'all' ||
+        result.assessment_name === filters.assessment;
+      const grade = result.grade;
+      let matchesGrade = true;
+      if (filters.gradeRange === 'excellent') matchesGrade = grade >= 8;
+      else if (filters.gradeRange === 'good')
+        matchesGrade = grade >= 6.5 && grade < 8;
+      else if (filters.gradeRange === 'sufficient')
+        matchesGrade = grade >= 5.5 && grade < 6.5;
+      else if (filters.gradeRange === 'insufficient')
+        matchesGrade = grade < 5.5;
+      return matchesSearch && matchesClass && matchesAssessment && matchesGrade;
+    });
+  }, [allResults, filters, view]);
 
   const renderAssessmentsView = () => {
     if (assessmentsLayout === 'table') {
       return (
         <AssessmentsResultTable
           data={filteredAssessments}
-          onSelect={(assessment) => handleAssessmentCardClick(assessment)}
+          onSelect={handleAssessmentCardClick}
         />
       );
     }
@@ -224,7 +271,7 @@ const ResultsPage = () => {
     />
   );
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Laden...</div>;
 
   return (
     <>
@@ -241,11 +288,11 @@ const ResultsPage = () => {
             view={view}
             onViewChange={handleViewChange}
             assessments={assessments}
-            results={allResults}
-            onFilterChange={handleFilterChange}
             classes={classes}
             assessmentsLayout={assessmentsLayout}
             onAssessmentsLayoutChange={setAssessmentsLayout}
+            filters={filters}
+            onFiltersChange={setFilters}
           />
         </div>
 

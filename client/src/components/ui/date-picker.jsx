@@ -33,16 +33,17 @@ export function DatePicker({
 }) {
   const [open, setOpen] = React.useState(false);
 
-  // Defaults for DOB: 1900 .. (currentYear - 4)
+  // Defaults: allow a very wide range (1900..2100) unless overridden
   const currentYear = new Date().getFullYear();
   const defaultFromYear = fromYear ?? 1900;
-  const defaultToYear = toYear ?? currentYear - 4;
+  const defaultToYear = toYear ?? 2100;
 
   // Bound dates for disabling
   const computedMinDate = minDate ?? new Date(defaultFromYear, 0, 1); // Jan 1, fromYear
   const computedMaxDate = maxDate ?? new Date(defaultToYear, 11, 31); // Dec 31, toYear
 
-  const selected = toDateOrUndefined(value);
+  // Default selected date: today if no value provided
+  const selected = toDateOrUndefined(value) ?? new Date();
 
   return (
     <div className={cn('w-full', className)}>
@@ -52,7 +53,7 @@ export function DatePicker({
             variant="outline"
             id={id}
             className={cn(
-              'w-full justify-between text-left font-normal',
+              'w-full justify-between text-left font-normal bg-white',
               !selected && 'text-muted-foreground',
               buttonClassName
             )}
@@ -74,6 +75,7 @@ export function DatePicker({
             selected={selected}
             // shadcn (react-day-picker v9) supports "dropdown" or "dropdown-buttons" depending on your version
             captionLayout="dropdown"
+            highlightToday={false}
             fromYear={defaultFromYear}
             toYear={defaultToYear}
             // Disable anything outside bounds (and future dates if your toYear < current year)

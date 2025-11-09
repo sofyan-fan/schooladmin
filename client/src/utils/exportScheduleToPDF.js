@@ -23,7 +23,29 @@ const exportScheduleToPDF = ({ columns, rows, options = {} }) => {
     orientation = 'landscape',
     format = 'a4',
     headAlign = 'center',
+    // Optional accent color for title and header background. Accepts hex '#RRGGBB' or [r,g,b]
+    accentColor,
   } = options;
+
+  // Resolve accent color
+  const defaultAccent = [30, 58, 138]; // blue (legacy default)
+  let accent = defaultAccent;
+  if (accentColor) {
+    if (Array.isArray(accentColor) && accentColor.length === 3) {
+      const [r, g, b] = accentColor.map((v) =>
+        Number.isFinite(v) ? Math.max(0, Math.min(255, Math.floor(v))) : 0
+      );
+      accent = [r, g, b];
+    } else if (typeof accentColor === 'string') {
+      const hex = accentColor.trim().replace('#', '');
+      if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        accent = [r, g, b];
+      }
+    }
+  }
 
   // Create new PDF document
   const doc = new jsPDF({
@@ -43,7 +65,7 @@ const exportScheduleToPDF = ({ columns, rows, options = {} }) => {
 
   // Add title
   doc.setFontSize(18);
-  doc.setTextColor(30, 58, 138); // Primary blue color similar to Excel export
+  doc.setTextColor(...accent);
   doc.text(title.toUpperCase(), doc.internal.pageSize.getWidth() / 2, 20, {
     align: 'center',
   });
@@ -111,13 +133,14 @@ const exportScheduleToPDF = ({ columns, rows, options = {} }) => {
   });
 
   // Add the table using autoTable plugin
+  const tableMargin = { top: 35, right: 10, bottom: 20, left: 10 };
   autoTable(doc, {
     columns: tableColumns,
     body: tableRows,
-    startY: 35,
+    startY: tableMargin.top,
     theme: 'striped',
     headStyles: {
-      fillColor: [30, 58, 138], // Primary blue
+      fillColor: accent, // Accent color
       textColor: [255, 255, 255],
       fontSize: 11,
       fontStyle: 'bold',
@@ -136,42 +159,24 @@ const exportScheduleToPDF = ({ columns, rows, options = {} }) => {
       1: { cellWidth: 'auto' },
       2: { cellWidth: 'auto' },
     },
-    margin: { top: 35, right: 10, bottom: 20, left: 10 },
+    margin: tableMargin,
     didDrawPage: function (data) {
-      // Footer with page numbers
-      const pageCount = doc.internal.getNumberOfPages();
-      const currentPage = data.pageNumber;
-
-      doc.setFontSize(9);
+      doc.setFontSize(18);
       doc.setTextColor(100, 100, 100);
 
-      // Left: Export date/time
-      const exportDate = new Date().toLocaleString('nl-NL', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      // Left: Branding text
       doc.text(
-        `Geëxporteerd: ${exportDate}`,
+        'MaktApp',
         data.settings.margin.left,
         doc.internal.pageSize.getHeight() - 10
-      );
-
-      // Right: Page numbers
-      const pageText = `Pagina ${currentPage} van ${pageCount}`;
-      doc.text(
-        pageText,
-        doc.internal.pageSize.getWidth() - data.settings.margin.right,
-        doc.internal.pageSize.getHeight() - 10,
-        { align: 'right' }
       );
     },
     didDrawCell: function () {
       // Optional: Add custom cell rendering if needed
     },
   });
+
+  // Removed rounded-corner decorations per request
 
   // Summary section removed as per requirement
 

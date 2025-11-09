@@ -1,8 +1,11 @@
 import { get_teachers } from '@/apis/teachersAPI';
 import { timeRegisterAPI } from '@/apis/timeregisterAPI';
+import PageHeader from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import ComboboxField from '@/components/ui/combobox';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -15,13 +18,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -29,10 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import PageHeader from '@/components/shared/PageHeader';
 
 import { useAuth } from '@/hooks/useAuth';
-import { Check, Clock, Edit, Plus } from 'lucide-react';
+import { Check, Clock, Edit } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -89,6 +84,10 @@ const TimeRegisterPage = () => {
 
   const handleTimeRegSubmit = async (e) => {
     e.preventDefault();
+    if (!timeRegForm.week_start) {
+      toast.error('Selecteer een weekstart datum');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -178,7 +177,7 @@ const TimeRegisterPage = () => {
 
   const getTeacherName = (teacherId) => {
     const teacher = teachers.find((t) => t.id === teacherId);
-    return teacher ? `${teacher.first_name} ${teacher.last_name}` : 'Unknown';
+    return teacher ? `${teacher.first_name} ${teacher.last_name}` : 'Onbekend';
   };
 
   return (
@@ -193,107 +192,103 @@ const TimeRegisterPage = () => {
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-         
+
           <Dialog
             open={isTimeRegModalOpen}
             onOpenChange={setIsTimeRegModalOpen}
           >
             <DialogTrigger asChild>
-              
+
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>
-                  {editingTimeReg ? 'Bewerk' : 'Nieuwe'} Tijd Registratie
-                </DialogTitle>
+                <DialogTitle>Nieuwe Tijd Registratie</DialogTitle>
                 <DialogDescription>
                   Vul de uren in voor elke dag van de week.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleTimeRegSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="teacher_id">Docent</Label>
-                    <Select
+                {/* Header section: Docent (left) and Week Start (right) */}
+                <div className="flex items-end gap-4">
+                  <div className="flex-1">
+                    <ComboboxField
+                      label="Docent"
+                      items={teachers.map((t) => ({
+                        value: t.id.toString(),
+                        label: `${t.first_name} ${t.last_name}`,
+                      }))}
                       value={timeRegForm.teacher_id}
-                      onValueChange={(value) =>
+                      onChange={(value) =>
                         setTimeRegForm((prev) => ({
                           ...prev,
                           teacher_id: value,
                         }))
                       }
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecteer docent" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {teachers.map((teacher) => (
-                          <SelectItem
-                            key={teacher.id}
-                            value={teacher.id.toString()}
-                          >
-                            {teacher.first_name} {teacher.last_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Selecteer docent"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="week_start">Week Start</Label>
-                    <Input
-                      type="date"
+                  <div className="w-56 ml-auto space-y-2">
+                    <Label htmlFor="week_start">Weekstart</Label>
+                    <DatePicker
+                      id="week_start"
                       value={timeRegForm.week_start}
-                      onChange={(e) =>
+                      onChange={(date) =>
                         setTimeRegForm((prev) => ({
                           ...prev,
-                          week_start: e.target.value,
+                          week_start: date
+                            ? date.toISOString().split('T')[0]
+                            : '',
                         }))
                       }
-                      required
+                      buttonClassName="h-10"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4">
+                {/* Main section: Vertical day rows with separators */}
+                <div className="rounded-md border divide-y">
                   {[
-                    'monday',
-                    'tuesday',
-                    'wednesday',
-                    'thursday',
-                    'friday',
-                    'saturday',
-                    'sunday',
-                  ].map((day) => (
-                    <div key={day} className="space-y-2">
-                      <Label htmlFor={day}>
-                        {day.charAt(0).toUpperCase() + day.slice(1)}
+                    { key: 'monday', label: 'Maandag' },
+                    { key: 'tuesday', label: 'Dinsdag' },
+                    { key: 'wednesday', label: 'Woensdag' },
+                    { key: 'thursday', label: 'Donderdag' },
+                    { key: 'friday', label: 'Vrijdag' },
+                    { key: 'saturday', label: 'Zaterdag' },
+                    { key: 'sunday', label: 'Zondag' },
+                  ].map(({ key, label }) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between px-4 py-3"
+                    >
+                      <Label htmlFor={key} className="w-28 font-medium">
+                        {label}
                       </Label>
                       <Input
+                        id={key}
                         type="number"
                         step="0.5"
                         min="0"
                         max="24"
-                        value={timeRegForm[day]}
+                        value={timeRegForm[key]}
                         onChange={(e) =>
                           setTimeRegForm((prev) => ({
                             ...prev,
-                            [day]: parseFloat(e.target.value) || 0,
+                            [key]: parseFloat(e.target.value) || 0,
                           }))
                         }
+                        className="h-10 w-24 text-right"
                       />
                     </div>
                   ))}
                 </div>
 
-                <div className="bg-muted p-4 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Totaal Uren:</span>
-                    <Badge variant="secondary">{getTotalHours()} uur</Badge>
-                  </div>
+                {/* Footer section: Total (right-aligned) */}
+                <div className="pt-2 text-right font-semibold">
+                  Totaal Uren: {getTotalHours()} uur
                 </div>
 
-                <DialogFooter>
+                {/* Footer buttons: bottom-right */}
+                <DialogFooter className="justify-end">
                   <Button
                     type="button"
                     variant="outline"

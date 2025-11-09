@@ -43,35 +43,35 @@ export default function ProfileCard({
   // Role-specific fields (extend as needed)
   const config = useMemo(() => {
     const common = [
-      { name: 'firstName', label: 'Firstname' },
-      { name: 'lastName', label: 'Lastname' },
-      { name: 'email', label: 'Email' },
-      { name: 'phone', label: 'Phone' },
-      { name: 'address', label: 'Address' },
-      { name: 'postalCode', label: 'Postal Code' },
-      { name: 'city', label: 'City' },
+      { name: 'firstName', label: 'Voornaam' },
+      { name: 'lastName', label: 'Achternaam' },
+      { name: 'email', label: 'E-mailadres' },
+      { name: 'phone', label: 'Telefoon' },
+      { name: 'address', label: 'Adres' },
+      { name: 'postalCode', label: 'Postcode' },
+      { name: 'city', label: 'Woonplaats' },
     ];
 
     const studentOnly = [
-      { name: 'birthDate', label: 'Birth Date', type: 'date' },
+      { name: 'birthDate', label: 'Geboortedatum', type: 'date' },
       {
         name: 'gender',
-        label: 'Gender',
+        label: 'Geslacht',
         type: 'select',
-        options: ['Male', 'Female'],
+        options: ['Man', 'Vrouw'],
       },
-      { name: 'className', label: 'Class / Group' },
-      { name: 'registrationDate', label: 'Registration Date', type: 'date' },
-      { name: 'lessonPackage', label: 'Lesson Package' },
+      { name: 'className', label: 'Klas / Groep' },
+      { name: 'registrationDate', label: 'Registratiedatum', type: 'date' },
+      { name: 'lessonPackage', label: 'Lespakket' },
       { name: 'status', label: 'Status', type: 'switch' },
     ];
 
     const teacherOnly = [
-      { name: 'hireDate', label: 'Hire Date', type: 'date' },
-      { name: 'subject', label: 'Subject' },
-      { name: 'department', label: 'Department' },
-      { name: 'availability', label: 'Availability' },
-      { name: 'active', label: 'Active', type: 'switch' },
+      { name: 'hireDate', label: 'In dienst sinds', type: 'date' },
+      { name: 'subject', label: 'Vak' },
+      { name: 'department', label: 'Afdeling' },
+      { name: 'availability', label: 'Beschikbaarheid' },
+      { name: 'active', label: 'Actief', type: 'switch' },
     ];
 
     return {
@@ -89,9 +89,9 @@ export default function ProfileCard({
   const handleSave = () => {
     // naive email check; replace with your validation of choice
     if (!form.firstName || !form.lastName)
-      return alert('Firstname and Lastname are required.');
+      return alert('Voornaam en achternaam zijn verplicht.');
     if (form.email && !/.+@.+\..+/.test(form.email))
-      return alert('Email seems invalid.');
+      return alert('E-mailadres lijkt ongeldig.');
     onSave?.(form);
     onOpenChange(false);
   };
@@ -134,9 +134,9 @@ export default function ProfileCard({
                       candidates.find((n) => fieldValue(form, n, '') !== '') ||
                       candidates[0];
                     const labelMap = {
-                      birthDate: 'Birth Date',
-                      registrationDate: 'Registration Date',
-                      hireDate: 'Hire Date',
+                      birthDate: 'Geboortedatum',
+                      registrationDate: 'Registratiedatum',
+                      hireDate: 'In dienst sinds',
                     };
                     const value = fieldValue(form, fieldName, '');
                     return (
@@ -161,7 +161,7 @@ export default function ProfileCard({
             <>
               {/* Personal Information */}
               <section className="space-y-4">
-                <h3 className="font-medifum">Personal Information</h3>
+                <h3 className="font-medifum">Persoonsgegevens</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {config.personal.map((f) => (
                     <div key={f.name} className="space-y-1.5">
@@ -172,9 +172,9 @@ export default function ProfileCard({
                           onValueChange={(v) => update(f.name, v)}
                         >
                           <SelectTrigger id={f.name}>
-                            <SelectValue
-                              placeholder={`Select ${f.label.toLowerCase()}`}
-                            />
+                          <SelectValue
+                            placeholder={`Selecteer ${f.label.toLowerCase()}`}
+                          />
                           </SelectTrigger>
                           <SelectContent>
                             {f.options?.map((opt) => (
@@ -195,7 +195,7 @@ export default function ProfileCard({
                             htmlFor={f.name}
                             className="text-sm text-muted-foreground"
                           >
-                            {form[f.name] ? 'Active' : 'Inactive'}
+                            {form[f.name] ? 'Actief' : 'Inactief'}
                           </Label>
                         </div>
                       ) : (
@@ -217,8 +217,8 @@ export default function ProfileCard({
               <section className="space-y-4">
                 <h3 className="font-medium">
                   {role === 'Teacher'
-                    ? 'Employment / Teaching'
-                    : 'School Information'}
+                    ? 'Dienstverband / Lesgeven'
+                    : 'Schoolinformatie'}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {config.roleFields.map((f) => (
@@ -230,9 +230,9 @@ export default function ProfileCard({
                           onValueChange={(v) => update(f.name, v)}
                         >
                           <SelectTrigger id={f.name}>
-                            <SelectValue
-                              placeholder={`Select ${f.label.toLowerCase()}`}
-                            />
+                          <SelectValue
+                            placeholder={`Selecteer ${f.label.toLowerCase()}`}
+                          />
                           </SelectTrigger>
                           <SelectContent>
                             {f.options?.map((opt) => (
@@ -253,7 +253,7 @@ export default function ProfileCard({
                             htmlFor={f.name}
                             className="text-sm text-muted-foreground"
                           >
-                            {form[f.name] ? 'Active' : 'Inactive'}
+                            {form[f.name] ? 'Actief' : 'Inactief'}
                           </Label>
                         </div>
                       ) : (

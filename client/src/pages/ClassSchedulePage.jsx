@@ -102,7 +102,7 @@ const ClassSchedulePage = () => {
       setRosters(rostersData);
     } catch (error) {
       console.error('Failed to fetch rosters:', error);
-      toast.error('Failed to reload schedule');
+      toast.error('Opnieuw laden van rooster is mislukt');
     }
   }, []);
 
@@ -132,7 +132,7 @@ const ClassSchedulePage = () => {
         setClassrooms(classroomsData);
       } catch (error) {
         console.error('Failed to fetch data:', error);
-        toast.error('Failed to load schedule data');
+        toast.error('Laden van roostergegevens is mislukt');
       } finally {
         setIsLoading(false);
       }
@@ -204,16 +204,16 @@ const ClassSchedulePage = () => {
 
         return {
           id: roster.id,
-          title: subject?.name || 'Unknown Subject',
+          title: subject?.name || 'Onbekend vak',
           start,
           end,
           resource: {
             teacher: teacher
               ? `${teacher.first_name} ${teacher.last_name}`
-              : 'No Teacher',
-            classroom: classroom?.name || 'No Room',
+              : 'Geen docent',
+            classroom: classroom?.name || 'Geen lokaal',
             classId: roster.class_id,
-            className: classInfo?.name || 'Unknown Class',
+            className: classInfo?.name || 'Onbekende klas',
             subjectId: roster.subject_id,
             teacherId: roster.teacher_id,
             classroomId: roster.classroom_id,
@@ -276,7 +276,7 @@ const ClassSchedulePage = () => {
   const handleSelectSlot = useCallback(
     ({ start, end }) => {
       if (!selectedClassId) {
-        toast.error('Please select a class first');
+        toast.error('Selecteer eerst een klas');
         return;
       }
 
@@ -288,7 +288,7 @@ const ClassSchedulePage = () => {
 
       if (classConflict) {
         toast.error(
-          'This time slot conflicts with an existing lesson for this class'
+          'Dit tijdslot conflicteert met een bestaande les voor deze klas'
         );
         return;
       }
@@ -320,7 +320,7 @@ const ClassSchedulePage = () => {
       );
 
       if (hasConflict) {
-        toast.error('Cannot move lesson - conflicts with existing schedule');
+        toast.error('Kan les niet verplaatsen - conflicteert met bestaand rooster');
         return;
       }
 
@@ -347,11 +347,11 @@ const ClassSchedulePage = () => {
           classroom_id: event.resource.classroomId,
         });
 
-        toast.success('Lesson rescheduled successfully');
+        toast.success('Les succesvol opnieuw ingepland');
         await fetchRosters();
       } catch (error) {
         console.error('Failed to update lesson:', error);
-        toast.error('Failed to reschedule lesson');
+        toast.error('Opnieuw inplannen van les is mislukt');
       }
     },
     [selectedClassId, checkConflicts, fetchRosters]
@@ -370,7 +370,7 @@ const ClassSchedulePage = () => {
       );
 
       if (hasConflict) {
-        toast.error('Cannot resize lesson - conflicts with existing schedule');
+        toast.error('Kan les niet van duur veranderen - conflicteert met bestaand rooster');
         return;
       }
 
@@ -397,11 +397,11 @@ const ClassSchedulePage = () => {
           classroom_id: event.resource.classroomId,
         });
 
-        toast.success('Lesson duration updated');
+        toast.success('Lesduur bijgewerkt');
         await fetchRosters();
       } catch (error) {
         console.error('Failed to resize lesson:', error);
-        toast.error('Failed to update lesson duration');
+        toast.error('Bijwerken van lesduur is mislukt');
       }
     },
     [selectedClassId, checkConflicts, fetchRosters]

@@ -44,7 +44,7 @@ export const createColumns = ({
     accessorKey: 'studentLabel',
     header: ({ column }) => (
       <Button
-        className="hover:bg-transparent hover:text-primary text-lg"
+        className="hover:bg-transparent hover:text-primary text-lg px-0 has-[>svg]:px-0"
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >

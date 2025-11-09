@@ -181,6 +181,7 @@ function CalendarDayButton({ className, day, modifiers, ...props }) {
 
   return (
     <Button
+      type="button"
       ref={ref}
       variant="ghost"
       size="icon"

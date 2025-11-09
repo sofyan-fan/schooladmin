@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { FileSpreadsheet, FileText } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const ExportDialog = ({
   isOpen,
@@ -15,7 +17,29 @@ const ExportDialog = ({
   onExportPDF,
   title = 'Exporteer gegevens',
   description = 'Kies een bestandsformaat voor het exporteren.',
+  // Optional: enable scope/date selection (used by roosters export)
+  enableScopeSelection = false,
+  defaultScope = 'week', // 'day' | 'week'
+  defaultDate,
 }) => {
+  const [scope, setScope] = useState(defaultScope === 'day' ? 'day' : 'week');
+  const [selectedDate, setSelectedDate] = useState(defaultDate || new Date());
+  const [step, setStep] = useState(1); // 1 = choose date/scope, 2 = choose format
+
+  useEffect(() => {
+    setScope(defaultScope === 'day' ? 'day' : 'week');
+  }, [defaultScope]);
+
+  useEffect(() => {
+    if (defaultDate) setSelectedDate(defaultDate);
+  }, [defaultDate]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+    }
+  }, [isOpen]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -23,34 +47,126 @@ const ExportDialog = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 py-6">
-          <Button
-            variant="outline"
-            className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
-            onClick={() => {
-              onExportExcel();
-              onClose();
-            }}
-          >
-            <FileSpreadsheet className="size-16 text-green-600" />
-            <div className="text-center">
-              <div className="font-semibold text-lg">Excel</div>
-            </div>
-          </Button>
-          <Button
-            variant="outline"
-            className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
-            onClick={() => {
-              onExportPDF();
-              onClose();
-            }}
-          >
-            <FileText className="size-16 text-red-600" />
-            <div className="text-center">
-              <div className="font-semibold text-lg">PDF</div>
-            </div>
-          </Button>
-        </div>
+        {enableScopeSelection ? (
+          <>
+            {step === 1 ? (
+              <div className="space-y-4 mt-2">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-muted-foreground">Bereik:</div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={scope === 'day' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setScope('day')}
+                    >
+                      Dag
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={scope === 'week' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setScope('week')}
+                    >
+                      Week
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    {scope === 'day'
+                      ? 'Kies de datum van de dag'
+                      : 'Kies een datum binnen de week'}
+                  </div>
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={(d) => d && setSelectedDate(d)}
+                    placeholder="Selecteer datum"
+                  />
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button type="button" onClick={() => setStep(2)}>
+                    Volgende
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Gekozen: {scope === 'day' ? 'Dag' : 'Week'} –{' '}
+                  {selectedDate?.toLocaleDateString('nl-NL', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </div>
+                <div className="grid grid-cols-2 gap-4 py-6">
+                  <Button
+                    variant="outline"
+                    className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
+                    onClick={() => {
+                      onExportExcel?.({ scope, date: selectedDate });
+                      onClose();
+                    }}
+                  >
+                    <FileSpreadsheet className="size-16 text-green-600" />
+                    <div className="text-center">
+                      <div className="font-semibold text-lg">Excel</div>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
+                    onClick={() => {
+                      onExportPDF?.({ scope, date: selectedDate });
+                      onClose();
+                    }}
+                  >
+                    <FileText className="size-16 text-red-600" />
+                    <div className="text-center">
+                      <div className="font-semibold text-lg">PDF</div>
+                    </div>
+                  </Button>
+                </div>
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                    Terug
+                  </Button>
+                  <div />
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 py-6">
+            <Button
+              variant="outline"
+              className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
+              onClick={() => {
+                onExportExcel?.();
+                onClose();
+              }}
+            >
+              <FileSpreadsheet className="size-16 text-green-600" />
+              <div className="text-center">
+                <div className="font-semibold text-lg">Excel</div>
+              </div>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-secondary hover:border-primary"
+              onClick={() => {
+                onExportPDF?.();
+                onClose();
+              }}
+            >
+              <FileText className="size-16 text-red-600" />
+              <div className="text-center">
+                <div className="font-semibold text-lg">PDF</div>
+              </div>
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

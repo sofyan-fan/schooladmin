@@ -420,7 +420,7 @@ export default function QuranLogPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Qur'an Log"
+        title="Qur'an-logboek"
         description="Registreer en beheer Qur'an-logs voor leerlingen."
         icon={<BookCheck className="size-9" />}
       >
@@ -524,7 +524,7 @@ export default function QuranLogPage() {
                 }
               }}
             >
-              <FileDown className="mr-2 h-4 w-4" /> Export
+              <FileDown className="mr-2 h-4 w-4" /> Exporteren
             </Button>
 
             <Button onClick={() => setOpenAddDialog(true)}>

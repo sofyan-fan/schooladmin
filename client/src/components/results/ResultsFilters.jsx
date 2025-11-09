@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import ComboboxField from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import AssessmentsLayoutToggle from './AssessmentsLayoutToggle';
 import ViewToggle from './ViewToggle';
 
@@ -58,13 +58,17 @@ const ResultsFilters = ({
   view,
   onViewChange,
   assessments,
-  results,
-  onFilterChange,
+  // results no longer used for internal filtering
   classes,
   assessmentsLayout,
   onAssessmentsLayoutChange,
+  // Controlled filters
+  filters,
+  onFiltersChange,
 }) => {
-  const [filters, setFilters] = useState(initialFilters);
+  // Fall back to internal state if not provided (for safety/back-compat)
+  const [uncontrolledFilters, setUncontrolledFilters] = useState(initialFilters);
+  const activeFilters = filters ?? uncontrolledFilters;
 
   // --- Data transformation for Comboboxes (unchanged) ---
   const classOptions = useMemo(() => {
@@ -99,70 +103,22 @@ const ResultsFilters = ({
     ];
   }, [assessments]);
 
-  // --- Filtering logic (unchanged) ---
-  useEffect(() => {
-    let filteredAssessments = assessments;
-    let filteredResults = results;
-    if (view === 'assessments') {
-      filteredAssessments = assessments.filter((assessment) => {
-        const searchTerm = filters.search.toLowerCase();
-        const matchesSearch =
-          searchTerm === '' ||
-          assessment.name.toLowerCase().includes(searchTerm) ||
-          assessment.subject?.subject?.name.toLowerCase().includes(searchTerm);
-        const matchesClass =
-          filters.class === 'all' ||
-          assessment.class_layout?.name === filters.class;
-        const matchesSubject =
-          filters.subject === 'all' ||
-          assessment.subject?.subject?.name === filters.subject;
-        const gradedStudents = assessment.results?.length || 0;
-        const totalStudents = assessment.class_layout?.student_count || 0;
-        let matchesStatus = true;
-        if (filters.status === 'pending')
-          matchesStatus = gradedStudents < totalStudents && gradedStudents > 0;
-        else if (filters.status === 'not_started')
-          matchesStatus = gradedStudents === 0;
-        else if (filters.status === 'completed')
-          matchesStatus = gradedStudents === totalStudents;
-        return matchesSearch && matchesClass && matchesSubject && matchesStatus;
-      });
+  // Controlled/uncontrolled update helpers
+  const handleFilterChange = (key, value) => {
+    if (onFiltersChange) {
+      onFiltersChange({ ...activeFilters, [key]: value });
+    } else {
+      setUncontrolledFilters((prev) => ({ ...prev, [key]: value }));
     }
-
-    if (view === 'students') {
-      filteredResults = results.filter((result) => {
-        const searchTerm = filters.search.toLowerCase();
-        const studentName =
-          `${result.student.first_name} ${result.student.last_name}`.toLowerCase();
-        const matchesSearch =
-          searchTerm === '' || studentName.includes(searchTerm);
-        const matchesClass =
-          filters.class === 'all' ||
-          result.student.class_layout?.name === filters.class;
-        const matchesAssessment =
-          filters.assessment === 'all' ||
-          result.assessment_name === filters.assessment;
-        const grade = result.grade;
-        let matchesGrade = true;
-        if (filters.gradeRange === 'excellent') matchesGrade = grade >= 8;
-        else if (filters.gradeRange === 'good')
-          matchesGrade = grade >= 6.5 && grade < 8;
-        else if (filters.gradeRange === 'sufficient')
-          matchesGrade = grade >= 5.5 && grade < 6.5;
-        else if (filters.gradeRange === 'insufficient')
-          matchesGrade = grade < 5.5;
-        return (
-          matchesSearch && matchesClass && matchesAssessment && matchesGrade
-        );
-      });
+  };
+  const clearFilters = () => {
+    if (onFiltersChange) {
+      onFiltersChange(initialFilters);
+    } else {
+      setUncontrolledFilters(initialFilters);
     }
-    onFilterChange({ filteredAssessments, filteredResults });
-  }, [filters, assessments, results, view, onFilterChange]);
-
-  const handleFilterChange = (key, value) =>
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  const clearFilters = () => setFilters(initialFilters);
-  const hasActiveFilters = Object.values(filters).some(
+  };
+  const hasActiveFilters = Object.values(activeFilters).some(
     (v) => v !== '' && v !== 'all'
   );
 
@@ -195,7 +151,7 @@ const ResultsFilters = ({
         });
     }
     return chips;
-  }, [filters, view]);
+  }, [activeFilters, view]);
 
   return (
     // --- REFACTORED: Simplified outer container ---
@@ -212,7 +168,7 @@ const ResultsFilters = ({
                   ? 'Zoek op beoordeling, vak...'
                   : 'Zoek op leerling...'
               }
-              value={filters.search}
+              value={activeFilters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
               className="w-full md:w-auto md:min-w-[150px] lg:min-w-[200px] bg-white h-9 pl-8"
             />
@@ -222,19 +178,19 @@ const ResultsFilters = ({
             <>
               <ComboboxField
                 items={classOptions}
-                value={filters.class}
+                value={activeFilters.class}
                 onChange={(v) => handleFilterChange('class', v)}
                 className="w-[calc(50%-0.25rem)] md:w-[180px] flex-shrink-0"
               />
               <ComboboxField
                 items={subjectOptions}
-                value={filters.subject}
+                value={activeFilters.subject}
                 onChange={(v) => handleFilterChange('subject', v)}
                 className="w-[calc(50%-0.25rem)] md:w-[180px] flex-shrink-0"
               />
               <ComboboxField
                 items={statusOptions}
-                value={filters.status}
+                value={activeFilters.status}
                 onChange={(v) => handleFilterChange('status', v)}
                 className="w-full md:w-[180px] flex-shrink-0"
               />
@@ -243,19 +199,19 @@ const ResultsFilters = ({
             <>
               <ComboboxField
                 items={classOptions}
-                value={filters.class}
+                value={activeFilters.class}
                 onChange={(v) => handleFilterChange('class', v)}
                 className="w-full sm:w-[180px] flex-shrink-0"
               />
               <ComboboxField
                 items={assessmentOptions}
-                value={filters.assessment}
+                value={activeFilters.assessment}
                 onChange={(v) => handleFilterChange('assessment', v)}
                 className="w-full sm:w-[220px] flex-shrink-0"
               />
               <ComboboxField
                 items={gradeRangeOptions}
-                value={filters.gradeRange}
+                value={activeFilters.gradeRange}
                 onChange={(v) => handleFilterChange('gradeRange', v)}
                 className="w-full sm:w-[220px] flex-shrink-0"
               />

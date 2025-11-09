@@ -5,7 +5,7 @@ const StatusIndicator = ({ isActive }) => (
         isActive ? 'bg-green-500' : 'bg-red-500'
       }`}
     />
-    <span>{isActive ? 'Active' : 'Inactive'}</span>
+    <span>{isActive ? 'Actief' : 'Inactief'}</span>
   </div>
 );
 
