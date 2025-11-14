@@ -38,8 +38,8 @@ export default function QuranLogDialog({
     loading,
     surahItems: allSurahItems,
     ayahsFor,
-    endSurahsAfter,
-    endAyahsAfter,
+    endSurahsBefore,
+    endAyahsBefore,
     hizbFor,
   } = useQuranRelations();
 
@@ -91,18 +91,15 @@ export default function QuranLogDialog({
     [begin.surahId, ayahsFor]
   );
 
-  const endSurahItems = useMemo(
-    () => endSurahsAfter(begin),
-    [begin, endSurahsAfter]
-  );
+  const endSurahItems = useMemo(() => endSurahsBefore(begin), [begin, endSurahsBefore]);
   const endAyahItems = useMemo(
-    () => endAyahsAfter(end.surahId, undefined, begin),
-    [end.surahId, begin, endAyahsAfter]
+    () => endAyahsBefore(end.surahId, undefined, begin),
+    [end.surahId, begin, endAyahsBefore]
   );
 
   // Keep end selection valid as begin changes
   useEffect(() => {
-    const allowedSurahs = endSurahsAfter(begin);
+    const allowedSurahs = endSurahsBefore(begin);
     if (end.surahId && !allowedSurahs.some((o) => o.value === end.surahId)) {
       const next = { ...end, surahId: '', ayah: '' };
       setEnd(next);
@@ -110,7 +107,7 @@ export default function QuranLogDialog({
       return;
     }
     if (end.surahId) {
-      const allowedAyahs = endAyahsAfter(end.surahId, undefined, begin);
+      const allowedAyahs = endAyahsBefore(end.surahId, undefined, begin);
       if (end.ayah && !allowedAyahs.some((o) => o.value === end.ayah)) {
         const next = { ...end, ayah: '' };
         setEnd(next);

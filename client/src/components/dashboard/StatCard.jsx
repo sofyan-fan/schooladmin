@@ -1,13 +1,13 @@
 // src/components/dashboard/StatCard.jsx
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
-import { cva } from 'class-variance-authority';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { cva } from 'class-variance-authority';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
 // Variants for the icon container styling (color, background)
-const iconContainerVariants = cva('p-4 rounded-full flex items-center justify-center', {
+const iconContainerVariants = cva('p-4 rounded-full flex items-center justify-center hidden md:hidden lg:flex', {
   variants: {
     variant: {
       default: 'bg-primary/10 text-primary',
@@ -21,7 +21,7 @@ const iconContainerVariants = cva('p-4 rounded-full flex items-center justify-ce
   },
 });
 
-const   StatCard = ({
+const StatCard = ({
   title,
   value,
   icon,
@@ -34,12 +34,11 @@ const   StatCard = ({
         <div className="flex flex-row items-center gap-5 h-full">
           <div className={cn(iconContainerVariants({ variant }))}>
             {icon}
-          </div>
 
+          </div>
           <div className="flex flex-col justify-center h-full gap-2">
             <p className="text-xl font-medium text-regular">{title}</p>
             <p className="text-4xl font-medium text-regular">{value}</p>
-          
           </div>
         </div>
       </Card>

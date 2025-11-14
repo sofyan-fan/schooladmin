@@ -74,11 +74,22 @@ export function useQuranRelations() {
   }, []);
 
   const surahItems = useMemo(
-    () =>
-      chapters.map((c) => ({
+    () => {
+      // Default items from API
+      const items = chapters.map((c) => ({
         value: String(c.id),
         label: `${c.id}. ${c.name_simple}`,
-      })),
+      }));
+      if (!items.length) return items;
+      // Special ordering for UI:
+      // - Al-Fatihah (1) first
+      // - then the remaining surahs in descending order (114..2)
+      const fatihah = items.find((i) => i.value === '1');
+      const othersDesc = items
+        .filter((i) => i.value !== '1')
+        .sort((a, b) => Number(b.value) - Number(a.value));
+      return fatihah ? [fatihah, ...othersDesc] : othersDesc;
+    },
     [chapters]
   );
   const hizbItemsAll = useMemo(
@@ -162,6 +173,20 @@ export function useQuranRelations() {
     return 1;
   }
 
+  // Compute a global limiting index for reversed (descending) selection semantics.
+  // If only a surah is chosen, use the END of the surah as the bound so the user
+  // can still choose any ayah within that surah or any earlier surah.
+  function globalEndForPoint(p) {
+    if (!C || !HG) return C ? C[114] : 6236;
+    const surahId = Number(p?.surahId || 0);
+    const ayah = Number(p?.ayah || 0);
+    const hizb = Number(p?.hizb || 0);
+    if (surahId && ayah) return toGlobal(surahId, ayah, C);
+    if (hizb) return HG.idx[hizb] || 1;
+    if (surahId) return surahRange(surahId, C)[1];
+    return C[114];
+  }
+
   // End-side surah options that occur at or after the given begin point
   function endSurahsAfter(beginPoint, maybeHizb) {
     const gBegin = globalStartForPoint(beginPoint);
@@ -182,6 +207,25 @@ export function useQuranRelations() {
     return base.filter((opt) => toGlobal(s, Number(opt.value), C) >= gBegin);
   }
 
+  // Reversed-direction end options (for Juz Amma style): end must be at or BEFORE begin
+  function endSurahsBefore(beginPoint, maybeHizb) {
+    const gBound = globalEndForPoint(beginPoint);
+    const base = maybeHizb ? surahsForHizb(maybeHizb) : surahItems;
+    return base.filter((opt) => {
+      const s = Number(opt.value);
+      const [g1] = surahRange(s, C);
+      return g1 <= gBound; // surah starts at or before the bound
+    });
+  }
+
+  function endAyahsBefore(surahId, maybeHizb, beginPoint) {
+    const s = Number(surahId || 0);
+    if (!s) return [];
+    const gBound = globalEndForPoint(beginPoint);
+    const base = ayahsFor(surahId, maybeHizb);
+    return base.filter((opt) => toGlobal(s, Number(opt.value), C) <= gBound);
+  }
+
   return {
     loading,
     surahItems,
@@ -191,7 +235,10 @@ export function useQuranRelations() {
     ayahsFor,
     hizbFor,
     globalStartForPoint,
+    globalEndForPoint,
     endSurahsAfter,
     endAyahsAfter,
+    endSurahsBefore,
+    endAyahsBefore,
   };
 }
