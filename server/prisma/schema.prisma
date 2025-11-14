@@ -16,6 +16,29 @@ model user {
   created_at DateTime @default(now())
 }
 
+model school_year {
+  id          Int      @id @default(autoincrement())
+  name        String
+  start_date  DateTime
+  end_date    DateTime?
+  is_active   Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  students         student[]
+  class_layouts    class_layout[]
+  assessments      assessment[]
+  results          result[]
+  progress         progress[]
+  absences         absence[]
+  schedules        schedule[]
+  rosters          roster[]
+  tuition_payments tuition_payment[]
+  financial_logs   financial_log[]
+  student_logs     student_log[]
+  time_registrations time_registration[]
+  events           events[]
+}
+
 model student {
   id                Int      @id @default(autoincrement())
   first_name        String
@@ -38,6 +61,9 @@ model student {
 
   class_layout class_layout? @relation(fields: [class_id], references: [id])
   class_id     Int?
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 
   active   Boolean           @default(true)
   progress progress[]
@@ -92,6 +118,9 @@ model class_layout {
   course_id Int?
   course    courses? @relation(fields: [course_id], references: [id])
 
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
+
   students    student[]
   assessments assessment[]
   schedules   schedule[]
@@ -107,6 +136,9 @@ model assessment {
 
   subject    course_module_subject @relation(fields: [subject_id], references: [id])
   subject_id Int
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 
   leverage    Float    @default(1)
   date        DateTime
@@ -126,6 +158,9 @@ model progress {
   end_verse   String
   completed   Boolean
   notes       String?
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 }
 
 model absence {
@@ -141,6 +176,9 @@ model absence {
   reason     String
   date       DateTime
   created_at DateTime @default(now())
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 }
 
 // model test {
@@ -171,6 +209,9 @@ model result {
   assessment    assessment @relation(fields: [assessment_id], references: [id])
   assessment_id Int
 
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
+
   grade Float
   date  DateTime
 }
@@ -196,6 +237,9 @@ model schedule {
 
   classroom    classroom @relation(fields: [classroom_id], references: [id])
   classroom_id Int
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 }
 
 model roster {
@@ -216,6 +260,9 @@ model roster {
   classroom    classroom @relation(fields: [classroom_id], references: [id])
   classroom_id Int
 
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
+
   created_at DateTime  @default(now())
   absence    absence[]
 }
@@ -227,6 +274,9 @@ model tuition_payment {
 
   course    courses @relation(fields: [course_id], references: [id])
   course_id Int
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 
   amount Float
   date   DateTime
@@ -337,6 +387,9 @@ model events {
   start_time  String
   end_time    String
   location    String?
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 }
 
 model time_registration {
@@ -365,6 +418,9 @@ model time_registration {
   approved_by Int? // admin id
   approved_at DateTime?
 
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -382,6 +438,9 @@ model student_log {
   end_log   String
   completed Boolean  @default(false)
   comment   String?
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 
   created_at DateTime @default(now())
 
@@ -408,6 +467,9 @@ model financial_log {
 
   course           courses?        @relation(fields: [course_id], references: [id])
   course_id        Int?
+
+  school_year school_year? @relation(fields: [school_year_id], references: [id])
+  school_year_id Int?
 
   amount           Float
   method           String
