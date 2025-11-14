@@ -42,13 +42,13 @@ const TimeRegisterPage = () => {
     teacher_id: '',
     week_start: '',
     week_end: '',
-    monday: 0,
-    tuesday: 0,
-    wednesday: 0,
-    thursday: 0,
-    friday: 0,
-    saturday: 0,
-    sunday: 0,
+    monday: '',
+    tuesday: '',
+    wednesday: '',
+    thursday: '',
+    friday: '',
+    saturday: '',
+    sunday: '',
   });
 
   const [isTimeRegModalOpen, setIsTimeRegModalOpen] = useState(false);
@@ -92,8 +92,23 @@ const TimeRegisterPage = () => {
 
     try {
       const { start, end } = calculateWeekDates(timeRegForm.week_start);
+      const dayKeys = [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+        'sunday',
+      ];
+      const numericDays = dayKeys.reduce((acc, day) => {
+        const value = timeRegForm[day];
+        acc[day] = value === '' ? 0 : parseFloat(value || 0);
+        return acc;
+      }, {});
       const data = {
         ...timeRegForm,
+        ...numericDays,
         week_start: start.toISOString(),
         week_end: end.toISOString(),
         teacher_id: parseInt(timeRegForm.teacher_id),
@@ -137,13 +152,13 @@ const TimeRegisterPage = () => {
       teacher_id: '',
       week_start: '',
       week_end: '',
-      monday: 0,
-      tuesday: 0,
-      wednesday: 0,
-      thursday: 0,
-      friday: 0,
-      saturday: 0,
-      sunday: 0,
+      monday: '',
+      tuesday: '',
+      wednesday: '',
+      thursday: '',
+      friday: '',
+      saturday: '',
+      sunday: '',
     });
     setEditingTimeReg(null);
   };
@@ -267,13 +282,16 @@ const TimeRegisterPage = () => {
                         id={key}
                         type="number"
                         step="0.5"
-                        min="0"
+                        min={key === 'monday' ? '1' : '0'}
                         max="24"
                         value={timeRegForm[key]}
                         onChange={(e) =>
                           setTimeRegForm((prev) => ({
                             ...prev,
-                            [key]: parseFloat(e.target.value) || 0,
+                            [key]:
+                              e.target.value === ''
+                                ? ''
+                                : parseFloat(e.target.value),
                           }))
                         }
                         className="h-10 w-24 text-right"

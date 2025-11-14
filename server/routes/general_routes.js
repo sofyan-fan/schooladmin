@@ -93,6 +93,16 @@ const {
   delete_student_log,
 } = require('../controllers/general/student_log');
 
+const {
+  get_all_school_years,
+  get_school_year_by_id,
+  get_active_school_year,
+  create_school_year,
+  update_school_year,
+  activate_school_year,
+  archive_school_year,
+} = require('../controllers/general/school_year');
+
 // ==============================
 // Students routes
 // ==============================
@@ -212,5 +222,16 @@ router.get('/student-logs', get_all_student_logs);
 router.get('/student-logs/:id', get_student_log_by_id);
 router.put('/student-logs/:id', update_student_log);
 router.delete('/student-logs/:id', delete_student_log);
+
+// ==============================
+// School Years routes
+// ==============================
+router.get('/school-years', get_all_school_years);
+router.get('/school-years/active', get_active_school_year);
+router.get('/school-years/:id', get_school_year_by_id);
+router.post('/school-years', create_school_year);
+router.put('/school-years/:id', update_school_year);
+router.put('/school-years/:id/activate', activate_school_year);
+router.put('/school-years/:id/archive', archive_school_year);
 
 module.exports = router;

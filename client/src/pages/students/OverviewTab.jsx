@@ -9,9 +9,21 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import format from 'date-fns/format';
 import { nl } from 'date-fns/locale';
 import {
+  CheckCircle2,
   CreditCard,
   IdCard,
   Info,
@@ -21,7 +33,7 @@ import {
   Phone,
   TrendingUp,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function StatCard({ icon, title, description, tab, setTab, className }) {
   return (
@@ -90,6 +102,107 @@ export default function OverviewTab({ student, studentStats, setTab }) {
     (quranProgress.recentLogs || []).map((l) => ({ ...l, memorized: false }))
   );
 
+  // ----- Betalingen (lokaal met localStorage) -----
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat('nl-NL', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(Number(value || 0));
+
+  const courseName =
+    studentStats?.lesson_package || student?.lesson_package || '—';
+
+  const studentKey =
+    student?.id ??
+    student?.email ??
+    studentStats?.fullName ??
+    'onbekende_student';
+  const paymentStorageKey = `payments:${studentKey}:${courseName}`;
+
+  const getDefaultCoursePrice = () => {
+    try {
+      const map = JSON.parse(localStorage.getItem('coursePrices') || '{}');
+      const raw = map?.[courseName];
+      const num = typeof raw === 'number' ? raw : Number(raw);
+      return Number.isFinite(num) && num > 0 ? num : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const readStoredPayment = () => {
+    try {
+      const raw = localStorage.getItem(paymentStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return {
+        totalPrice: Number(parsed?.totalPrice) || 0,
+        paid: Math.max(0, Number(parsed?.paid) || 0),
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const [paymentState, setPaymentState] = useState(() => {
+    const stored = readStoredPayment();
+    if (stored) {
+      const cappedPaid = Math.min(stored.paid, stored.totalPrice || 0);
+      return { totalPrice: stored.totalPrice, paid: cappedPaid };
+    }
+    return { totalPrice: getDefaultCoursePrice(), paid: 0 };
+  });
+
+  const remainingToPay = Math.max(
+    (paymentState.totalPrice || 0) - (paymentState.paid || 0),
+    0
+  );
+
+  const [paymentAmountInput, setPaymentAmountInput] = useState('');
+  const parsedAmount = Math.max(0, parseFloat(paymentAmountInput) || 0);
+  const isPayDisabled =
+    parsedAmount <= 0 ||
+    remainingToPay <= 0 ||
+    (paymentState.totalPrice || 0) <= 0;
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  // Re-sync when the key (student/course) changes
+  useEffect(() => {
+    const stored = readStoredPayment();
+    if (stored) {
+      setPaymentState({
+        totalPrice: stored.totalPrice,
+        paid: Math.min(stored.paid, stored.totalPrice || 0),
+      });
+    } else {
+      setPaymentState({ totalPrice: getDefaultCoursePrice(), paid: 0 });
+    }
+    setPaymentAmountInput('');
+  }, [paymentStorageKey]);
+
+  // Persist on change
+  useEffect(() => {
+    try {
+      localStorage.setItem(paymentStorageKey, JSON.stringify(paymentState));
+    } catch { }
+  }, [paymentState, paymentStorageKey]);
+
+  const handleConfirmPayment = () => {
+    const apply = Math.min(parsedAmount, remainingToPay);
+    if (apply <= 0) {
+      setIsConfirmOpen(false);
+      return;
+    }
+    setPaymentState((prev) => {
+      const total = prev.totalPrice || 0;
+      const nextPaid = Math.min((prev.paid || 0) + apply, total);
+      return { ...prev, paid: nextPaid };
+    });
+    setPaymentAmountInput('');
+    setIsConfirmOpen(false);
+  };
+
   return (
     <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12">
       <AttendanceCard
@@ -153,13 +266,138 @@ export default function OverviewTab({ student, studentStats, setTab }) {
         />
       </div>
       <div className="lg:col-span-4">
-        <StatCard
+        {/* <StatCard
           icon={<CreditCard size={20} />}
           title="Betalingen"
           description="Status van lesgeldbetalingen."
           tab="betalingen"
           setTab={setTab}
-        />
+        /> */}
+
+        {/* Betalingen */}
+        <Card className={'flex flex-col'}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CreditCard className="size-5" />
+              Betalingen
+            </CardTitle>
+            {/* <CardDescription>Status van lesgeldbetalingen.</CardDescription> */}
+            <CardDescription className="text-sm text-muted-foreground">
+              Status van lesgeldbetalingen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span>Lespakket</span>
+                <span className="font-medium">{courseName || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Totaalprijs</span>
+                <span className="font-medium">
+                  {paymentState.totalPrice > 0
+                    ? formatCurrency(paymentState.totalPrice)
+                    : '—'}
+                </span>
+              </div>
+              {remainingToPay > 0 ? (
+                <div className="flex items-center justify-between">
+                  <span>Nog te betalen</span>
+                  <span className="font-medium text-orange-600">
+                    {formatCurrency(remainingToPay)}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-green-700">
+                  <span className="inline-flex items-center gap-2 font-medium">
+                    <CheckCircle2 className="size-4" />
+                    Lespakket betaald
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="payment-amount">Bedrag</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="payment-amount"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={paymentAmountInput}
+                  onChange={(e) => setPaymentAmountInput(e.target.value)}
+                  placeholder="Voer bedrag in"
+                  className="max-w-[200px]"
+                  disabled={(paymentState.totalPrice || 0) <= 0 || remainingToPay <= 0}
+                />
+
+                <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        if (
+                          !(
+                            parsedAmount <= 0 ||
+                            remainingToPay <= 0 ||
+                            (paymentState.totalPrice || 0) <= 0
+                          )
+                        ) {
+                          setIsConfirmOpen(true);
+                        }
+                      }}
+                      disabled={
+                        parsedAmount <= 0 ||
+                        remainingToPay <= 0 ||
+                        (paymentState.totalPrice || 0) <= 0
+                      }
+                    >
+                      Betalen
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent maxWidth="480px">
+                    <DialogHeader>
+                      <DialogTitle>Betaling bevestigen</DialogTitle>
+                      <DialogDescription>
+                        Weet je zeker dat je {formatCurrency(parsedAmount)} wilt
+                        betalen voor {courseName}?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="text-sm">
+                      Nieuw resterend bedrag:{' '}
+                      <span className="font-medium">
+                        {formatCurrency(
+                          Math.max(remainingToPay - parsedAmount, 0)
+                        )}
+                      </span>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsConfirmOpen(false)}>
+                        Annuleren
+                      </Button>
+                      <Button onClick={handleConfirmPayment}>Bevestigen</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              {(paymentState.totalPrice || 0) <= 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Geen prijs bekend voor dit lespakket. Dit kan later vanuit de
+                  lespakketten worden ingesteld.
+                </p>
+              )}
+              {parsedAmount > remainingToPay && remainingToPay > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Je invoer is hoger dan het resterende bedrag. Het overschot
+                  wordt niet meegerekend.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
       <div className="lg:col-span-4">
         <StatCard

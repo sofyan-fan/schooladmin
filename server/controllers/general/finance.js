@@ -72,12 +72,22 @@ exports.create_financial_log = async (req, res) => {
       method,
       notes,
       transaction_type,
+      school_year_id,
     } = req.body;
 
     if (!['income', 'expense'].includes(transaction_type)) {
       return res
         .status(400)
         .json({ error: "transaction_type must be 'income' or 'expense'" });
+    }
+
+    let resolvedSchoolYearId = school_year_id ? parseInt(school_year_id) : null;
+    if (!resolvedSchoolYearId && prisma.school_year && typeof prisma.school_year.findFirst === 'function') {
+      const activeYear = await prisma.school_year.findFirst({ where: { is_active: true } });
+      if (!activeYear) {
+        return res.status(400).json({ error: 'No active school year. Provide school_year_id.' });
+      }
+      resolvedSchoolYearId = activeYear.id;
     }
 
     const log = await prisma.financial_log.create({
@@ -89,6 +99,7 @@ exports.create_financial_log = async (req, res) => {
         method,
         notes,
         transaction_type,
+        ...(resolvedSchoolYearId != null ? { school_year_id: resolvedSchoolYearId } : {}),
       },
       include: {
         type: true,
@@ -107,7 +118,16 @@ exports.create_financial_log = async (req, res) => {
 // Get all financial logs
 exports.get_financial_logs = async (req, res) => {
   try {
+    const where = {};
+    if (req.query.school_year_id) {
+      where.school_year_id = parseInt(req.query.school_year_id);
+    } else if (prisma.school_year && typeof prisma.school_year.findFirst === 'function') {
+      const activeYear = await prisma.school_year.findFirst({ where: { is_active: true } });
+      if (activeYear) where.school_year_id = activeYear.id;
+    }
+
     const logs = await prisma.financial_log.findMany({
+      where,
       include: {
         type: true,
         student: { select: { first_name: true, last_name: true } },

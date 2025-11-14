@@ -86,6 +86,9 @@ model class_layout {
   id   Int    @id @default(autoincrement())
   name String
 
+  school_year   school_year @relation(fields: [school_year_id], references: [id])
+  school_year_id Int
+
   mentor_id Int?     @unique
   mentor    teacher? @relation(fields: [mentor_id], references: [id])
 
@@ -96,6 +99,9 @@ model class_layout {
   assessments assessment[]
   schedules   schedule[]
   roster      roster[]
+
+  @@unique([name, school_year_id])
+  @@index([school_year_id])
 }
 
 model assessment {
@@ -108,12 +114,17 @@ model assessment {
   subject    course_module_subject @relation(fields: [subject_id], references: [id])
   subject_id Int
 
+  school_year   school_year @relation(fields: [school_year_id], references: [id])
+  school_year_id Int
+
   leverage    Float    @default(1)
   date        DateTime
   is_central  Boolean  @default(false)
   description String?
 
   results result[]
+
+  @@index([school_year_id])
 }
 
 model progress {
@@ -190,12 +201,17 @@ model schedule {
   class_layout class_layout @relation(fields: [class_id], references: [id])
   class_id     Int
 
+  school_year    school_year @relation(fields: [school_year_id], references: [id])
+  school_year_id Int
+
   day        String
   start_time String
   end_time   String
 
   classroom    classroom @relation(fields: [classroom_id], references: [id])
   classroom_id Int
+
+  @@index([school_year_id])
 }
 
 model roster {
@@ -209,6 +225,9 @@ model roster {
   teacher    teacher @relation(fields: [teacher_id], references: [id])
   teacher_id Int
 
+  school_year    school_year @relation(fields: [school_year_id], references: [id])
+  school_year_id Int
+
   day_of_week String
   start_time  String
   end_time    String
@@ -218,6 +237,8 @@ model roster {
 
   created_at DateTime  @default(now())
   absence    absence[]
+
+  @@index([school_year_id])
 }
 
 model tuition_payment {
@@ -228,10 +249,15 @@ model tuition_payment {
   course    courses @relation(fields: [course_id], references: [id])
   course_id Int
 
+  school_year    school_year @relation(fields: [school_year_id], references: [id])
+  school_year_id Int
+
   amount Float
   date   DateTime
   status String
   notes  String?
+
+  @@index([school_year_id])
 }
 
 model book_inventory {
@@ -409,6 +435,9 @@ model financial_log {
   course           courses?        @relation(fields: [course_id], references: [id])
   course_id        Int?
 
+  school_year      school_year     @relation(fields: [school_year_id], references: [id])
+  school_year_id   Int
+
   amount           Float
   method           String
   notes            String?
@@ -421,4 +450,24 @@ model financial_log {
   updated_at       DateTime @updatedAt
 
   @@index([type_id])
+  @@index([school_year_id])
+}
+
+model school_year {
+  id          Int       @id @default(autoincrement())
+  name        String
+  start_date  DateTime
+  end_date    DateTime
+  is_active   Boolean   @default(false)
+  is_archived Boolean   @default(false)
+
+  class_layout     class_layout[]
+  tuition_payments tuition_payment[]
+  financial_logs   financial_log[]
+  assessments      assessment[]
+  rosters          roster[]
+  schedules        schedule[]
+
+  @@index([is_active])
+  @@index([is_archived])
 }

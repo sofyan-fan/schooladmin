@@ -195,6 +195,10 @@ async function main() {
   }
   await cleanDatabase();
 
+
+  async 
+  await 
+
   console.log(`🌱 Start met vullen ...`);
 
   const hashedPassword = await bcrypt.hash('password', 10);

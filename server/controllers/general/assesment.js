@@ -12,7 +12,17 @@ exports.create_assessment = async (req, res) => {
       date,
       is_central,
       description,
+      school_year_id,
     } = req.body;
+
+    let resolvedSchoolYearId = school_year_id ? parseInt(school_year_id) : null;
+    if (!resolvedSchoolYearId && prisma.school_year && typeof prisma.school_year.findFirst === 'function') {
+      const activeYear = await prisma.school_year.findFirst({ where: { is_active: true } });
+      if (!activeYear) {
+        return res.status(400).json({ success: false, message: 'No active school year. Provide school_year_id' });
+      }
+      resolvedSchoolYearId = activeYear.id;
+    }
 
     const newAssessment = await prisma.assessment.create({
       data: {
@@ -24,6 +34,9 @@ exports.create_assessment = async (req, res) => {
         date: new Date(date),
         is_central,
         description,
+        ...(prisma.school_year && typeof prisma.school_year.findFirst === 'function'
+          ? { school_year_id: resolvedSchoolYearId }
+          : {}),
       },
     });
 
@@ -45,7 +58,16 @@ exports.create_assessment = async (req, res) => {
 // Get all assessments
 exports.get_all_assessments = async (req, res) => {
   try {
+    const where = {};
+    if (req.query.school_year_id) {
+      where.school_year_id = parseInt(req.query.school_year_id);
+    } else if (prisma.school_year && typeof prisma.school_year.findFirst === 'function') {
+      const activeYear = await prisma.school_year.findFirst({ where: { is_active: true } });
+      if (activeYear) where.school_year_id = activeYear.id;
+    }
+
     const assessments = await prisma.assessment.findMany({
+      where,
       include: {
         class_layout: true,
         subject: true,

@@ -22,6 +22,7 @@ import ResultsPage from './pages/ResultsPage';
 // import RosterPage from './pages/RosterPage';
 import EducationPage from './pages/EducationPage';
 import RostersPage from './pages/RostersPage';
+// import SchoolYearsPage from './pages/SchoolYearsPage';
 import SettingsPage from './pages/SettingsPage';
 import StudentDetailsPage from './pages/StudentDetailsPage';
 import StudentSelfPage from './pages/StudentSelfPage';
@@ -83,6 +84,7 @@ const App = () => {
 
         {/* Admin-only */}
         <Route element={<RequireRole allowedRoles={['admin']} />}>
+          {/* <Route path="/school-jaar" element={<SchoolYearsPage />} /> */}
           <Route path="/klassen" element={<ClassesPage />} />
           <Route path="/roosters" element={<RostersPage />} />
           <Route path="/class-schedule" element={<ClassSchedulePage />} />

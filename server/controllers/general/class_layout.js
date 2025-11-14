@@ -3,11 +3,20 @@ const { prisma } = require('../../prisma/connection');
 // Create a class layout
 exports.create_class_layout = async (req, res) => {
   try {
-    const { name, mentor_id, course_id } = req.body;
+    const { name, mentor_id, course_id, school_year_id } = req.body;
+    let resolvedSchoolYearId = school_year_id ? parseInt(school_year_id) : null;
+    if (!resolvedSchoolYearId && prisma.school_year && typeof prisma.school_year.findFirst === 'function') {
+      const activeYear = await prisma.school_year.findFirst({ where: { is_active: true } });
+      if (!activeYear) {
+        return res.status(400).json({ message: 'No active school year. Provide school_year_id.' });
+      }
+      resolvedSchoolYearId = activeYear.id;
+    }
 
     const newClassLayout = await prisma.class_layout.create({
       data: {
         name,
+        ...(resolvedSchoolYearId != null ? { school_year_id: resolvedSchoolYearId } : {}),
         mentor_id: mentor_id || null,
         course_id: course_id || null,
       },
@@ -28,7 +37,16 @@ exports.create_class_layout = async (req, res) => {
 // Get all class layouts
 exports.get_class_layouts = async (req, res) => {
   try {
+    const where = {};
+    if (req.query.school_year_id) {
+      where.school_year_id = parseInt(req.query.school_year_id);
+    } else if (prisma.school_year && typeof prisma.school_year.findFirst === 'function') {
+      const activeYear = await prisma.school_year.findFirst({ where: { is_active: true } });
+      if (activeYear) where.school_year_id = activeYear.id;
+    }
+
     const classLayouts = await prisma.class_layout.findMany({
+      where,
       include: {
         mentor: true,
         course: true,
