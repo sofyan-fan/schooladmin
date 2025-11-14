@@ -25,9 +25,9 @@ const NoData = (
     <TableCell colSpan={5} className="h-48 text-center">
       <div className="flex flex-col items-center justify-center space-y-4">
         <Users className="size-12 text-gray-400" />
-        <h3 className="text-xl font-semibold">No Classes Found</h3>
+        <h3 className="text-xl font-semibold">Geen klassen gevonden</h3>
         <p className="text-muted-foreground">
-          Get started by adding a new class.
+          Begin door een nieuwe klas toe te voegen.
         </p>
       </div>
     </TableCell>
@@ -70,9 +70,9 @@ export default function ClassesPage() {
     try {
       const addedClass = await classApi.add_class(newClass);
       setClasses((prev) => [...prev, addedClass]);
-      toast.success('Class added successfully.');
+      toast.success('Klas succesvol toegevoegd.');
     } catch (err) {
-      toast.error(`Failed to add class: ${err.message}`);
+      toast.error(`Toevoegen van klas mislukt: ${err.message}`);
       throw err; // re-throw error so modal can catch it
     }
   };
@@ -85,10 +85,10 @@ export default function ClassesPage() {
         prev.map((c) => (c.id === updatedClass.id ? updatedClass : c))
       );
 
-      toast.success('Class updated successfully.');
+      toast.success('Klas succesvol bijgewerkt.');
       setOpenEdit(false);
     } catch (err) {
-      toast.error(`Failed to update class: ${err.message}`);
+      toast.error(`Bijwerken van klas mislukt: ${err.message}`);
       throw err;
     }
   };
@@ -97,10 +97,10 @@ export default function ClassesPage() {
     try {
       await classApi.delete_class(id);
       setClasses((prev) => prev.filter((c) => c.id !== id));
-      toast.success('Class deleted successfully.');
+      toast.success('Klas succesvol verwijderd.');
       setOpenDelete(false);
     } catch (err) {
-      toast.error(`Failed to delete class: ${err.message}`);
+      toast.error(`Verwijderen van klas mislukt: ${err.message}`);
     }
   };
 

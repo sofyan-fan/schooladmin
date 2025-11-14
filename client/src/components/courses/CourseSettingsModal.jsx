@@ -98,7 +98,7 @@ export default function CourseSettingsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent maxWidth="820px">
         <DialogHeader>
-          <DialogTitle>Lespakket instellingen</DialogTitle>
+          <DialogTitle>Lespakket Slagingsnormering</DialogTitle>
           <DialogDescription>
             Stel slagingsnormering per module in
             {/* <span className="font-medium">{'> 8'}</span> is voldoende. */}

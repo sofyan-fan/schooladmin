@@ -20,12 +20,14 @@ import RegisterPage from './pages/RegisterPage';
 import ResultsPage from './pages/ResultsPage';
 // import WelcomePage from './pages/WelcomePage';
 // import RosterPage from './pages/RosterPage';
+import EducationPage from './pages/EducationPage';
 import RostersPage from './pages/RostersPage';
 import SettingsPage from './pages/SettingsPage';
 import StudentDetailsPage from './pages/StudentDetailsPage';
 import StudentSelfPage from './pages/StudentSelfPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
+import TeacherDetailsPage from './pages/TeacherDetailsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
 // import StudentDetailsPage from './pages/StudentDetailsPage';
@@ -92,6 +94,8 @@ const App = () => {
           <Route path="/leerlingen" element={<StudentsPage />} />
           <Route path="/docenten" element={<TeachersPage />} />
           <Route path="/leerlingen/:id" element={<StudentDetailsPage />} />
+          <Route path="/docenten/:id" element={<TeacherDetailsPage />} />
+          <Route path="/onderwijs" element={<EducationPage />} />
         </Route>
 
         {/* Admin + Teacher */}

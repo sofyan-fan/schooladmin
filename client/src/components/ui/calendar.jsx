@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { DayPicker, getDefaultClassNames } from 'react-day-picker';
+import { nl } from 'date-fns/locale';
 
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ function Calendar({
   formatters,
   components,
   highlightToday = true,
+  locale = nl,
   ...props
 }) {
   const defaultClassNames = getDefaultClassNames();
@@ -25,6 +27,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={locale}
       className={cn(
         'bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -34,7 +37,12 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString('default', { month: 'short' }),
+          date.toLocaleString('nl-NL', { month: 'short' }),
+        formatWeekdayName: (date) => {
+          const label = date.toLocaleDateString('nl-NL', { weekday: 'short' });
+          // Capitalize first letter: ma -> Ma, di -> Di, etc.
+          return label.charAt(0).toUpperCase() + label.slice(1);
+        },
         ...formatters,
       }}
       classNames={{
@@ -181,6 +189,7 @@ function CalendarDayButton({ className, day, modifiers, ...props }) {
 
   return (
     <Button
+      type="button"
       ref={ref}
       variant="ghost"
       size="icon"

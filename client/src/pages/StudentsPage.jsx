@@ -21,7 +21,7 @@ import {
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { BookOpen, Download, GraduationCap } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function StudentsPage() {
@@ -43,44 +43,49 @@ export default function StudentsPage() {
     pageSize: 10,
   });
 
+  // Track mount status to avoid state updates before/after mount in async flows
+  const isMountedRef = useRef(false);
   useEffect(() => {
-    let mounted = true;
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     (async () => {
       setLoading(true);
       try {
         const response = await studentAPI.get_students();
         const classesResponse = await classAPI.get_classes();
-        setClasses(classesResponse);
+        if (isMountedRef.current) setClasses(classesResponse);
         const mapped = Array.isArray(response)
           ? response.map((s) => ({
-              id: s.id,
-              firstName: s.first_name,
-              lastName: s.last_name,
-              email: s.parent_email ?? '',
-              parentName: s.parent_name ?? '',
-              phone: s.phone ?? '',
-              address: s.address ?? '',
-              postalCode: s.postal_code ?? '',
-              city: s.city ?? '',
-              birthDate: s.birth_date ?? '',
-              gender: s.gender ?? '',
-              classId: s.class_id ?? s.class_layout?.id ?? null,
-              className: s.class_layout?.name ?? '',
-              registrationDate: s.created_at ?? '',
-              lessonPackage: s.lesson_package ?? '',
-              status: s.enrollment_status ? 'Active' : 'Inactive',
-            }))
+            id: s.id,
+            firstName: s.first_name,
+            lastName: s.last_name,
+            email: s.parent_email ?? '',
+            parentName: s.parent_name ?? '',
+            phone: s.phone ?? '',
+            address: s.address ?? '',
+            postalCode: s.postal_code ?? '',
+            city: s.city ?? '',
+            birthDate: s.birth_date ?? '',
+            gender: s.gender ?? '',
+            classId: s.class_id ?? s.class_layout?.id ?? null,
+            className: s.class_layout?.name ?? '',
+            registrationDate: s.created_at ?? '',
+            lessonPackage: s.lesson_package ?? '',
+            status: s.enrollment_status ? 'Active' : 'Inactive',
+          }))
           : [];
-        if (mounted) setStudents(mapped);
+        if (isMountedRef.current) setStudents(mapped);
       } catch (e) {
         console.error('Failed to load students', e);
       } finally {
-        if (mounted) setLoading(false);
+        if (isMountedRef.current) setLoading(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const handleEdit = useCallback((record) => {
@@ -149,13 +154,15 @@ export default function StudentsPage() {
           (response.enrollment_status ? 'Active' : 'Inactive'),
       };
 
-      setStudents((prev) =>
-        prev.map((s) =>
-          s.id === updatedStudentForState.id
-            ? { ...s, ...updatedStudentForState }
-            : s
-        )
-      );
+      if (isMountedRef.current) {
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.id === updatedStudentForState.id
+              ? { ...s, ...updatedStudentForState }
+              : s
+          )
+        );
+      }
 
       // Dismiss loading toast and show success
       toast.dismiss(loadingToast);
@@ -164,7 +171,7 @@ export default function StudentsPage() {
       );
 
       // Close the modal
-      setOpenEditProfile(false);
+      if (isMountedRef.current) setOpenEditProfile(false);
     } catch (error) {
       console.error('Failed to update student', error);
       // Dismiss loading toast and show error
@@ -195,10 +202,12 @@ export default function StudentsPage() {
 
     try {
       await studentAPI.delete_student(pendingDeleteId);
-      setStudents((prev) => prev.filter((s) => s.id !== pendingDeleteId));
-      if (selected?.id === pendingDeleteId) {
-        setOpenEditProfile(false);
-        setOpenViewProfile(false);
+      if (isMountedRef.current) {
+        setStudents((prev) => prev.filter((s) => s.id !== pendingDeleteId));
+        if (selected?.id === pendingDeleteId) {
+          setOpenEditProfile(false);
+          setOpenViewProfile(false);
+        }
       }
       toast.dismiss(loadingToast);
       toast.success(`${studentName} is succesvol verwijderd.`);
@@ -209,8 +218,10 @@ export default function StudentsPage() {
         'Er is een fout opgetreden bij het verwijderen van de leerling. Probeer het opnieuw.'
       );
     } finally {
-      setOpenDeleteDialog(false);
-      setPendingDeleteId(null);
+      if (isMountedRef.current) {
+        setOpenDeleteDialog(false);
+        setPendingDeleteId(null);
+      }
     }
   };
 
@@ -229,9 +240,9 @@ export default function StudentsPage() {
       <TableCell colSpan={columns.length} className="h-48 text-center">
         <div className="flex flex-col items-center justify-center space-y-4">
           <BookOpen className="size-12 text-gray-400" />
-          <h3 className="text-xl font-semibold">No Students Found</h3>
+          <h3 className="text-xl font-semibold">Geen leerlingen gevonden</h3>
           <p className="text-muted-foreground">
-            Get started by adding a new student.
+            Begin door een nieuwe leerling toe te voegen.
           </p>
         </div>
       </TableCell>
@@ -335,9 +346,8 @@ export default function StudentsPage() {
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
-      const fileName = `resultaten_geselecteerde_leerlingen_${
-        new Date().toISOString().split('T')[0]
-      }.xlsx`;
+      const fileName = `resultaten_geselecteerde_leerlingen_${new Date().toISOString().split('T')[0]
+        }.xlsx`;
       saveAs(blob, fileName);
 
       toast.dismiss(loadingToast);

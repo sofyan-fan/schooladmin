@@ -24,9 +24,9 @@ const NoData = (
     <TableCell colSpan={5} className="h-48 text-center">
       <div className="flex flex-col items-center justify-center space-y-4">
         <Building className="size-12 text-gray-400" />
-        <h3 className="text-xl font-semibold">No Classrooms Found</h3>
+        <h3 className="text-xl font-semibold">Geen lokalen gevonden</h3>
         <p className="text-muted-foreground">
-          Get started by adding a new classroom.
+          Begin door een nieuw lokaal toe te voegen.
         </p>
       </div>
     </TableCell>
@@ -55,7 +55,7 @@ const ClassroomsPage = () => {
       setClassrooms(classroomsData);
     } catch (e) {
       console.error('Failed to load classrooms', e);
-      toast.error('Failed to load classrooms.');
+      toast.error('Laden van lokalen is mislukt.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ const ClassroomsPage = () => {
     try {
       const created = await classroomAPI.addClassroom(newClassroom);
       setClassrooms((prev) => [...prev, created]);
-      toast.success('Classroom created successfully.');
+      toast.success('Lokaal succesvol aangemaakt.');
     } catch (e) {
       // Check if it's a duplicate name error
       if (e.response?.data?.error?.includes('already exists')) {
@@ -93,7 +93,7 @@ const ClassroomsPage = () => {
       setClassrooms((prev) =>
         prev.map((c) => (c.id === updated.id ? updated : c))
       );
-      toast.success('Classroom updated successfully.');
+      toast.success('Lokaal succesvol bijgewerkt.');
       setOpenEdit(false);
     } catch (e) {
       // Check if it's a duplicate name error
@@ -116,7 +116,7 @@ const ClassroomsPage = () => {
     try {
       await classroomAPI.deleteClassroom(selected.id);
       setClassrooms((prev) => prev.filter((c) => c.id !== selected.id));
-      toast.success('Classroom deleted successfully.');
+      toast.success('Lokaal succesvol verwijderd.');
       setOpenDelete(false);
     } catch (e) {
       toast.error(e.message || 'Kon het lokaal niet verwijderen.');

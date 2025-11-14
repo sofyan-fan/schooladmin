@@ -28,14 +28,14 @@ const ViewToggle = ({ view, onViewChange }) => {
       </ToggleGroupItem>
       <ToggleGroupItem
         value="students"
-        aria-label="Students view"
+        aria-label="Leerlingenweergave"
         className={cn(
           'px-4 ',
           view === 'students' ? activeClasses : inactiveClasses
         )}
       >
         <Users className="h-4 w-4" />
-        <span className="ml-2 hidden sm:inline">Students</span>
+        <span className="ml-2 hidden sm:inline">Leerlingen</span>
       </ToggleGroupItem>
     </ToggleGroup>
   );

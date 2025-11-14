@@ -23,8 +23,8 @@ const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || '')
   .filter(Boolean);
 
 const allowedOrigins = [
-  'http://localhost:5173', // dev
-  'https://school-admin.nl', // prod
+  'http://localhost:5173', 
+  'https://school-admin.nl', 
   ...FRONTEND_ORIGINS,
 ];
 

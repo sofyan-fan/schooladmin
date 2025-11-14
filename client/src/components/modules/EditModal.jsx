@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function EditModal({
@@ -28,7 +26,6 @@ export default function EditModal({
   module,
 }) {
   const [name, setName] = useState('');
-  const [moduleItems, setModuleItems] = useState([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [selectedLevel, setSelectedLevel] = useState(''); // stores levelId (string)
   const [selectedMaterial, setSelectedMaterial] = useState(''); // stores materialId (string)
@@ -61,7 +58,9 @@ export default function EditModal({
       if (mat && typeof mat === 'object') {
         // Handle Prisma structure: { id, material, subject_id }
         const id = String(mat.id ?? idx);
-        const label = String(mat.material ?? mat.name ?? mat.title ?? id);
+        const label = String(
+          mat.material ?? mat.name ?? mat.title ?? mat.label ?? id
+        );
         return { id, label };
       }
       return { id: String(mat), label: String(mat) };
@@ -71,85 +70,63 @@ export default function EditModal({
   useEffect(() => {
     if (open && module) {
       setName(module.name ?? '');
-      // Prefill en normaliseren van bestaande items (enforce single)
-      setModuleItems(
-        (module.subjects || []).slice(0, 1).map((s) => {
-          const subjId =
-            s.subjectId ?? s.subject_id ?? s.subject?.id ?? s.id ?? '';
-          const subjName = s.subjectName ?? s.subject?.name ?? s.name ?? '';
 
-          const lvl = s.level ?? s.levelObj;
-          const mat = s.material ?? s.materialObj;
+      const first = (module.subjects || []).slice(0, 1)[0];
+      if (!first) {
+        setSelectedSubjectId('');
+        setSelectedLevel('');
+        setSelectedMaterial('');
+        setError('');
+        return;
+      }
 
-          const levelId =
-            typeof lvl === 'object' && lvl !== null ? lvl.id ?? '' : '';
-          const levelLabel =
-            typeof lvl === 'object' && lvl !== null
-              ? lvl.level ?? lvl.name ?? ''
-              : typeof lvl !== 'undefined' && lvl !== null
-              ? String(lvl)
-              : '';
+      const subjIdRaw =
+        first.subjectId ?? first.subject_id ?? first.subject?.id ?? first.id;
+      const subjId = subjIdRaw != null ? String(subjIdRaw) : '';
 
-          const materialId =
-            typeof mat === 'object' && mat !== null ? mat.id ?? '' : '';
-          const materialLabel =
-            typeof mat === 'object' && mat !== null
-              ? mat.name ?? mat.title ?? mat.material ?? ''
-              : typeof mat !== 'undefined' && mat !== null
-              ? String(mat)
-              : '';
+      const lvlVal = first.level ?? first.levelObj;
+      const levelLabel =
+        typeof lvlVal === 'object' && lvlVal !== null
+          ? lvlVal.level ?? lvlVal.name ?? lvlVal.label ?? ''
+          : typeof lvlVal !== 'undefined' && lvlVal !== null
+            ? String(lvlVal)
+            : '';
 
-          return {
-            subjectId: Number(subjId),
-            subjectName: subjName,
-            levelId: levelId ? String(levelId) : '',
-            levelLabel: levelLabel || '',
-            materialId: materialId ? String(materialId) : '',
-            materialLabel: materialLabel || '',
-          };
-        })
+      const matVal = first.material ?? first.materialObj;
+      const materialLabel =
+        typeof matVal === 'object' && matVal !== null
+          ? matVal.material ?? matVal.name ?? matVal.title ?? matVal.label ?? ''
+          : typeof matVal !== 'undefined' && matVal !== null
+            ? String(matVal)
+            : '';
+
+      const norm = (v) => String(v ?? '').trim().toLowerCase();
+      const selectedSubj = Array.isArray(subjects)
+        ? subjects.find((s) => String(s.id) === subjId)
+        : undefined;
+      const levelMatch = (selectedSubj?.levels || []).find(
+        (l) => norm(l.label) === norm(levelLabel)
       );
-      // Reset combinator inputs bij openen
-      setSelectedSubjectId('');
-      setSelectedLevel('');
-      setSelectedMaterial('');
+      const materialMatch = (selectedSubj?.materials || []).find(
+        (m) => norm(m.label) === norm(materialLabel)
+      );
+
+      const levelId = levelMatch ? String(levelMatch.id) : '';
+      const materialId = materialMatch ? String(materialMatch.id) : '';
+
+      // Preselect dropdowns
+      setSelectedSubjectId(subjId);
+      setSelectedLevel(levelId);
+      setSelectedMaterial(materialId);
       setError('');
     }
-  }, [module, open]);
+  }, [module, open, subjects]);
 
   const resetComboInputs = () => {
     setSelectedSubjectId('');
     setSelectedLevel('');
     setSelectedMaterial('');
   };
-
-  const handleAddCombo = () => {
-    if (!selectedSubjectId || !selectedLevel || !selectedMaterial) return;
-
-    const levelObj = normalizedLevels.find(
-      (l) => String(l.id) === String(selectedLevel)
-    );
-    const materialObj = normalizedMaterials.find(
-      (m) => String(m.id) === String(selectedMaterial)
-    );
-
-    // Enforce single subject per module: replace any existing item
-    setModuleItems([
-      {
-        subjectId: Number(selectedSubjectId),
-        subjectName: selectedSubject?.name || '',
-        levelId: levelObj?.id || '',
-        levelLabel: levelObj?.label || '',
-        materialId: materialObj?.id || '',
-        materialLabel: materialObj?.label || '',
-      },
-    ]);
-
-    resetComboInputs();
-  };
-
-  const removeCombo = (idx) =>
-    setModuleItems((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -159,25 +136,30 @@ export default function EditModal({
       setError('Geef de module een naam.');
       return;
     }
-    if (moduleItems.length === 0) {
-      setError('Voeg ten minste één vak toe aan deze module.');
+    if (!selectedSubjectId || !selectedLevel || !selectedMaterial) {
+      setError('Kies een vak, niveau en literatuur.');
       return;
     }
 
     setLoading(true);
     try {
+      const levelObj = normalizedLevels.find(
+        (l) => String(l.id) === String(selectedLevel)
+      );
+      const materialObj = normalizedMaterials.find(
+        (m) => String(m.id) === String(selectedMaterial)
+      );
       await onSave({
         id: module.id,
         name: name.trim(),
         subjects: [
           {
-            subject_id: Number(moduleItems[0].subjectId),
-            level: String(moduleItems[0].levelLabel),
-            material: String(moduleItems[0].materialLabel),
+            subject_id: Number(selectedSubjectId),
+            level: String(levelObj?.label || ''),
+            material: String(materialObj?.label || ''),
           },
         ],
       });
-      console.log('moduleItems', moduleItems);
       onOpenChange(false);
     } catch (err) {
       setError(
@@ -213,7 +195,7 @@ export default function EditModal({
           </div>
 
           {/* Combinator: Subject / Level / Material */}
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] gap-3 items-end">
             {/* Subject */}
             <div className="space-y-2">
               <Label htmlFor="subject">Vak</Label>
@@ -280,58 +262,8 @@ export default function EditModal({
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Add */}
-            <Button
-              type="button"
-              onClick={handleAddCombo}
-              variant="outline"
-              size="icon"
-              disabled={
-                !selectedSubjectId ||
-                !selectedLevel ||
-                !selectedMaterial ||
-                loading
-              }
-            >
-              <Plus className="h-4 w-4" />
-              <span className="sr-only">Voeg toe</span>
-            </Button>
           </div>
 
-          {/* Geselecteerde combinaties */}
-          <div className="space-y-2">
-            <Label>Toegevoegde vakken</Label>
-            <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-muted/50">
-              {moduleItems.length > 0 ? (
-                moduleItems.map((item, i) => (
-                  <Badge
-                    key={`${item.subjectId}-${item.levelId}-${item.materialId}-${i}`}
-                    variant="secondary"
-                    className="flex items-center gap-2 py-1.5 px-3 text-sm"
-                  >
-                    <span>
-                      {String(item.subjectName || '')} –{' '}
-                      {String(item.levelLabel || '')} –{' '}
-                      {String(item.materialLabel || '')}
-                    </span>
-                    <button
-                      type="button"
-                      className="rounded-full p-0.5 hover:bg-background/50"
-                      onClick={() => removeCombo(i)}
-                      aria-label="Remove item"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground italic px-2">
-                  Nog geen vakken toegevoegd.
-                </p>
-              )}
-            </div>
-          </div>
 
           {/* Error */}
           {error && (
@@ -348,7 +280,16 @@ export default function EditModal({
             >
               Annuleren
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={
+                loading ||
+                !name.trim() ||
+                !selectedSubjectId ||
+                !selectedLevel ||
+                !selectedMaterial
+              }
+            >
               {loading ? 'Opslaan...' : 'Wijzigingen opslaan'}
             </Button>
           </DialogFooter>

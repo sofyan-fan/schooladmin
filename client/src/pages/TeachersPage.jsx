@@ -24,9 +24,9 @@ const NoData = (
     <TableCell colSpan={6} className="h-48 text-center">
       <div className="flex flex-col items-center justify-center space-y-4">
         <BookOpen className="size-12 text-gray-400" />
-        <h3 className="text-xl font-semibold">No Teachers Found</h3>
+        <h3 className="text-xl font-semibold">Geen docenten gevonden</h3>
         <p className="text-muted-foreground">
-          Get started by adding a new teacher.
+          Begin door een nieuwe docent toe te voegen.
         </p>
       </div>
     </TableCell>
@@ -56,22 +56,22 @@ export default function TeachersPage() {
       const response = await teachersAPI.get_teachers();
       const mapped = Array.isArray(response)
         ? response.map((s) => {
-            const mentorClass = Array.isArray(s.class_layout)
-              ? s.class_layout[0]
-              : s.class_layout;
-            return {
-              id: s.id,
-              firstName: s.first_name,
-              lastName: s.last_name,
-              email: s.email ?? '',
-              phone: s.phone ?? '',
-              address: s.address ?? '',
-              classId: mentorClass?.id ?? null,
-              className: mentorClass?.name ?? '',
-              registrationDate: s.created_at ?? '',
-              active: s.active ?? false,
-            };
-          })
+          const mentorClass = Array.isArray(s.class_layout)
+            ? s.class_layout[0]
+            : s.class_layout;
+          return {
+            id: s.id,
+            firstName: s.first_name,
+            lastName: s.last_name,
+            email: s.email ?? '',
+            phone: s.phone ?? '',
+            address: s.address ?? '',
+            classId: mentorClass?.id ?? null,
+            className: mentorClass?.name ?? '',
+            registrationDate: s.created_at ?? '',
+            active: s.active ?? false,
+          };
+        })
         : [];
       setTeachers(mapped);
     } catch (e) {
@@ -156,14 +156,14 @@ export default function TeachersPage() {
         );
         toast.success(
           `${mapped.firstName ?? 'Docent'} ${mapped.lastName ?? ''}`.trim() +
-            ' is succesvol bijgewerkt.'
+          ' is succesvol bijgewerkt.'
         );
       } else {
         // Add new teacher to list
         setTeachers((prev) => [...prev, mapped]);
         toast.success(
           `${mapped.firstName ?? 'Docent'} ${mapped.lastName ?? ''}`.trim() +
-            ' is succesvol aangemaakt.'
+          ' is succesvol aangemaakt.'
         );
       }
 
@@ -186,8 +186,7 @@ export default function TeachersPage() {
     try {
       const teacherToDelete = teachers.find((t) => t.id === pendingDeleteId);
       const teacherName = teacherToDelete
-        ? `${teacherToDelete.firstName ?? ''} ${
-            teacherToDelete.lastName ?? ''
+        ? `${teacherToDelete.firstName ?? ''} ${teacherToDelete.lastName ?? ''
           }`.trim()
         : 'Docent';
 

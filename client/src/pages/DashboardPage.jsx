@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatHijri } from '@/utils/hijri';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { TrendingDown, TrendingUp, Clock, Presentation, UserX } from 'lucide-react';
+import { Clock, Presentation, TrendingDown, TrendingUp, UserX } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Label, Pie, PieChart } from 'recharts';
 import StatCard from '../components/dashboard/StatCard';
@@ -255,7 +255,7 @@ const DashboardPage = () => {
   }, [isAdmin]);
 
   if (!stats) {
-    return <div>Loading...</div>;
+    return <div>Laden...</div>;
   }
 
   const today = new Date();
@@ -347,7 +347,8 @@ const DashboardPage = () => {
             </div>
             <CardContent className="p-0">
               <div className="text-xl font-medium text-regular mb-2">
-                Afwezigen
+                <h1>Leerlingen</h1>
+                <h2 className="text-base text-regular">Afwezig</h2>
               </div>
               <div className="text-3xl font-medium text-regular">
                 {stats.totalStudents - stats.studentsPresent}
@@ -370,6 +371,7 @@ const DashboardPage = () => {
         {/* Finance Stat Card (replaces Leerlingen) */}
         <StatCard
           title="Saldo (totaal)"
+
           value={new Intl.NumberFormat('nl-NL', {
             style: 'currency',
             currency: 'EUR',

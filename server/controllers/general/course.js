@@ -265,7 +265,31 @@ exports.update_module = async (req, res) => {
       return res.status(404).json({ error: 'Module not found' });
     }
 
-    // Delete all current subjects first (to avoid foreign key constraint)
+    // Collect current course_module_subject ids for this module
+    const currentLinks = await prisma.course_module_subject.findMany({
+      where: { course_module_id: Number(id) },
+      select: { id: true },
+    });
+    const currentLinkIds = currentLinks.map((l) => l.id);
+
+    // If there are assessments referencing these links, delete dependent results and assessments first
+    if (currentLinkIds.length > 0) {
+      const assessments = await prisma.assessment.findMany({
+        where: { subject_id: { in: currentLinkIds } },
+        select: { id: true },
+      });
+      const assessmentIds = assessments.map((a) => a.id);
+      if (assessmentIds.length > 0) {
+        await prisma.result.deleteMany({
+          where: { assessment_id: { in: assessmentIds } },
+        });
+        await prisma.assessment.deleteMany({
+          where: { id: { in: assessmentIds } },
+        });
+      }
+    }
+
+    // Now it is safe to delete the old course_module_subject rows
     await prisma.course_module_subject.deleteMany({
       where: { course_module_id: Number(id) },
     });

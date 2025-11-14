@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import TimePicker from '@/components/ui/time-picker';
 
 const AddEventDialog = ({
   isOpen,
@@ -45,47 +46,36 @@ const AddEventDialog = ({
             {/* Date & Time Section */}
             <div className="space-y-3">
               {/* <Label className="text-sm font-medium">Datum & Tijd</Label> */}
-              <div>
-                <DateTimePicker
-                  date={newItem.date || undefined}
-                  startTime={newItem.startTime || ''}
-                  endTime={newItem.endTime || ''}
-                  highlightToday={false}
-                  onDateChange={(date) => {
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <DatePicker
+                  value={newItem.date || undefined}
+                  onChange={(date) => {
                     const event = {
                       target: {
                         name: 'date',
                         value: date
-                          ? `${date.getFullYear()}-${String(
-                              date.getMonth() + 1
-                            ).padStart(2, '0')}-${String(
-                              date.getDate()
-                            ).padStart(2, '0')}`
+                          ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
                           : '',
-                      },
-                    };
-                    onNewItemChange(event);
-                  }}
-                  onStartTimeChange={(time) => {
-                    const event = {
-                      target: {
-                        name: 'startTime',
-                        value: time,
-                      },
-                    };
-                    onNewItemChange(event);
-                  }}
-                  onEndTimeChange={(time) => {
-                    const event = {
-                      target: {
-                        name: 'endTime',
-                        value: time,
                       },
                     };
                     onNewItemChange(event);
                   }}
                   fromYear={new Date().getFullYear() - 1}
                   toYear={new Date().getFullYear() + 5}
+                />
+                <TimePicker
+                  value={newItem.startTime || ''}
+                  onChange={(time) =>
+                    onNewItemChange({ target: { name: 'startTime', value: time } })
+                  }
+                  step={10}
+                />
+                <TimePicker
+                  value={newItem.endTime || ''}
+                  onChange={(time) =>
+                    onNewItemChange({ target: { name: 'endTime', value: time } })
+                  }
+                  step={10}
                 />
               </div>
             </div>

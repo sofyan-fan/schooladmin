@@ -77,6 +77,7 @@ const SidebarComponent = () => {
     },
     {
       name: 'Onderwijs',
+      path: 'onderwijs',
       Icon: LayoutDashboard,
       subItems: [
         { name: 'Klassen', path: 'klassen', roles: ['admin'] },
@@ -228,7 +229,10 @@ const SidebarComponent = () => {
               item.subItems ? (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton
-                    onClick={() => setOnderwijsOpen(!onderwijsOpen)}
+                    onClick={() => {
+                      setOnderwijsOpen(!onderwijsOpen);
+                      navigate('/onderwijs');
+                    }}
                     isActive={activeItemName === item.name}
                     tooltip={item.name}
                     className="cursor-pointer"
@@ -324,14 +328,14 @@ const SidebarComponent = () => {
           <PanelLeft />
           <span className="sr-only">Toggle sidebar</span>
         </Button>
-        <Button onClick={logout} tooltip="Logout">
+        <Button onClick={logout} tooltip="Uitloggen">
           <span
             className={cn(
               'w-full cursor-pointer',
               'group-data-[collapsible=icon]:hidden'
             )}
           >
-            Logout
+            Uitloggen
           </span>
           <LogOut />
         </Button>

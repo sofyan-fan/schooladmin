@@ -32,9 +32,9 @@ const NoData = (
     <TableCell colSpan={5} className="h-48 text-center">
       <div className="flex flex-col items-center justify-center space-y-4">
         <BookOpen className="size-12 text-gray-400" />
-        <h3 className="text-xl font-semibold">No Subjects Found</h3>
+        <h3 className="text-xl font-semibold">Geen vakken gevonden</h3>
         <p className="text-muted-foreground">
-          Get started by adding a new subject.
+          Begin door een nieuw vak toe te voegen.
         </p>
       </div>
     </TableCell>
@@ -101,7 +101,7 @@ const SubjectsPage = () => {
       .get_subjects()
       .then((data) => setSubjects(data || []))
       .catch(() =>
-        setApiError('Failed to load subjects. Please try again later.')
+        setApiError('Laden van vakken is mislukt. Probeer het later opnieuw.')
       )
       .finally(() => setLoading(false));
   };
@@ -189,18 +189,18 @@ const SubjectsPage = () => {
         <AlertDialog open={!!deletingSubject} onOpenChange={handleCancelDelete}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>Weet u het zeker?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                subject.
+                Deze actie kan niet ongedaan worden gemaakt. Dit verwijdert het vak
+                permanent.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleCancelDelete}>
-                Cancel
+                Annuleren
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmDelete}>
-                Delete
+                Verwijderen
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
