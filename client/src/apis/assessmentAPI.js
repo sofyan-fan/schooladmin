@@ -1,8 +1,16 @@
 import RequestHandler from './RequestHandler';
 
 const assessmentApi = {
-  getAssessments: async () => {
-    const response = await RequestHandler.get('/general/assessments');
+  getAssessments: async (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.school_year_id) {
+      searchParams.set('school_year_id', String(params.school_year_id));
+    }
+    const query = searchParams.toString();
+    const url = query
+      ? `/general/assessments?${query}`
+      : '/general/assessments';
+    const response = await RequestHandler.get(url);
     return response.data;
   },
 

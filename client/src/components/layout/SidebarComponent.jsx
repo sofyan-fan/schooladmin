@@ -18,6 +18,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart,
   BookCheck,
+  CalendarDays,
   ChevronDown,
   CircleDollarSign,
   Clock,
@@ -30,6 +31,7 @@ import {
   LogOut,
   PanelLeft,
   Presentation,
+  Bell,
   Settings,
   UserCheck,
 } from 'lucide-react';
@@ -64,6 +66,12 @@ const SidebarComponent = () => {
       roles: ['admin', 'teacher', 'student'],
     },
     {
+      name: 'Meldingen',
+      path: 'meldingen',
+      Icon: Bell,
+      roles: ['admin', 'teacher', 'student'],
+    },
+    {
       name: 'Leerlingen',
       path: 'leerlingen',
       Icon: GraduationCap,
@@ -85,6 +93,18 @@ const SidebarComponent = () => {
         { name: 'Roosters', path: 'roosters', roles: ['admin'] },
         { name: 'Klas Planning', path: 'class-schedule', roles: ['admin'] },
       ],
+    },
+    {
+      name: 'Schooljaren',
+      path: 'school-jaar',
+      Icon: CalendarDays,
+      roles: ['admin'],
+    },
+    {
+      name: 'Schooljaren (dummy)',
+      path: 'school-jaar-dummy',
+      Icon: CalendarDays,
+      roles: ['admin'],
     },
     { name: 'Vakken', path: 'vakken', Icon: LibraryBig, roles: ['admin'] },
     { name: 'Modules', path: 'modules', Icon: Component, roles: ['admin'] },

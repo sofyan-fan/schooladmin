@@ -25,16 +25,16 @@ const SUBJECTS = [
 // Lespakketten (Nederlands)
 // Modules worden verderop aan courses gekoppeld
 const COURSES = [
-  { name: 'Islamitische Studies - Compleet', price: 500 },
-  { name: 'Intensief Quranprogramma', price: 350 },
-  { name: 'Arabisch voor Beginners', price: 250 },
+  { name: 'Islamitische Studies - Compleet', description:"Een overzichtelijke introductie in de belangrijkste onderwerpen van de islam, zoals geloof, geschiedenis en dagelijkse praktijk.", price: 500 },
+  { name: 'Intensief Quranprogramma', description:"Gerichte lessen waarin studenten leren de Quran beter en duidelijker te lezen, met begeleiding bij uitspraak en ritme.", price: 350 },
+  { name: 'Arabisch voor Beginners', description:"Een start om het Arabische alfabet te leren, eenvoudige woorden te begrijpen en basiszinnen te kunnen lezen.", price: 250 },
 ];
 
 const CLASSROOM_COUNT = 5;
 const CLASS_LAYOUT_COUNT = 5;
 
 // Veelgebruikte naamverzamelingen (Nederlands-Marokkaanse context)
-const MOROCCAN_MALE_FIRST_NAMES = [
+const MOROCCAN_MALE_FIRST_NAMES = [ 
   'Mohammed',
   'Youssef',
   'Yassine',
@@ -149,6 +149,19 @@ function makeEmail(first, last, domain = 'school.com') {
   return `${base}${suffix}@${domain}`;
 }
 
+// Generate first_name@domain and ensure global uniqueness by appending a number if needed
+function makeFirstEmailUnique(first, usedEmails, domain = 'school.com') {
+  const base = slugify(first).toLowerCase();
+  let candidate = `${base}@${domain}`;
+  let n = 1;
+  while (usedEmails.has(candidate)) {
+    candidate = `${base}${n}@${domain}`;
+    n++;
+  }
+  usedEmails.add(candidate);
+  return candidate;
+}
+
 async function cleanDatabase() {
   console.log('🧹 Database wordt opgeschoond...');
   // Delete records in an order that respects foreign key constraints.
@@ -178,6 +191,7 @@ async function cleanDatabase() {
   await prisma.subject.deleteMany();
   await prisma.events.deleteMany();
   await prisma.book_inventory.deleteMany();
+  await prisma.school_year.deleteMany();
   console.log('✅ Database opgeschoond.');
 }
 
@@ -195,13 +209,9 @@ async function main() {
   }
   await cleanDatabase();
 
-
-  async 
-  await 
-
   console.log(`🌱 Start met vullen ...`);
 
-  const hashedPassword = await bcrypt.hash('password', 10);
+  const adminHash = await bcrypt.hash('admin123', 10);
 
   // 1. Vakken
   console.log('Vakken worden aangemaakt...');
@@ -209,6 +219,49 @@ async function main() {
     SUBJECTS.map((name) => prisma.subject.create({ data: { name } }))
   );
   console.log(`✅ ${subjects.length} vakken aangemaakt.`);
+
+  // 1b. Schooljaren
+  console.log('Schooljaren worden aangemaakt...');
+  const now = new Date();
+  const currentYearStart = new Date(now.getFullYear(), 8, 1); // 1 Sep
+  const currentYearEnd = new Date(now.getFullYear() + 1, 6, 31); // 31 Jul
+  const previousYearStart = new Date(now.getFullYear() - 1, 8, 1);
+  const previousYearEnd = new Date(now.getFullYear(), 6, 31);
+  const twoYearsAgoStart = new Date(now.getFullYear() - 2, 8, 1);
+  const twoYearsAgoEnd = new Date(now.getFullYear() - 1, 6, 31);
+
+  // Historisch dummyjaar (bijv. 2023-2024), altijd gearchiveerd
+  const dummyYear = await prisma.school_year.create({
+    data: {
+      name: `${twoYearsAgoStart.getFullYear()}-${twoYearsAgoEnd.getFullYear()}`,
+      start_date: twoYearsAgoStart,
+      end_date: twoYearsAgoEnd,
+      is_active: false,
+      is_archived: true,
+    },
+  });
+
+  const [prevYear, activeYear] = await Promise.all([
+    prisma.school_year.create({
+      data: {
+        name: `${previousYearStart.getFullYear()}-${previousYearEnd.getFullYear()}`,
+        start_date: previousYearStart,
+        end_date: previousYearEnd,
+        is_active: false,
+        is_archived: true,
+      },
+    }),
+    prisma.school_year.create({
+      data: {
+        name: `${currentYearStart.getFullYear()}-${currentYearEnd.getFullYear()}`,
+        start_date: currentYearStart,
+        end_date: currentYearEnd,
+        is_active: true,
+        is_archived: false,
+      },
+    }),
+  ]);
+  console.log('✅ Schooljaren aangemaakt.');
 
   // 2. Niveaus (NL) en materialen (AR) per vak (1-3 elk)
   console.log('Niveaus en materialen worden aangemaakt...');
@@ -293,7 +346,8 @@ async function main() {
         data: {
           ...courseData,
           // courses.description is required in schema
-          description: faker.lorem.sentence(),
+          description: courseData.description,
+          price: courseData.price,
         },
       });
       // Link each course to 2-3 random modules
@@ -338,10 +392,13 @@ async function main() {
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@school.com',
-      password: hashedPassword,
+      password: adminHash,
       role: 'admin',
     },
   });
+
+  // Track used emails to respect user.email @unique constraint
+  const usedEmails = new Set(['admin@school.com']);
 
   // Voor docenten: eerst namen genereren zodat e-mails NL/Marokkaans lijken
   const teacherNamePairs = Array.from({ length: TEACHER_COUNT }).map(() => {
@@ -350,15 +407,17 @@ async function main() {
   });
 
   const teacherUsers = await Promise.all(
-    teacherNamePairs.map((nm) =>
-      prisma.user.create({
+    teacherNamePairs.map(async (nm) => {
+      const passwordHash = await bcrypt.hash(`${nm.first.toLowerCase()}123`, 10);
+      const email = makeFirstEmailUnique(nm.first, usedEmails);
+      return prisma.user.create({
         data: {
-          email: makeEmail(nm.first, nm.last).toLowerCase(),
-          password: hashedPassword,
+          email,
+          password: passwordHash,
           role: 'teacher',
         },
-      })
-    )
+      });
+    })
   );
 
   // Voor leerlingen: namen + e-mails genereren
@@ -369,16 +428,27 @@ async function main() {
     return { ...nm, genderLabel };
   });
 
+  // Pre-generate parent info (first/last/email) per student
+  const studentParentInfo = Array.from({ length: STUDENT_COUNT }).map(() => {
+    const isMaleParent = Math.random() < 0.5;
+    const p = generatePersonNameByGender(isMaleParent);
+    // Keep parent first/last for name field; email will be set to student's user email later
+    return { first: p.first, last: p.last };
+  });
+
+  // Create student users using student's first-name email and password `${firstName.toLowerCase()}123`
   const studentUsers = await Promise.all(
-    studentNameTriples.map((nm) =>
-      prisma.user.create({
+    studentNameTriples.map(async (nm) => {
+      const passwordHash = await bcrypt.hash(`${nm.first.toLowerCase()}123`, 10);
+      const email = makeFirstEmailUnique(nm.first, usedEmails);
+      return prisma.user.create({
         data: {
-          email: makeEmail(nm.first, nm.last).toLowerCase(),
-          password: hashedPassword,
+          email,
+          password: passwordHash,
           role: 'student',
         },
-      })
-    )
+      });
+    })
   );
   console.log(
     `✅ ${1 + teacherUsers.length + studentUsers.length} gebruikers aangemaakt.`
@@ -422,16 +492,9 @@ async function main() {
           postal_code: faker.location.zipCode(),
           city: faker.location.city(),
           phone: `06${faker.string.numeric(8)}`,
-          parent_name: (() => {
-            const isMale = Math.random() < 0.5;
-            const p = generatePersonNameByGender(isMale);
-            return `${p.first} ${p.last}`;
-          })(),
-          parent_email: (() => {
-            const isMale = Math.random() < 0.5;
-            const p = generatePersonNameByGender(isMale);
-            return makeEmail(p.first, p.last).toLowerCase();
-          })(),
+          parent_name: `${studentParentInfo[idx].first} ${studentParentInfo[idx].last}`,
+          // Align to session mapping: use the student's user email as parent_email
+          parent_email: user.email,
           lesson_package: faker.helpers.arrayElement(['Standaard', 'Premium']),
           payment_method: faker.helpers.arrayElement([
             'Bankoverschrijving',
@@ -450,10 +513,9 @@ async function main() {
   console.log('Financiële transacties worden aangemaakt...');
   const paymentMethods = ['iDEAL', 'SEPA incasso', 'Contant', 'Creditcard'];
 
-  // Inkomsten: lesgeld voor willekeurige leerlingen en cursussen
+  // Inkomsten: lesgeld voor willekeurige leerlingen en cursussen (actief schooljaar)
   const incomeCount = Math.min(20, students.length);
   for (let i = 0; i < incomeCount; i++) {
-    // kies een leerling en vind zijn klas; selecteer een gerelateerd course_id via class_layout.course_id
     const s = faker.helpers.arrayElement(students);
     const sWithClass = await prisma.student.findUnique({
       where: { id: s.id },
@@ -468,6 +530,7 @@ async function main() {
         type_id: typeByName.get('Lesgeld').id,
         student_id: s.id,
         course_id: courseId,
+        school_year_id: activeYear.id,
         amount: faker.number.float({ min: 50, max: 200, multipleOf: 0.5 }),
         method: faker.helpers.arrayElement(paymentMethods),
         notes: 'Automatisch gegenereerde lesgeldbetaling',
@@ -476,7 +539,7 @@ async function main() {
     });
   }
 
-  // Uitgaven: kantoorartikelen/boodschappen/materiaal
+  // Uitgaven: kantoorartikelen/boodschappen/materiaal (actief schooljaar)
   const expenseTypes = ['Kantoorartikelen', 'Boodschappen', 'Materiaal'];
   for (let i = 0; i < 10; i++) {
     const t = faker.helpers.arrayElement(expenseTypes);
@@ -484,9 +547,9 @@ async function main() {
       data: {
         type_id: typeByName.get(t).id,
         student_id: null,
-        // Koppel materiaal-uitgaven aan een willekeurige cursus
         course_id:
           t === 'Materiaal' ? faker.helpers.arrayElement(courses).id : null,
+        school_year_id: activeYear.id,
         amount: faker.number.float({ min: 20, max: 400, multipleOf: 0.5 }),
         method: faker.helpers.arrayElement(['Contant', 'Bankoverschrijving']),
         notes:
@@ -495,6 +558,47 @@ async function main() {
             : t === 'Boodschappen'
             ? 'Boodschappen voor keuken'
             : 'Aanschaf lesmateriaal',
+        transaction_type: 'expense',
+      },
+    });
+  }
+
+  // Extra historische transacties voor het dummyjaar (archief)
+  const pastIncomeCount = Math.min(10, students.length);
+  for (let i = 0; i < pastIncomeCount; i++) {
+    const s = faker.helpers.arrayElement(students);
+    const courseId = faker.helpers.arrayElement(courses).id;
+    await prisma.financial_log.create({
+      data: {
+        type_id: typeByName.get('Lesgeld').id,
+        student_id: s.id,
+        course_id: courseId,
+        school_year_id: dummyYear.id,
+        amount: faker.number.float({ min: 40, max: 150, multipleOf: 0.5 }),
+        method: faker.helpers.arrayElement(paymentMethods),
+        notes: 'Historische lesgeldbetaling (archiefjaar)',
+        transaction_type: 'income',
+      },
+    });
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const t = faker.helpers.arrayElement(expenseTypes);
+    await prisma.financial_log.create({
+      data: {
+        type_id: typeByName.get(t).id,
+        student_id: null,
+        course_id:
+          t === 'Materiaal' ? faker.helpers.arrayElement(courses).id : null,
+        school_year_id: dummyYear.id,
+        amount: faker.number.float({ min: 15, max: 250, multipleOf: 0.5 }),
+        method: faker.helpers.arrayElement(['Contant', 'Bankoverschrijving']),
+        notes:
+          t === 'Kantoorartikelen'
+            ? 'Historische kantoorartikelen'
+            : t === 'Boodschappen'
+            ? 'Historische boodschappen'
+            : 'Historische aanschaf lesmateriaal',
         transaction_type: 'expense',
       },
     });
@@ -529,6 +633,7 @@ async function main() {
           // If there are fewer teachers than classes, fall back to null mentor
           mentor_id: mentor ? mentor.id : null,
           course_id: faker.helpers.arrayElement(courses).id,
+          school_year_id: activeYear.id,
         },
       });
     })
@@ -548,6 +653,24 @@ async function main() {
     )
   );
   console.log(`✅ Leerlingen toegewezen aan klassen.`);
+
+  // 10b. Lespakketnaam per leerling invullen o.b.v. toegewezen klas (course.name)
+  console.log('Lespakketnamen voor leerlingen instellen...');
+  const courseIdToName = new Map(courses.map((c) => [c.id, c.name]));
+  const studentsWithClass = await prisma.student.findMany({
+    include: { class_layout: true },
+  });
+  await Promise.all(
+    studentsWithClass.map(async (s) => {
+      const classCourseId = s?.class_layout?.course_id || null;
+      const courseName = classCourseId ? courseIdToName.get(classCourseId) : null;
+      await prisma.student.update({
+        where: { id: s.id },
+        data: { lesson_package: courseName || s.lesson_package || '' },
+      });
+    })
+  );
+  console.log('✅ Lespakketnamen ingesteld op basis van klas/cursus.');
 
   // 11. Roosters (Let op: day_of_week in Engels houden voor compatibiliteit)
   console.log('Roosters worden aangemaakt...');
@@ -570,6 +693,7 @@ async function main() {
             subject_id: faker.helpers.arrayElement(subjects).id,
             teacher_id: faker.helpers.arrayElement(teachers).id,
             classroom_id: faker.helpers.arrayElement(classrooms).id,
+            school_year_id: activeYear.id,
             day_of_week: day_of_week,
             start_time: timeSlot.start_time,
             end_time: timeSlot.end_time,
@@ -605,6 +729,7 @@ async function main() {
           name: pickAssessmentName('Test'),
           class_id: classLayout.id,
           subject_id: cms.id, // verwijst naar course_module_subject
+          school_year_id: activeYear.id,
           leverage: faker.number.float({ min: 0.5, max: 2, multipleOf: 0.5 }),
           date: faker.date.soon({ days: 45 }),
           is_central: false,
@@ -621,6 +746,7 @@ async function main() {
             name: pickAssessmentName('Exam'),
             class_id: classLayout.id,
             subject_id: cms.id,
+            school_year_id: activeYear.id,
             leverage: faker.number.float({ min: 1, max: 3, multipleOf: 0.5 }),
             date: faker.date.soon({ days: 90 }),
             is_central: booleanWithProb(0.3),

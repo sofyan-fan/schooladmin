@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import format from 'date-fns/format';
 import { nl } from 'date-fns/locale';
 import {
@@ -35,7 +36,16 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-function StatCard({ icon, title, description, tab, setTab, className }) {
+function StatCard({
+  icon,
+  title,
+  description,
+  tab,
+  setTab,
+  className,
+  extraAction,
+  content,
+}) {
   return (
     <Card className={['flex flex-col', className].join(' ')}>
       <CardHeader>
@@ -46,24 +56,44 @@ function StatCard({ icon, title, description, tab, setTab, className }) {
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 items-center">
-        <p className="text-sm text-muted-foreground">
-          Geen gegevens beschikbaar.
-        </p>
+        {content || (
+          <p className="text-sm text-muted-foreground">
+            Geen gegevens beschikbaar.
+          </p>
+        )}
       </CardContent>
-      <div className="px-6 pb-6">
-        <Button
-          variant="link"
-          className="px-0 text-primary"
-          onClick={() => setTab(tab)}
-        >
-          Bekijk {tab}
-        </Button>
-      </div>
+      {extraAction ? (
+        <div className="px-6 pb-6 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">{extraAction}</div>
+          <Button
+            variant="link"
+            className="px-0 text-primary"
+            onClick={() => setTab(tab)}
+          >
+            Bekijk {tab}
+          </Button>
+        </div>
+      ) : (
+        <div className="px-6 pb-6">
+          <Button
+            variant="link"
+            className="px-0 text-primary"
+            onClick={() => setTab(tab)}
+          >
+            Bekijk {tab}
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }
 
-export default function OverviewTab({ student, studentStats, setTab }) {
+export default function OverviewTab({
+  student,
+  studentStats,
+  setTab,
+  onAddNote,
+}) {
   const quranProgress = {
     summary: {
       lastSurah: 'Al-Baqarah',
@@ -102,6 +132,10 @@ export default function OverviewTab({ student, studentStats, setTab }) {
     (quranProgress.recentLogs || []).map((l) => ({ ...l, memorized: false }))
   );
 
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [noteSubject, setNoteSubject] = useState('');
+  const [noteText, setNoteText] = useState('');
+
   // ----- Betalingen (lokaal met localStorage) -----
   const formatCurrency = (value) =>
     new Intl.NumberFormat('nl-NL', {
@@ -109,8 +143,18 @@ export default function OverviewTab({ student, studentStats, setTab }) {
       currency: 'EUR',
     }).format(Number(value || 0));
 
+  // Prijzen fallback (seed-courses) indien localStorage geen prijs bevat
+  const DEFAULT_COURSE_PRICES = {
+    'Islamitische Studies - Compleet': 500,
+    'Intensief Quranprogramma': 350,
+    'Arabisch voor Beginners': 250,
+  };
+
   const courseName =
-    studentStats?.lesson_package || student?.lesson_package || '—';
+    studentStats?.meta?.course ||
+    studentStats?.lesson_package ||
+    student?.lesson_package ||
+    '—';
 
   const studentKey =
     student?.id ??
@@ -124,9 +168,13 @@ export default function OverviewTab({ student, studentStats, setTab }) {
       const map = JSON.parse(localStorage.getItem('coursePrices') || '{}');
       const raw = map?.[courseName];
       const num = typeof raw === 'number' ? raw : Number(raw);
-      return Number.isFinite(num) && num > 0 ? num : 0;
+      if (Number.isFinite(num) && num > 0) return num;
+      // Fallback op bekende seed-cursussen
+      const fallback = DEFAULT_COURSE_PRICES[courseName];
+      return Number.isFinite(fallback) ? fallback : 0;
     } catch {
-      return 0;
+      const fallback = DEFAULT_COURSE_PRICES[courseName];
+      return Number.isFinite(fallback) ? fallback : 0;
     }
   };
 
@@ -203,6 +251,21 @@ export default function OverviewTab({ student, studentStats, setTab }) {
     setIsConfirmOpen(false);
   };
 
+  const handleCreateNote = (e) => {
+    e.preventDefault();
+    const text = noteText.trim();
+    const subject = noteSubject.trim();
+    if (!text) return;
+
+    if (typeof onAddNote === 'function') {
+      onAddNote({ subject, text });
+    }
+
+    setNoteSubject('');
+    setNoteText('');
+    setIsNotesDialogOpen(false);
+  };
+
   return (
     <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12">
       <AttendanceCard
@@ -237,7 +300,9 @@ export default function OverviewTab({ student, studentStats, setTab }) {
               <IdCard className="size-5" />
               Lespakket:{' '}
               <span className="font-bold">
-                {studentStats.lesson_package || '—'}
+                {studentStats?.meta?.course ||
+                  studentStats?.lesson_package ||
+                  '—'}
               </span>
             </div>
             <div className="text-base ml-2 flex  text-regular mb-1 items-center gap-2">
@@ -275,16 +340,16 @@ export default function OverviewTab({ student, studentStats, setTab }) {
         /> */}
 
         {/* Betalingen */}
-        <Card className={'flex flex-col'}>
+        <Card className={'flex flex-col gap-1'}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CreditCard className="size-5" />
               Betalingen
             </CardTitle>
             {/* <CardDescription>Status van lesgeldbetalingen.</CardDescription> */}
-            <CardDescription className="text-sm text-muted-foreground">
+            {/* <CardDescription className="text-sm text-muted-foreground">
               Status van lesgeldbetalingen.
-            </CardDescription>
+            </CardDescription> */}
           </CardHeader>
           <CardContent>
             <div className="space-y-3 text-sm">
@@ -318,8 +383,8 @@ export default function OverviewTab({ student, studentStats, setTab }) {
             </div>
 
             <div className="mt-4 space-y-2">
-              <Label htmlFor="payment-amount">Bedrag</Label>
-              <div className="flex items-center gap-2">
+              {/* <Label htmlFor="payment-amount">Bedrag</Label> */}
+              <div className="flex items-center gap-2 justify-between">
                 <Input
                   id="payment-amount"
                   type="number"
@@ -382,17 +447,8 @@ export default function OverviewTab({ student, studentStats, setTab }) {
                   </DialogContent>
                 </Dialog>
               </div>
-              {(paymentState.totalPrice || 0) <= 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Geen prijs bekend voor dit lespakket. Dit kan later vanuit de
-                  lespakketten worden ingesteld.
-                </p>
-              )}
               {parsedAmount > remainingToPay && remainingToPay > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Je invoer is hoger dan het resterende bedrag. Het overschot
-                  wordt niet meegerekend.
-                </p>
+                <p className="text-xs text-muted-foreground">Bedrag wordt gemaximeerd op resterend bedrag.</p>
               )}
             </div>
           </CardContent>
@@ -400,13 +456,69 @@ export default function OverviewTab({ student, studentStats, setTab }) {
 
       </div>
       <div className="lg:col-span-4">
-        <StatCard
-          icon={<Notebook size={20} />}
-          title="Notities"
-          description="Persoonlijke opmerkingen."
-          tab="notities"
-          setTab={setTab}
-        />
+        <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+          <StatCard
+            icon={<Notebook size={20} />}
+            title="Notities"
+            description="Persoonlijke opmerkingen."
+            tab="notities"
+            setTab={setTab}
+            content={
+              <p className="text-sm text-muted-foreground">
+                Notities worden alleen in deze browser opgeslagen.
+              </p>
+            }
+            extraAction={
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">
+                  Nieuwe notitie
+                </Button>
+              </DialogTrigger>
+            }
+          />
+          <DialogContent className="sm:max-w-[480px]">
+            <DialogHeader>
+              <DialogTitle>Nieuwe notitie</DialogTitle>
+              <DialogDescription>
+                Schrijf een persoonlijke notitie over deze student. Deze
+                notities worden alleen in deze browser opgeslagen.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateNote} className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label htmlFor="note-subject">Onderwerp</Label>
+                <Input
+                  id="note-subject"
+                  value={noteSubject}
+                  onChange={(e) => setNoteSubject(e.target.value)}
+                  placeholder="Bijv. Huiswerk, gedrag, voortgang"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="note-text">Notitie</Label>
+                <Textarea
+                  id="note-text"
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  rows={5}
+                  placeholder="Schrijf hier je notitie..."
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsNotesDialogOpen(false)}
+                >
+                  Annuleren
+                </Button>
+                <Button type="submit" disabled={!noteText.trim()}>
+                  Notitie opslaan
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="lg:col-span-12">

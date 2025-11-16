@@ -1,0 +1,341 @@
+{
+  "schoolYear": {
+    "id": 1,
+    "name": "2023-2024",
+    "start_date": "2023-09-01",
+    "end_date": "2024-07-15",
+    "is_active": false,
+    "is_archived": true
+  },
+  "classes": [
+    { "id": 101, "name": "Klas 201", "mentor_id": 11, "course_id": 1 },
+    { "id": 102, "name": "Klas 202", "mentor_id": 12, "course_id": 2 },
+    { "id": 103, "name": "Klas 203", "mentor_id": 13, "course_id": 3 }
+  ],
+  "teachers": [
+    {
+      "id": 11,
+      "first_name": "Mohammed",
+      "last_name": "El Amrani",
+      "email": "mohammed@school.com",
+      "phone": "0612345678",
+      "address": "Oudegracht 12, Utrecht",
+      "is_active": true,
+      "compensation": 35.5
+    },
+    {
+      "id": 12,
+      "first_name": "Fatima",
+      "last_name": "Benali",
+      "email": "fatima@school.com",
+      "phone": "0698765432",
+      "address": "Van Woustraat 88, Amsterdam",
+      "is_active": true,
+      "compensation": 32.0
+    },
+    {
+      "id": 13,
+      "first_name": "Yassine",
+      "last_name": "Bouhaddou",
+      "email": "yassine@school.com",
+      "phone": "0687654321",
+      "address": "Groeneweg 5, Rotterdam",
+      "is_active": true,
+      "compensation": 38.75
+    }
+  ],
+  "students": [
+    {
+      "id": 201,
+      "first_name": "Aicha",
+      "last_name": "El Idrissi",
+      "class_id": 101,
+      "gender": "Vrouw",
+      "birth_date": "2012-04-03",
+      "city": "Utrecht",
+      "lesson_package": "Islamitische Studies - Compleet"
+    },
+    {
+      "id": 202,
+      "first_name": "Youssef",
+      "last_name": "Harchaoui",
+      "class_id": 101,
+      "gender": "Man",
+      "birth_date": "2011-11-18",
+      "city": "Utrecht",
+      "lesson_package": "Intensief Quranprogramma"
+    },
+    {
+      "id": 203,
+      "first_name": "Imane",
+      "last_name": "Nouri",
+      "class_id": 102,
+      "gender": "Vrouw",
+      "birth_date": "2010-02-09",
+      "city": "Amsterdam",
+      "lesson_package": "Islamitische Studies - Compleet"
+    },
+    {
+      "id": 204,
+      "first_name": "Bilal",
+      "last_name": "Azarkan",
+      "class_id": 102,
+      "gender": "Man",
+      "birth_date": "2011-07-27",
+      "city": "Amsterdam",
+      "lesson_package": "Arabisch voor Beginners"
+    },
+    {
+      "id": 205,
+      "first_name": "Sara",
+      "last_name": "El Yazidi",
+      "class_id": 103,
+      "gender": "Vrouw",
+      "birth_date": "2012-01-15",
+      "city": "Rotterdam",
+      "lesson_package": "Intensief Quranprogramma"
+    },
+    {
+      "id": 206,
+      "first_name": "Khalid",
+      "last_name": "El Bakkali",
+      "class_id": 103,
+      "gender": "Man",
+      "birth_date": "2010-09-30",
+      "city": "Rotterdam",
+      "lesson_package": "Islamitische Studies - Compleet"
+    }
+  ],
+  "subjects": [
+    { "id": 1, "name": "Quran Recitatie" },
+    { "id": 2, "name": "Tajweed" },
+    { "id": 3, "name": "Arabisch (taal)" },
+    { "id": 4, "name": "Islamitische Geschiedenis" }
+  ],
+  "assessments": [
+    {
+      "id": 301,
+      "type": "Test",
+      "name": "Toets Quran 1",
+      "class_id": 101,
+      "subject_id": 1,
+      "school_year_id": 1,
+      "date": "2023-11-10",
+      "is_central": false
+    },
+    {
+      "id": 302,
+      "type": "Test",
+      "name": "Tajweed Basis Toets",
+      "class_id": 102,
+      "subject_id": 2,
+      "school_year_id": 1,
+      "date": "2024-01-20",
+      "is_central": false
+    },
+    {
+      "id": 303,
+      "type": "Exam",
+      "name": "Quran Eindexamen",
+      "class_id": 103,
+      "subject_id": 1,
+      "school_year_id": 1,
+      "date": "2024-06-15",
+      "is_central": true
+    },
+    {
+      "id": 304,
+      "type": "Exam",
+      "name": "Islamitische Geschiedenis Examen",
+      "class_id": 102,
+      "subject_id": 4,
+      "school_year_id": 1,
+      "date": "2024-05-25",
+      "is_central": false
+    }
+  ],
+  "results": [
+    {
+      "id": 401,
+      "student_id": 201,
+      "assessment_id": 301,
+      "grade": 8.5,
+      "date": "2023-11-15"
+    },
+    {
+      "id": 402,
+      "student_id": 202,
+      "assessment_id": 301,
+      "grade": 7.3,
+      "date": "2023-11-15"
+    },
+    {
+      "id": 403,
+      "student_id": 203,
+      "assessment_id": 302,
+      "grade": 8.0,
+      "date": "2024-01-25"
+    },
+    {
+      "id": 404,
+      "student_id": 204,
+      "assessment_id": 302,
+      "grade": 6.9,
+      "date": "2024-01-25"
+    },
+    {
+      "id": 405,
+      "student_id": 205,
+      "assessment_id": 303,
+      "grade": 9.1,
+      "date": "2024-06-20"
+    },
+    {
+      "id": 406,
+      "student_id": 206,
+      "assessment_id": 303,
+      "grade": 7.8,
+      "date": "2024-06-20"
+    }
+  ],
+  "financial_logs": [
+    {
+      "id": 501,
+      "type": "Lesgeld",
+      "transaction_type": "income",
+      "amount": 150.0,
+      "method": "iDEAL",
+      "date": "2023-09-05",
+      "student_id": 201,
+      "course_id": 1
+    },
+    {
+      "id": 502,
+      "type": "Lesgeld",
+      "transaction_type": "income",
+      "amount": 150.0,
+      "method": "SEPA incasso",
+      "date": "2023-09-05",
+      "student_id": 202,
+      "course_id": 2
+    },
+    {
+      "id": 503,
+      "type": "Lesgeld",
+      "transaction_type": "income",
+      "amount": 150.0,
+      "method": "iDEAL",
+      "date": "2023-09-06",
+      "student_id": 203,
+      "course_id": 1
+    },
+    {
+      "id": 504,
+      "type": "Lesgeld",
+      "transaction_type": "income",
+      "amount": 150.0,
+      "method": "Contant",
+      "date": "2023-09-06",
+      "student_id": 204,
+      "course_id": 3
+    },
+    {
+      "id": 505,
+      "type": "Kantoorartikelen",
+      "transaction_type": "expense",
+      "amount": 42.5,
+      "method": "Bankoverschrijving",
+      "date": "2023-10-02"
+    },
+    {
+      "id": 506,
+      "type": "Materiaal",
+      "transaction_type": "expense",
+      "amount": 89.9,
+      "method": "iDEAL",
+      "date": "2023-11-12",
+      "course_id": 1
+    }
+  ],
+  "rosters": [
+    {
+      "id": 601,
+      "class_id": 101,
+      "subject_id": 1,
+      "teacher_id": 11,
+      "school_year_id": 1,
+      "day_of_week": "Monday",
+      "start_time": "09:00",
+      "end_time": "10:30",
+      "classroom_id": 1
+    },
+    {
+      "id": 602,
+      "class_id": 102,
+      "subject_id": 2,
+      "teacher_id": 12,
+      "school_year_id": 1,
+      "day_of_week": "Wednesday",
+      "start_time": "18:00",
+      "end_time": "19:30",
+      "classroom_id": 2
+    },
+    {
+      "id": 603,
+      "class_id": 103,
+      "subject_id": 3,
+      "teacher_id": 13,
+      "school_year_id": 1,
+      "day_of_week": "Friday",
+      "start_time": "19:00",
+      "end_time": "20:30",
+      "classroom_id": 3
+    }
+  ],
+  "time_registrations": [
+    {
+      "id": 701,
+      "teacher_id": 11,
+      "week_start": "2023-11-06",
+      "week_end": "2023-11-12",
+      "monday": 3.0,
+      "wednesday": 2.5,
+      "friday": 2.0,
+      "total_hours": 7.5,
+      "approved": true
+    },
+    {
+      "id": 702,
+      "teacher_id": 12,
+      "week_start": "2023-11-06",
+      "week_end": "2023-11-12",
+      "tuesday": 2.0,
+      "thursday": 2.5,
+      "saturday": 1.5,
+      "total_hours": 6.0,
+      "approved": true
+    }
+  ],
+  "events": [
+    {
+      "id": 801,
+      "name": "Open Dag",
+      "description": "Introductieavond voor nieuwe ouders en leerlingen.",
+      "date": "2023-10-14",
+      "start_time": "18:00",
+      "end_time": "20:30",
+      "location": "Moskee Al Noor"
+    },
+    {
+      "id": 802,
+      "name": "Quran Competitie",
+      "description": "Jaarlijkse recitatiewedstrijd.",
+      "date": "2024-03-09",
+      "start_time": "10:00",
+      "end_time": "14:00",
+      "location": "Zaal 3"
+    }
+  ]
+}
+
+

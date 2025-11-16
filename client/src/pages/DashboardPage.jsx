@@ -7,9 +7,10 @@ import {
 } from '@/components/ui/chart';
 import { useAuth } from '@/hooks/useAuth';
 import { formatHijri } from '@/utils/hijri';
+import { loadNotifications } from '@/utils/notificationsStorage';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Clock, Presentation, TrendingDown, TrendingUp, UserX } from 'lucide-react';
+import { Bell, Clock, TrendingDown, TrendingUp, UserX } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Label, Pie, PieChart } from 'recharts';
 import StatCard from '../components/dashboard/StatCard';
@@ -46,6 +47,7 @@ const DashboardPage = () => {
   const [lessons, setLessons] = useState([]);
   const [teacherAbsencesToday, setTeacherAbsencesToday] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [notificationsCount, setNotificationsCount] = useState(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -254,6 +256,12 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, [isAdmin]);
 
+  useEffect(() => {
+    // Load notifications count from localStorage
+    const notifications = loadNotifications();
+    setNotificationsCount(Array.isArray(notifications) ? notifications.length : 0);
+  }, []);
+
   if (!stats) {
     return <div>Laden...</div>;
   }
@@ -405,13 +413,13 @@ const DashboardPage = () => {
             variant="warning"
           />
         )}
-        {/* Leraren Stat Card */}
+        {/* Meldingen Stat Card */}
         <StatCard
-          title="Leraren"
-          value={stats.totalTeachers}
-          link="/docenten"
-          icon={<Presentation className="h-8 w-8" />}
-          variant="default" // Using default blue/primary color
+          title="Meldbox"
+          value={notificationsCount}
+          link="/meldingen"
+          icon={<Bell className="h-8 w-8" />}
+          variant="danger"
         />
       </div>
 

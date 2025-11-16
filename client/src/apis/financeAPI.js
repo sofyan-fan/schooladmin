@@ -41,8 +41,16 @@ const financeAPI = {
     return response.data;
   },
 
-  async get_financial_logs() {
-    const response = await RequestHandler.get(`${baseUrl}/financial_logs`);
+  async get_financial_logs(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.school_year_id) {
+      params.set('school_year_id', String(filters.school_year_id));
+    }
+    const query = params.toString();
+    const url = query
+      ? `${baseUrl}/financial_logs?${query}`
+      : `${baseUrl}/financial_logs`;
+    const response = await RequestHandler.get(url);
     return response.data;
   },
 

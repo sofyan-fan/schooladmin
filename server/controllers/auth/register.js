@@ -72,6 +72,32 @@ exports.register = async (req, res) => {
           message: 'Birth date is required for students.',
         });
       }
+      // Resolve lesson_package to a real course name if an id or name is provided
+      let lessonPackageName = '';
+      try {
+        if (lesson_package != null && lesson_package !== '') {
+          const raw = String(lesson_package);
+          let resolved = null;
+          // If numeric → treat as course id
+          if (/^\d+$/.test(raw)) {
+            const byId = await prisma.courses.findUnique({
+              where: { id: Number(raw) },
+            });
+            resolved = byId?.name || null;
+          }
+          // Otherwise try case-insensitive name match
+          if (!resolved) {
+            const byName = await prisma.courses.findFirst({
+              where: { name: { equals: raw, mode: 'insensitive' } },
+            });
+            resolved = byName?.name || null;
+          }
+          lessonPackageName = resolved || raw;
+        }
+      } catch (e) {
+        // Fall back to raw input if lookup fails
+        lessonPackageName = String(lesson_package || '');
+      }
       profile = await prisma.student.create({
         data: {
           first_name: first_name || '',
@@ -84,7 +110,7 @@ exports.register = async (req, res) => {
           phone: phone || '',
           parent_name: parent_name || '',
           parent_email: parent_email || '',
-          lesson_package: lesson_package || '',
+          lesson_package: lessonPackageName,
           payment_method: payment_method || '',
           sosnumber: sosnumber || '',
           enrollment_status: false,

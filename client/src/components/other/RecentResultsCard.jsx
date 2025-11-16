@@ -1,8 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Check, TrendingDown, TrendingUp } from 'lucide-react';
 
-
-
 export function RecentResultsCard({
   studentStats,
   className = '',
@@ -14,7 +12,6 @@ export function RecentResultsCard({
       date: '2025-09-26',
       assessment: { name: 'Praktijk Toets' },
     },
-    avg: 5.0,
     resultsCount: 1,
   };
 
@@ -22,10 +19,6 @@ export function RecentResultsCard({
     typeof stats?.lastResult?.grade === 'number'
       ? stats.lastResult.grade
       : Number(stats?.lastResult?.grade);
-
-  const avgNumber =
-    typeof stats?.avg === 'number' ? stats.avg : Number(stats?.avg);
-  const avgValue = Number.isFinite(avgNumber) ? avgNumber : 0;
 
   const thresholdPass = 5.5;
   const thresholdGood = 6.5;
@@ -44,24 +37,15 @@ export function RecentResultsCard({
     neutral: { bar: 'oklch(0.65 0.03 255)', text: 'text-muted-foreground' },
   };
 
-  const avgLevel = getPerfLevel(avgValue);
-  const avgColor = colorsByLevel[avgLevel];
+  const level = getPerfLevel(lastGrade);
+  const levelColor = colorsByLevel[level];
 
-  const epsilon = 0.05;
-  const trendDir =
-    Number.isFinite(lastGrade) && Number.isFinite(avgNumber)
-      ? lastGrade - avgNumber > epsilon
-        ? 'up'
-        : lastGrade - avgNumber < -epsilon
-        ? 'down'
-        : 'flat'
-      : 'flat';
   const TrendIcon =
-    trendDir === 'up'
-      ? TrendingUp
-      : trendDir === 'down'
-      ? TrendingDown
-      : ArrowRight;
+    level === 'good' ? TrendingUp : level === 'fail' ? TrendingDown : ArrowRight;
+
+  const formattedDate =
+    stats?.lastResult?.date &&
+    new Date(stats.lastResult.date).toLocaleDateString('nl-NL');
 
   return (
     <Card
@@ -88,15 +72,21 @@ export function RecentResultsCard({
 
       <CardContent className="pt-0 pb-0 flex-1">
         <section className="rounded-lg bg-muted/50 px-5 py-2 flex flex-col items-center text-center gap-2.5">
-          <div className="text-xl text-muted-foreground">Gemiddelde</div>
+          <div className="text-xl text-muted-foreground">Laatste resultaat</div>
           <div className="tabular-nums text-5xl font-semibold leading-none">
-            {Number.isFinite(avgNumber) ? avgValue.toFixed(1) : '—'}
+            {Number.isFinite(lastGrade) ? lastGrade.toFixed(1) : '—'}
           </div>
-         
-          {/* BONUS: Added conditional rendering for the passing grade text */}
-          {avgValue >= thresholdPass && (
+
+          {stats?.lastResult && (
+            <div className="text-sm text-muted-foreground">
+              {stats.lastResult.assessment?.name ?? 'Onbekende toets'}
+              {formattedDate ? ` · ${formattedDate}` : ''}
+            </div>
+          )}
+
+          {Number.isFinite(lastGrade) && lastGrade >= thresholdPass && (
             <span
-              className={`inline-flex items-center gap-1 text-lg ${avgColor.text}`}
+              className={`inline-flex items-center gap-1 text-lg ${levelColor.text}`}
             >
               <Check className="h-3.5 w-3.5" /> Voldoet aan norm
             </span>

@@ -38,8 +38,6 @@ export default function QuranLogDialog({
     loading,
     surahItems: allSurahItems,
     ayahsFor,
-    endSurahsBefore,
-    endAyahsBefore,
     hizbFor,
   } = useQuranRelations();
 
@@ -82,39 +80,18 @@ export default function QuranLogDialog({
   }, [newLog.to]);
 
   // gefilterde items; elke lijst respecteert de andere selectie
-  const beginSurahItems = useMemo(
-    () => allSurahItems,
-    [allSurahItems]
-  );
+  const beginSurahItems = useMemo(() => allSurahItems, [allSurahItems]);
   const beginAyahItems = useMemo(
     () => ayahsFor(begin.surahId, undefined),
     [begin.surahId, ayahsFor]
   );
 
-  const endSurahItems = useMemo(() => endSurahsBefore(begin), [begin, endSurahsBefore]);
+  // End-side now shows all surahs and all ayahs for the chosen surah
+  const endSurahItems = useMemo(() => allSurahItems, [allSurahItems]);
   const endAyahItems = useMemo(
-    () => endAyahsBefore(end.surahId, undefined, begin),
-    [end.surahId, begin, endAyahsBefore]
+    () => ayahsFor(end.surahId, undefined),
+    [end.surahId, ayahsFor]
   );
-
-  // Keep end selection valid as begin changes
-  useEffect(() => {
-    const allowedSurahs = endSurahsBefore(begin);
-    if (end.surahId && !allowedSurahs.some((o) => o.value === end.surahId)) {
-      const next = { ...end, surahId: '', ayah: '' };
-      setEnd(next);
-      setNewLog((s) => ({ ...s, to: serializePoint(next) }));
-      return;
-    }
-    if (end.surahId) {
-      const allowedAyahs = endAyahsBefore(end.surahId, undefined, begin);
-      if (end.ayah && !allowedAyahs.some((o) => o.value === end.ayah)) {
-        const next = { ...end, ayah: '' };
-        setEnd(next);
-        setNewLog((s) => ({ ...s, to: serializePoint(next) }));
-      }
-    }
-  }, [begin, end.surahId]);
 
   // derive hizb automatically from surah+ayah
   function deriveHizb(surahId, ayah) {

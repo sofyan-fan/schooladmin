@@ -22,7 +22,10 @@ import ResultsPage from './pages/ResultsPage';
 // import RosterPage from './pages/RosterPage';
 import EducationPage from './pages/EducationPage';
 import RostersPage from './pages/RostersPage';
-// import SchoolYearsPage from './pages/SchoolYearsPage';
+import SchoolYearDetailPage from './pages/SchoolYearDetailPage';
+import SchoolYearDummyDetailPage from './pages/SchoolYearDummyDetailPage';
+import SchoolYearsDummyPage from './pages/SchoolYearsDummyPage';
+import SchoolYearsPage from './pages/SchoolYearsPage';
 import SettingsPage from './pages/SettingsPage';
 import StudentDetailsPage from './pages/StudentDetailsPage';
 import StudentSelfPage from './pages/StudentSelfPage';
@@ -31,6 +34,7 @@ import SubjectsPage from './pages/SubjectsPage';
 import TeacherDetailsPage from './pages/TeacherDetailsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
+import NotificationsPage from './pages/NotificationsPage';
 // import StudentDetailsPage from './pages/StudentDetailsPage';
 // import { useAuth } from './hooks/useAuth';
 
@@ -64,6 +68,7 @@ const App = () => {
       >
         {/* Common (all authenticated roles) */}
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/meldingen" element={<NotificationsPage />} />
         <Route path="/instellingen" element={<SettingsPage />} />
         <Route
           path="/mijn-profiel"
@@ -84,7 +89,13 @@ const App = () => {
 
         {/* Admin-only */}
         <Route element={<RequireRole allowedRoles={['admin']} />}>
-          {/* <Route path="/school-jaar" element={<SchoolYearsPage />} /> */}
+          <Route path="/school-jaar" element={<SchoolYearsPage />} />
+          <Route path="/school-jaar/:id" element={<SchoolYearDetailPage />} />
+          <Route path="/school-jaar-dummy" element={<SchoolYearsDummyPage />} />
+          <Route
+            path="/school-jaar-dummy/:id"
+            element={<SchoolYearDummyDetailPage />}
+          />
           <Route path="/klassen" element={<ClassesPage />} />
           <Route path="/roosters" element={<RostersPage />} />
           <Route path="/class-schedule" element={<ClassSchedulePage />} />

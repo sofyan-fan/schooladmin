@@ -68,6 +68,7 @@ export default function StudentDetailsPage2() {
   const [search, setSearch] = useState('');
   const [moduleFilters, setModuleFilters] = useState([]);
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' });
+  const [studentNotes, setStudentNotes] = useState([]);
   const [tab, setTab] = useState('overzicht');
   const [savingEnroll, setSavingEnroll] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -130,9 +131,9 @@ export default function StudentDetailsPage2() {
     const avg =
       results.length > 0
         ? (
-            results.reduce((s, r) => s + (Number(r.grade) || 0), 0) /
-            results.length
-          ).toFixed(1)
+          results.reduce((s, r) => s + (Number(r.grade) || 0), 0) /
+          results.length
+        ).toFixed(1)
         : null;
 
     const totalAbs = absences.length;
@@ -146,6 +147,7 @@ export default function StudentDetailsPage2() {
     const donutTotal = Math.max(present + late + absent, 1);
     const presentPct = Math.round((present / donutTotal) * 100);
     console.log('Student Data: ', student);
+
     return {
       fullName: [student.first_name, student.last_name]
         .filter(Boolean)
@@ -153,11 +155,11 @@ export default function StudentDetailsPage2() {
       chips: [
         ...(student.lesson_package
           ? [
-              {
-                label: `Lespakket ${student.lesson_package}`,
-                variant: 'outline',
-              },
-            ]
+            {
+              label: `Lespakket ${student.lesson_package}`,
+              variant: 'outline',
+            },
+          ]
           : []),
         {
           label: student.enrollment_status ? 'Ingeschreven' : 'Uitgeschreven',
@@ -186,6 +188,69 @@ export default function StudentDetailsPage2() {
       },
     };
   }, [student, results, absences, klass]);
+
+  const studentNotesKey =
+    student?.id ??
+    student?.email ??
+    'onbekende_student';
+  const studentNotesStorageKey = `studentNotes:${studentNotesKey}`;
+
+  useEffect(() => {
+    if (!student) {
+      setStudentNotes([]);
+      return;
+    }
+    try {
+      if (typeof window === 'undefined') {
+        setStudentNotes([]);
+        return;
+      }
+      const raw = window.localStorage.getItem(studentNotesStorageKey);
+      if (!raw) {
+        setStudentNotes([]);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      setStudentNotes(Array.isArray(parsed) ? parsed : []);
+    } catch (e) {
+      console.error('Failed to load student notes from localStorage:', e);
+      setStudentNotes([]);
+    }
+  }, [student, studentNotesStorageKey]);
+
+  const handleAddStudentNote = ({ subject, text }) => {
+    const trimmedText = (text || '').trim();
+    const trimmedSubject = (subject || '').trim();
+    if (!trimmedText) return;
+
+    const newNote = {
+      id: Date.now(),
+      subject: trimmedSubject || 'Notitie',
+      text: trimmedText,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      let current = [];
+      if (typeof window !== 'undefined') {
+        const raw = window.localStorage.getItem(studentNotesStorageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          current = Array.isArray(parsed) ? parsed : [];
+        }
+      }
+      const updated = [newNote, ...current];
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(
+          studentNotesStorageKey,
+          JSON.stringify(updated)
+        );
+      }
+      setStudentNotes(updated);
+    } catch (e) {
+      console.error('Failed to save student note to localStorage:', e);
+    }
+  };
 
   const getModuleName = useCallback(
     (r) =>
@@ -391,9 +456,8 @@ export default function StudentDetailsPage2() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/gi, '_')
       .replace(/^_+|_+$/g, '');
-    const fileName = `resultaten_${studentSlug}_${
-      new Date().toISOString().split('T')[0]
-    }.xlsx`;
+    const fileName = `resultaten_${studentSlug}_${new Date().toISOString().split('T')[0]
+      }.xlsx`;
     saveAs(blob, fileName);
   };
 
@@ -437,9 +501,8 @@ export default function StudentDetailsPage2() {
         rows,
         options: {
           title: `Resultaten – ${studentStats.fullName}`,
-          fileName: `resultaten_${studentSlug}_${
-            new Date().toISOString().split('T')[0]
-          }.pdf`,
+          fileName: `resultaten_${studentSlug}_${new Date().toISOString().split('T')[0]
+            }.pdf`,
         },
       });
       toast.success('Resultaten succesvol geëxporteerd naar PDF!');
@@ -580,6 +643,7 @@ export default function StudentDetailsPage2() {
             student={student}
             studentStats={studentStats}
             setTab={setTab}
+            onAddNote={handleAddStudentNote}
           />
         </TabsContent>
 
@@ -731,13 +795,12 @@ export default function StudentDetailsPage2() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          className={`${
-                            result.grade >= 8
-                              ? 'text-white bg-green-700 size-8 rounded-full text-base'
-                              : result.grade >= 6
+                          className={`${result.grade >= 8
+                            ? 'text-white bg-green-700 size-8 rounded-full text-base'
+                            : result.grade >= 6
                               ? 'text-white bg-primary size-8 rounded-full text-base'
                               : 'text-white bg-red-500 size-8 rounded-full text-base'
-                          }`}
+                            }`}
                           variant="default"
                         >
                           {result.grade}
@@ -783,7 +846,7 @@ export default function StudentDetailsPage2() {
         </TabsContent>
 
         {/* Simple placeholders (consistent tone) */}
-        {['betalingen', 'voortgang', 'notities'].map((v) => (
+        {['betalingen', 'voortgang'].map((v) => (
           <TabsContent key={v} value={v} className="mt-6">
             <Card>
               <CardHeader>
@@ -796,6 +859,54 @@ export default function StudentDetailsPage2() {
             </Card>
           </TabsContent>
         ))}
+
+        {/* NOTITIES */}
+        <TabsContent value="notities" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notities</CardTitle>
+              <CardDescription>
+                Persoonlijke notities over deze student. Deze worden alleen in
+                deze browser opgeslagen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {studentNotes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Er zijn nog geen notities. Gebruik de kaart &quot;Notities&quot;
+                  op het overzicht om een eerste notitie toe te voegen.
+                </p>
+              ) : (
+                <div className="space-y-4 max-h-[480px] overflow-y-auto pr-2">
+                  {studentNotes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="border rounded-lg p-4 bg-white/60 flex flex-col gap-1"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-semibold text-regular">
+                          {note.subject || 'Notitie'}
+                        </h3>
+                        {note.createdAt && (
+                          <span className="text-xs text-muted-foreground">
+                            {format(
+                              note.createdAt,
+                              'dd-MM-yyyy HH:mm',
+                              { locale: nl }
+                            )}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-regular whitespace-pre-wrap">
+                        {note.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );

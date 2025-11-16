@@ -1,7 +1,12 @@
 import RequestHandler from './RequestHandler';
 
-export const get_classes = async () => {
-  const { data } = await RequestHandler.get('/general/class_layouts');
+export const get_classes = async (schoolYearId) => {
+  let url = '/general/class_layouts';
+  if (schoolYearId) {
+    const params = new URLSearchParams({ school_year_id: String(schoolYearId) });
+    url = `${url}?${params.toString()}`;
+  }
+  const { data } = await RequestHandler.get(url);
   // Transform backend field names to match client expectations
   return data.map((cls) => ({
     ...cls,

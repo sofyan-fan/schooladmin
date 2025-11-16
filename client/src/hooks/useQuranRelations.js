@@ -74,22 +74,15 @@ export function useQuranRelations() {
   }, []);
 
   const surahItems = useMemo(
-    () => {
-      // Default items from API
-      const items = chapters.map((c) => ({
-        value: String(c.id),
-        label: `${c.id}. ${c.name_simple}`,
-      }));
-      if (!items.length) return items;
-      // Special ordering for UI:
-      // - Al-Fatihah (1) first
-      // - then the remaining surahs in descending order (114..2)
-      const fatihah = items.find((i) => i.value === '1');
-      const othersDesc = items
-        .filter((i) => i.value !== '1')
-        .sort((a, b) => Number(b.value) - Number(a.value));
-      return fatihah ? [fatihah, ...othersDesc] : othersDesc;
-    },
+    () =>
+      // Always show surahs in canonical order: 1..114
+      chapters
+        .slice()
+        .sort((a, b) => a.id - b.id)
+        .map((c) => ({
+          value: String(c.id),
+          label: `${c.id}. ${c.name_simple}`,
+        })),
     [chapters]
   );
   const hizbItemsAll = useMemo(
