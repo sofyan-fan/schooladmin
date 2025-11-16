@@ -21,20 +21,22 @@ import ResultsPage from './pages/ResultsPage';
 // import WelcomePage from './pages/WelcomePage';
 // import RosterPage from './pages/RosterPage';
 import EducationPage from './pages/EducationPage';
+import NotificationsPage from './pages/NotificationsPage';
 import RostersPage from './pages/RostersPage';
 import SchoolYearDetailPage from './pages/SchoolYearDetailPage';
 import SchoolYearDummyDetailPage from './pages/SchoolYearDummyDetailPage';
 import SchoolYearsDummyPage from './pages/SchoolYearsDummyPage';
 import SchoolYearsPage from './pages/SchoolYearsPage';
 import SettingsPage from './pages/SettingsPage';
+import StudentClassPage from './pages/StudentClassPage';
 import StudentDetailsPage from './pages/StudentDetailsPage';
+import StudentRosterPage from './pages/StudentRosterPage';
 import StudentSelfPage from './pages/StudentSelfPage';
 import StudentsPage from './pages/StudentsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import TeacherDetailsPage from './pages/TeacherDetailsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
-import NotificationsPage from './pages/NotificationsPage';
 // import StudentDetailsPage from './pages/StudentDetailsPage';
 // import { useAuth } from './hooks/useAuth';
 
@@ -83,6 +85,22 @@ const App = () => {
           element={
             <RequireRole allowedRoles={['student']}>
               <StudentDetailsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/mijn-rooster"
+          element={
+            <RequireRole allowedRoles={['student']}>
+              <StudentRosterPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/mijn-klas"
+          element={
+            <RequireRole allowedRoles={['student']}>
+              <StudentClassPage />
             </RequireRole>
           }
         />

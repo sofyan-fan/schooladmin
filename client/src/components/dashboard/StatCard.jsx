@@ -27,6 +27,7 @@ const StatCard = ({
   icon,
   link,
   variant = 'default',
+  subtitle,
 }) => {
   return (
     <Link to={link} aria-label={`View details for ${title}`}>
@@ -39,6 +40,11 @@ const StatCard = ({
           <div className="flex flex-col justify-center h-full gap-2">
             <p className="text-xl font-medium text-regular">{title}</p>
             <p className="text-4xl font-medium text-regular">{value}</p>
+            {subtitle ? (
+              <p className="text-sm text-muted-foreground line-clamp-1">
+                {subtitle}
+              </p>
+            ) : null}
           </div>
         </div>
       </Card>
@@ -51,6 +57,7 @@ StatCard.propTypes = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   icon: PropTypes.node.isRequired,
   link: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
   variant: PropTypes.oneOf(['default', 'success', 'warning', 'danger']),
 };
 

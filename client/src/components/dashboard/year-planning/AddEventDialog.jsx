@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import TimePicker from '@/components/ui/time-picker';
+import { useEffect } from 'react';
 
 const AddEventDialog = ({
   isOpen,
@@ -20,6 +21,25 @@ const AddEventDialog = ({
   onNewItemChange,
   onSave,
 }) => {
+  // When opening the dialog, default the date to "tomorrow" if no date is set yet
+  useEffect(() => {
+    if (isOpen && !newItem.date) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const formattedTomorrow = `${tomorrow.getFullYear()}-${String(
+        tomorrow.getMonth() + 1
+      ).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+      onNewItemChange({
+        target: {
+          name: 'date',
+          value: formattedTomorrow,
+        },
+      });
+    }
+  }, [isOpen, newItem.date, onNewItemChange]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px]">

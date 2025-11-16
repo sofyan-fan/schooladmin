@@ -155,7 +155,9 @@ export default function QuranLogPage() {
   }, []);
 
   const addLog = async () => {
-    if (!newLog.from || !newLog.to) return false;
+    if (!newLog.studentId || !newLog.from || !newLog.to || !newLog.date) {
+      return false;
+    }
     try {
       const selectedStudentId = newLog.studentId || '';
       const hasSelectedStudent = Boolean(selectedStudentId);
@@ -165,7 +167,7 @@ export default function QuranLogPage() {
 
       const payload = {
         student_id: hasSelectedStudent ? Number(selectedStudentId) : undefined,
-        date: newLog.date || new Date().toISOString().slice(0, 10),
+        date: newLog.date,
         start_log: String(newLog.from),
         end_log: String(newLog.to),
         completed: Boolean(newLog.memorized),
@@ -527,7 +529,16 @@ export default function QuranLogPage() {
               <FileDown className="mr-2 h-4 w-4" /> Exporteren
             </Button>
 
-            <Button onClick={() => setOpenAddDialog(true)}>
+            <Button
+              onClick={() => {
+                // Prefill the new log with the currently selected student (if any)
+                setNewLog((prev) => ({
+                  ...prev,
+                  studentId: filters.studentId || '',
+                }));
+                setOpenAddDialog(true);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" /> Log toevoegen
             </Button>
           </div>

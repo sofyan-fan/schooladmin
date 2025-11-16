@@ -11,7 +11,7 @@ import DeleteEventDialog from './year-planning/DeleteEventDialog';
 import EditEventDialog from './year-planning/EditEventDialog';
 import YearPlanningTable from './year-planning/YearPlanningTable';
 
-const YearPlanning = ({ items, setItems }) => {
+const YearPlanning = ({ items, setItems, readOnly = false }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedItem, setEditedItem] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -247,9 +247,8 @@ const YearPlanning = ({ items, setItems }) => {
     });
 
     // Generate filename with current date
-    const fileName = `jaarplanning_${
-      new Date().toISOString().split('T')[0]
-    }.xlsx`;
+    const fileName = `jaarplanning_${new Date().toISOString().split('T')[0]
+      }.xlsx`;
     saveAs(blob, fileName);
   };
 
@@ -305,9 +304,8 @@ const YearPlanning = ({ items, setItems }) => {
         rows: sortedItems,
         options: {
           title: 'Jaarplanning Overzicht',
-          fileName: `jaarplanning_${
-            new Date().toISOString().split('T')[0]
-          }.pdf`,
+          fileName: `jaarplanning_${new Date().toISOString().split('T')[0]
+            }.pdf`,
         },
       });
 
@@ -443,38 +441,45 @@ const YearPlanning = ({ items, setItems }) => {
       <Card className="rounded-lg border shadow-sm bg-white p-6 min-h-[28rem]">
         <YearPlanningTable
           items={mappedItems}
-          onEditClick={handleEditClick}
-          onDeleteClick={handleDeleteClick}
-          onAddClick={newEvent}
-          onExportClick={() => setIsExportDialogOpen(true)}
+          onEditClick={readOnly ? undefined : handleEditClick}
+          onDeleteClick={readOnly ? undefined : handleDeleteClick}
+          onAddClick={readOnly ? undefined : newEvent}
+          onExportClick={
+            readOnly ? undefined : () => setIsExportDialogOpen(true)
+          }
           loading={false}
+          readOnly={readOnly}
         />
       </Card>
-      <EditEventDialog
-        isOpen={isEditDialogOpen}
-        onClose={handleEditDialogClose}
-        editedItem={editedItem}
-        onInputChange={handleInputChange}
-        onSaveChanges={handleSaveChanges}
-      />
-      <DeleteEventDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={handleDeleteDialogClose}
-        onConfirm={handleConfirmDelete}
-      />
-      <ExportDialog
-        isOpen={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        onExportExcel={handleExportExcel}
-        onExportPDF={handleExportPDF}
-      />
-      <AddEventDialog
-        isOpen={isAddDialogOpen}
-        onClose={handleAddDialogClose}
-        newItem={newItem}
-        onNewItemChange={handleNewItemChange}
-        onSave={handleSaveNewItem}
-      />
+      {!readOnly && (
+        <>
+          <EditEventDialog
+            isOpen={isEditDialogOpen}
+            onClose={handleEditDialogClose}
+            editedItem={editedItem}
+            onInputChange={handleInputChange}
+            onSaveChanges={handleSaveChanges}
+          />
+          <DeleteEventDialog
+            isOpen={isDeleteDialogOpen}
+            onClose={handleDeleteDialogClose}
+            onConfirm={handleConfirmDelete}
+          />
+          <ExportDialog
+            isOpen={isExportDialogOpen}
+            onClose={() => setIsExportDialogOpen(false)}
+            onExportExcel={handleExportExcel}
+            onExportPDF={handleExportPDF}
+          />
+          <AddEventDialog
+            isOpen={isAddDialogOpen}
+            onClose={handleAddDialogClose}
+            newItem={newItem}
+            onNewItemChange={handleNewItemChange}
+            onSave={handleSaveNewItem}
+          />
+        </>
+      )}
     </>
   );
 };

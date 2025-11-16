@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart,
+  Bell,
   BookCheck,
   CalendarDays,
   ChevronDown,
@@ -31,7 +32,6 @@ import {
   LogOut,
   PanelLeft,
   Presentation,
-  Bell,
   Settings,
   UserCheck,
 } from 'lucide-react';
@@ -70,6 +70,18 @@ const SidebarComponent = () => {
       path: 'meldingen',
       Icon: Bell,
       roles: ['admin', 'teacher', 'student'],
+    },
+    {
+      name: 'Rooster',
+      path: 'mijn-rooster',
+      Icon: CalendarDays,
+      roles: ['student'],
+    },
+    {
+      name: 'Klas',
+      path: 'mijn-klas',
+      Icon: GraduationCap,
+      roles: ['student'],
     },
     {
       name: 'Leerlingen',

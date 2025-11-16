@@ -120,10 +120,19 @@ exports.get_financial_logs = async (req, res) => {
   try {
     const where = {};
     if (req.query.school_year_id) {
-      where.school_year_id = parseInt(req.query.school_year_id);
-    } else if (prisma.school_year && typeof prisma.school_year.findFirst === 'function') {
-      const activeYear = await prisma.school_year.findFirst({ where: { is_active: true } });
+      where.school_year_id = parseInt(req.query.school_year_id, 10);
+    } else if (
+      prisma.school_year &&
+      typeof prisma.school_year.findFirst === 'function'
+    ) {
+      const activeYear = await prisma.school_year.findFirst({
+        where: { is_active: true },
+      });
       if (activeYear) where.school_year_id = activeYear.id;
+    }
+
+    if (req.query.student_id) {
+      where.student_id = parseInt(req.query.student_id, 10);
     }
 
     const logs = await prisma.financial_log.findMany({
@@ -138,6 +147,8 @@ exports.get_financial_logs = async (req, res) => {
 
     const formatted = logs.map((log) => ({
       id: log.id,
+      student_id: log.student_id,
+      course_id: log.course_id,
       type: log.type.name,
       student: log.student
         ? `${log.student.first_name} ${log.student.last_name}`

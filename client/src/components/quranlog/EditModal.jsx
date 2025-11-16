@@ -43,6 +43,13 @@ export default function EditQuranLogModal({
   const [date, setDate] = useState(value?.date || '');
   const [description, setDescription] = useState(value?.description || '');
   const [memorized, setMemorized] = useState(Boolean(value?.memorized));
+  const [errors, setErrors] = useState({
+    beginSurah: '',
+    beginAyah: '',
+    endSurah: '',
+    endAyah: '',
+    date: '',
+  });
 
   useEffect(() => {
     if (!value) return;
@@ -62,6 +69,18 @@ export default function EditQuranLogModal({
     setDescription(value.description || '');
     setMemorized(Boolean(value.memorized));
   }, [value]);
+
+  useEffect(() => {
+    if (open) {
+      setErrors({
+        beginSurah: '',
+        beginAyah: '',
+        endSurah: '',
+        endAyah: '',
+        date: '',
+      });
+    }
+  }, [open]);
 
   function deriveHizb(surahId, ayah) {
     const h = hizbFor(surahId, ayah);
@@ -110,11 +129,6 @@ export default function EditQuranLogModal({
     [end.surahId, ayahsFor]
   );
 
-  const canSave = useMemo(
-    () => serializePoint(begin) && serializePoint(end) && !loading,
-    [begin, end, loading]
-  );
-
   function emitIfChanged(
     nextBegin,
     nextEnd,
@@ -141,6 +155,43 @@ export default function EditQuranLogModal({
       Boolean(value.memorized) === Boolean(next.memorized);
     if (!same) onChange?.(next);
   }
+  function handleSave() {
+    const nextErrors = {
+      beginSurah: '',
+      beginAyah: '',
+      endSurah: '',
+      endAyah: '',
+      date: '',
+    };
+    let hasError = false;
+
+    if (!begin.surahId) {
+      nextErrors.beginSurah = 'Selecteer een begin-surah.';
+      hasError = true;
+    }
+    if (!begin.ayah) {
+      nextErrors.beginAyah = 'Selecteer een begin-ayah.';
+      hasError = true;
+    }
+    if (!end.surahId) {
+      nextErrors.endSurah = 'Selecteer een einde-surah.';
+      hasError = true;
+    }
+    if (!end.ayah) {
+      nextErrors.endAyah = 'Selecteer een einde-ayah.';
+      hasError = true;
+    }
+    if (!date) {
+      nextErrors.date = 'Selecteer een datum.';
+      hasError = true;
+    }
+
+    setErrors(nextErrors);
+    if (hasError) return;
+
+    onSave?.();
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -169,14 +220,25 @@ export default function EditQuranLogModal({
                 label="Surah"
                 items={beginSurahItems}
                 value={begin.surahId}
-                onChange={(v) => pushBegin({ surahId: v })}
+                onChange={(v) => {
+                  pushBegin({ surahId: v });
+                  setErrors((prev) => ({
+                    ...prev,
+                    beginSurah: '',
+                    beginAyah: '',
+                  }));
+                }}
                 placeholder="—"
+                error={errors.beginSurah}
               />
               <ComboboxField
                 label="Ayah"
                 items={beginAyahItems}
                 value={begin.ayah}
-                onChange={(v) => pushBegin({ ayah: v })}
+                onChange={(v) => {
+                  pushBegin({ ayah: v });
+                  setErrors((prev) => ({ ...prev, beginAyah: '' }));
+                }}
                 placeholder={
                   begin.surahId
                     ? beginAyahItems.length
@@ -185,6 +247,7 @@ export default function EditQuranLogModal({
                     : 'Kies eerst surah'
                 }
                 disabled={!begin.surahId || beginAyahItems.length === 0}
+                error={errors.beginAyah}
               />
               <div className="flex flex-col">
                 <Label>Hizb</Label>
@@ -219,14 +282,25 @@ export default function EditQuranLogModal({
                 label="Surah"
                 items={endSurahItems}
                 value={end.surahId}
-                onChange={(v) => pushEnd({ surahId: v })}
+                onChange={(v) => {
+                  pushEnd({ surahId: v });
+                  setErrors((prev) => ({
+                    ...prev,
+                    endSurah: '',
+                    endAyah: '',
+                  }));
+                }}
                 placeholder="—"
+                error={errors.endSurah}
               />
               <ComboboxField
                 label="Ayah"
                 items={endAyahItems}
                 value={end.ayah}
-                onChange={(v) => pushEnd({ ayah: v })}
+                onChange={(v) => {
+                  pushEnd({ ayah: v });
+                  setErrors((prev) => ({ ...prev, endAyah: '' }));
+                }}
                 placeholder={
                   end.surahId
                     ? endAyahItems.length
@@ -235,6 +309,7 @@ export default function EditQuranLogModal({
                     : 'Kies eerst surah'
                 }
                 disabled={!end.surahId || endAyahItems.length === 0}
+                error={errors.endAyah}
               />
               <div className="flex flex-col">
                 <Label>Hizb</Label>
@@ -278,6 +353,9 @@ export default function EditQuranLogModal({
                   emitIfChanged(undefined, undefined, nextDate, undefined);
                 }}
               />
+              {errors.date ? (
+                <p className="text-sm text-destructive mt-1">{errors.date}</p>
+              ) : null}
             </div>
             <div className="grid gap-2 w-full col-span-2">
               <Label htmlFor="description">Omschrijving</Label>
@@ -300,7 +378,7 @@ export default function EditQuranLogModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuleren
           </Button>
-          <Button onClick={onSave} disabled={!canSave}>
+          <Button onClick={handleSave} disabled={loading}>
             Opslaan
           </Button>
         </DialogFooter>

@@ -45,6 +45,14 @@ export default function QuranLogDialog({
   const [begin, setBegin] = useState(asPointStrings(parsePoint(newLog.from)));
   const [end, setEnd] = useState(asPointStrings(parsePoint(newLog.to)));
   const [studentItems, setStudentItems] = useState([]);
+  const [errors, setErrors] = useState({
+    studentId: '',
+    beginSurah: '',
+    beginAyah: '',
+    endSurah: '',
+    endAyah: '',
+    date: '',
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +74,20 @@ export default function QuranLogDialog({
       cancelled = true;
     };
   }, []);
+
+  // reset validation errors when dialog opens fresh
+  useEffect(() => {
+    if (open) {
+      setErrors({
+        studentId: '',
+        beginSurah: '',
+        beginAyah: '',
+        endSurah: '',
+        endAyah: '',
+        date: '',
+      });
+    }
+  }, [open]);
 
   // beveiligde synchronisatie om feedbacklus op Ayah verandering te voorkomen
   useEffect(() => {
@@ -145,11 +167,49 @@ export default function QuranLogDialog({
     setNewLog((s) => ({ ...s, to: serializePoint(next) }));
   }
 
-  const canSave = useMemo(() => {
-    const hasBegin = serializePoint(begin) !== '';
-    const hasEnd = serializePoint(end) !== '';
-    return hasBegin && hasEnd && !loading;
-  }, [begin, end, loading]);
+  const canSave = useMemo(() => !loading, [loading]);
+
+  function handleSave() {
+    const nextErrors = {
+      studentId: '',
+      beginSurah: '',
+      beginAyah: '',
+      endSurah: '',
+      endAyah: '',
+      date: '',
+    };
+    let hasError = false;
+
+    if (!newLog.studentId) {
+      nextErrors.studentId = 'Selecteer een leerling.';
+      hasError = true;
+    }
+    if (!begin.surahId) {
+      nextErrors.beginSurah = 'Selecteer een begin-surah.';
+      hasError = true;
+    }
+    if (!begin.ayah) {
+      nextErrors.beginAyah = 'Selecteer een begin-ayah.';
+      hasError = true;
+    }
+    if (!end.surahId) {
+      nextErrors.endSurah = 'Selecteer een einde-surah.';
+      hasError = true;
+    }
+    if (!end.ayah) {
+      nextErrors.endAyah = 'Selecteer een einde-ayah.';
+      hasError = true;
+    }
+    if (!newLog.date) {
+      nextErrors.date = 'Selecteer een datum.';
+      hasError = true;
+    }
+
+    setErrors(nextErrors);
+    if (hasError) return;
+
+    onSave?.();
+  }
 
   const beginAyahHint = null;
   const endAyahHint = null;
@@ -168,8 +228,12 @@ export default function QuranLogDialog({
               label="Leerling"
               items={studentItems}
               value={newLog.studentId || ''}
-              onChange={(v) => setNewLog((s) => ({ ...s, studentId: v }))}
+              onChange={(v) => {
+                setNewLog((s) => ({ ...s, studentId: v }));
+                setErrors((prev) => ({ ...prev, studentId: '' }));
+              }}
               placeholder="Kies leerling"
+              error={errors.studentId}
             />
           </div>
 
@@ -181,14 +245,25 @@ export default function QuranLogDialog({
                 label="Surah"
                 items={beginSurahItems}
                 value={begin.surahId}
-                onChange={(v) => pushBegin({ surahId: v })}
+                onChange={(v) => {
+                  pushBegin({ surahId: v });
+                  setErrors((prev) => ({
+                    ...prev,
+                    beginSurah: '',
+                    beginAyah: '',
+                  }));
+                }}
                 placeholder="—"
+                error={errors.beginSurah}
               />
               <ComboboxField
                 label="Ayah"
                 items={beginAyahItems}
                 value={begin.ayah}
-                onChange={(v) => pushBegin({ ayah: v })}
+                onChange={(v) => {
+                  pushBegin({ ayah: v });
+                  setErrors((prev) => ({ ...prev, beginAyah: '' }));
+                }}
                 placeholder={
                   begin.surahId
                     ? beginAyahItems.length
@@ -197,6 +272,7 @@ export default function QuranLogDialog({
                     : 'Kies eerst surah'
                 }
                 disabled={!begin.surahId || beginAyahItems.length === 0}
+                error={errors.beginAyah}
               />
               <div className="flex flex-col">
                 <Label>Hizb</Label>
@@ -236,14 +312,25 @@ export default function QuranLogDialog({
                 label="Surah"
                 items={endSurahItems}
                 value={end.surahId}
-                onChange={(v) => pushEnd({ surahId: v })}
+                onChange={(v) => {
+                  pushEnd({ surahId: v });
+                  setErrors((prev) => ({
+                    ...prev,
+                    endSurah: '',
+                    endAyah: '',
+                  }));
+                }}
                 placeholder="—"
+                error={errors.endSurah}
               />
               <ComboboxField
                 label="Ayah"
                 items={endAyahItems}
                 value={end.ayah}
-                onChange={(v) => pushEnd({ ayah: v })}
+                onChange={(v) => {
+                  pushEnd({ ayah: v });
+                  setErrors((prev) => ({ ...prev, endAyah: '' }));
+                }}
                 placeholder={
                   end.surahId
                     ? endAyahItems.length
@@ -252,6 +339,7 @@ export default function QuranLogDialog({
                     : 'Kies eerst surah'
                 }
                 disabled={!end.surahId || endAyahItems.length === 0}
+                error={errors.endAyah}
               />
               <div className="flex flex-col">
                 <Label>Hizb</Label>
@@ -304,8 +392,12 @@ export default function QuranLogDialog({
                     ...s,
                     date: date ? toLocalYMD(date) : '',
                   }));
+                  setErrors((prev) => ({ ...prev, date: '' }));
                 }}
               />
+              {errors.date ? (
+                <p className="text-sm text-destructive mt-1">{errors.date}</p>
+              ) : null}
             </div>
             {/* Description */}
             <div className="grid gap-2 w-full col-span-2">
@@ -327,7 +419,7 @@ export default function QuranLogDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuleren
           </Button>
-          <Button onClick={onSave} disabled={!canSave}>
+          <Button onClick={handleSave} disabled={!canSave}>
             Opslaan
           </Button>
         </DialogFooter>

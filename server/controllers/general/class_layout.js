@@ -76,6 +76,7 @@ exports.get_class_layout = async (req, res) => {
         mentor: true,
         course: true,
         students: true,
+        school_year: true,
       },
     });
 

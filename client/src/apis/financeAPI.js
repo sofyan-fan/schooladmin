@@ -46,6 +46,9 @@ const financeAPI = {
     if (filters.school_year_id) {
       params.set('school_year_id', String(filters.school_year_id));
     }
+    if (filters.student_id) {
+      params.set('student_id', String(filters.student_id));
+    }
     const query = params.toString();
     const url = query
       ? `${baseUrl}/financial_logs?${query}`

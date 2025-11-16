@@ -162,7 +162,6 @@ export default function ManageResultsModal({
         <Table
           containerClassName="flex-grow min-h-0 overflow-y-auto overflow-x-auto will-change-scroll
     [scrollbar-width:thin]
-    [scrollbar-color:theme(colors.muted.DEFAULT)_theme(colors.primary)]
     [&::-webkit-scrollbar]:w-2
     [&::-webkit-scrollbar-track]:bg-transparent
     [&::-webkit-scrollbar-thumb]:rounded-full

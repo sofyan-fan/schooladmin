@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { CalendarDays, Eye, RefreshCw } from 'lucide-react';
+import { CalendarDays, Eye } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -174,7 +174,7 @@ export default function SchoolYearsPage() {
           </Label>
         </div>
 
-        <Button
+        {/* <Button
           type="button"
           variant="outline"
           size="icon"
@@ -182,7 +182,7 @@ export default function SchoolYearsPage() {
           disabled={loading}
         >
           <RefreshCw className="size-4" />
-        </Button>
+        </Button> */}
       </div>
 
       {error && (

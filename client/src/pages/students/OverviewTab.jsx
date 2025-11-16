@@ -1,3 +1,5 @@
+import { getChapters } from '@/apis/quranAPI';
+import quranLogAPI from '@/apis/quranLogAPI';
 import { AttendanceCard } from '@/components/other/AttendanceCard';
 import { RecentResultsCard } from '@/components/other/RecentResultsCard';
 import { Button } from '@/components/ui/button';
@@ -20,12 +22,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { parsePoint } from '@/utils/quran';
 import format from 'date-fns/format';
 import { nl } from 'date-fns/locale';
 import {
   CheckCircle2,
   CreditCard,
+  HandCoins,
   IdCard,
   Info,
   Mail,
@@ -34,7 +39,7 @@ import {
   Phone,
   TrendingUp,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function StatCard({
   icon,
@@ -132,6 +137,106 @@ export default function OverviewTab({
     (quranProgress.recentLogs || []).map((l) => ({ ...l, memorized: false }))
   );
 
+  const [latestQuranLog, setLatestQuranLog] = useState(null);
+  const [latestQuranLogLoading, setLatestQuranLogLoading] = useState(false);
+  const [chapters, setChapters] = useState([]);
+
+  // Load Quran chapters once (for surah names)
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const cs = await getChapters();
+        if (!active) return;
+        setChapters(cs || []);
+      } catch (e) {
+        console.error('Failed to load Quran chapters', e);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Load latest Quran log for this student
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      if (!student?.id) {
+        if (active) {
+          setLatestQuranLog(null);
+          setLatestQuranLogLoading(false);
+        }
+        return;
+      }
+
+      setLatestQuranLogLoading(true);
+      try {
+        const all = await quranLogAPI.get_logs();
+        if (!active) return;
+        const sid = Number(student.id);
+        const filtered = (all || []).filter(
+          (l) => Number(l.student_id) === sid
+        );
+        if (!filtered.length) {
+          setLatestQuranLog(null);
+          return;
+        }
+        filtered.sort(
+          (a, b) =>
+            new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+        );
+        setLatestQuranLog(filtered[0]);
+      } catch (e) {
+        console.error('Failed to load Quran logs for student', e);
+        if (active) setLatestQuranLog(null);
+      } finally {
+        if (active) setLatestQuranLogLoading(false);
+      }
+    };
+
+    run();
+    return () => {
+      active = false;
+    };
+  }, [student?.id]);
+
+  const chapterById = useMemo(
+    () =>
+      new Map(
+        (chapters || []).map((c) => [String(c.id), c])
+      ),
+    [chapters]
+  );
+
+  const formatLogDate = (value) => {
+    if (!value) return 'Onbekend';
+    try {
+      const dt =
+        value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(dt.getTime())) return 'Onbekend';
+      return format(dt, 'dd-MM-yyyy', { locale: nl });
+    } catch {
+      return 'Onbekend';
+    }
+  };
+
+  const formatPointLabel = (raw) => {
+    if (!raw) return '—';
+    const p = parsePoint(String(raw));
+    const parts = [];
+    if (p.surahId) {
+      const chapter = chapterById.get(String(p.surahId));
+      const name = chapter?.name_simple || `Soera ${p.surahId}`;
+      parts.push(name);
+    }
+    if (p.ayah) parts.push(`Ayah ${p.ayah}`);
+    if (p.hizb) parts.push(`Hizb ${p.hizb}`);
+    if (!parts.length) return '—';
+    return parts.join(' • ');
+  };
+
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [noteSubject, setNoteSubject] = useState('');
   const [noteText, setNoteText] = useState('');
@@ -186,6 +291,9 @@ export default function OverviewTab({
       return {
         totalPrice: Number(parsed?.totalPrice) || 0,
         paid: Math.max(0, Number(parsed?.paid) || 0),
+        transactions: Array.isArray(parsed?.transactions)
+          ? parsed.transactions
+          : [],
       };
     } catch {
       return null;
@@ -196,9 +304,13 @@ export default function OverviewTab({
     const stored = readStoredPayment();
     if (stored) {
       const cappedPaid = Math.min(stored.paid, stored.totalPrice || 0);
-      return { totalPrice: stored.totalPrice, paid: cappedPaid };
+      return {
+        totalPrice: stored.totalPrice,
+        paid: cappedPaid,
+        transactions: stored.transactions || [],
+      };
     }
-    return { totalPrice: getDefaultCoursePrice(), paid: 0 };
+    return { totalPrice: getDefaultCoursePrice(), paid: 0, transactions: [] };
   });
 
   const remainingToPay = Math.max(
@@ -215,14 +327,17 @@ export default function OverviewTab({
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
+  const [paymentMethod, setPaymentMethod] = useState('Bank');
+
   // Re-sync when the key (student/course) changes
   useEffect(() => {
     const stored = readStoredPayment();
     if (stored) {
-      setPaymentState({
+      setPaymentState((prev) => ({
         totalPrice: stored.totalPrice,
         paid: Math.min(stored.paid, stored.totalPrice || 0),
-      });
+        transactions: stored.transactions || prev.transactions || [],
+      }));
     } else {
       setPaymentState({ totalPrice: getDefaultCoursePrice(), paid: 0 });
     }
@@ -245,7 +360,21 @@ export default function OverviewTab({
     setPaymentState((prev) => {
       const total = prev.totalPrice || 0;
       const nextPaid = Math.min((prev.paid || 0) + apply, total);
-      return { ...prev, paid: nextPaid };
+      const tx = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        amount: apply,
+        method: paymentMethod,
+        source: 'Lesgeldkaart',
+      };
+      const existing = Array.isArray(prev.transactions)
+        ? prev.transactions
+        : [];
+      return {
+        ...prev,
+        paid: nextPaid,
+        transactions: [tx, ...existing],
+      };
     });
     setPaymentAmountInput('');
     setIsConfirmOpen(false);
@@ -321,15 +450,76 @@ export default function OverviewTab({
         </CardContent>
       </Card>
 
-      <div className="lg:col-span-4">
-        <StatCard
-          icon={<TrendingUp size={20} />}
-          title="Voortgang"
-          description="Overzicht van leer voortgang."
-          tab="voortgang"
-          setTab={setTab}
-        />
-      </div>
+      <Card className="lg:col-span-4 flex flex-col h-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <TrendingUp size={20} />
+            Qur'an-voortgang
+          </CardTitle>
+          <CardDescription>
+            Meest recente log uit het Qur'an-logboek.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center">
+          {latestQuranLogLoading ? (
+            <p className="text-sm text-muted-foreground">
+              Qur'an-log wordt geladen...
+            </p>
+          ) : !latestQuranLog ? (
+            <p className="text-sm text-muted-foreground">
+              Nog geen Qur'an-log geregistreerd.
+            </p>
+          ) : (
+            <div className="w-full space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Datum</span>
+                <span className="font-medium">
+                  {formatLogDate(latestQuranLog.date)}
+                </span>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-0.5">
+                  Bereik
+                </div>
+                <div className="text-sm font-medium">
+                  Van: {formatPointLabel(latestQuranLog.start_log)}
+                </div>
+                <div className="text-sm">
+                  Tot: {formatPointLabel(latestQuranLog.end_log)}
+                </div>
+              </div>
+              {latestQuranLog.comment ? (
+                <div>
+                  <div className="text-xs text-muted-foreground mb-0.5">
+                    Omschrijving
+                  </div>
+                  <div className="text-sm">
+                    {latestQuranLog.comment}
+                  </div>
+                </div>
+              ) : null}
+              <div className="text-xs text-muted-foreground">
+                Status:{' '}
+                <span className="font-medium">
+                  {latestQuranLog.completed
+                    ? 'Geleerd'
+                    : 'Nog in behandeling'}
+                </span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+        <div className="px-6 pb-6">
+          <Button
+            variant="link"
+            className="px-0 text-primary"
+            onClick={() => setTab('voortgang')}
+          >
+            Bekijk voortgang
+          </Button>
+        </div>
+      </Card>
+
       <div className="lg:col-span-4">
         {/* <StatCard
           icon={<CreditCard size={20} />}
@@ -381,8 +571,46 @@ export default function OverviewTab({
                 </div>
               )}
             </div>
-
-            <div className="mt-4 space-y-2">
+            <div className="space-y-1 mt-2">
+              <Label className="text-xs text-muted-foreground">
+                Betaalmethode
+              </Label>
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={setPaymentMethod}
+                className="flex flex-wrap gap-4"
+              >
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem
+                    id="method-bank"
+                    value="Bank"
+                    aria-label="Bankoverschrijving"
+                  />
+                  <Label
+                    htmlFor="method-bank"
+                    className="flex cursor-pointer items-center gap-1 text-xs sm:text-sm"
+                  >
+                    <CreditCard className="size-4" />
+                    <span>Bank</span>
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem
+                    id="method-cash"
+                    value="Contant"
+                    aria-label="Contant betalen"
+                  />
+                  <Label
+                    htmlFor="method-cash"
+                    className="flex cursor-pointer items-center gap-1 text-xs sm:text-sm"
+                  >
+                    <HandCoins className="size-4" />
+                    <span>Contant</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="mt-4 space-y-3">
               {/* <Label htmlFor="payment-amount">Bedrag</Label> */}
               <div className="flex items-center gap-2 justify-between">
                 <Input
@@ -450,12 +678,13 @@ export default function OverviewTab({
               {parsedAmount > remainingToPay && remainingToPay > 0 && (
                 <p className="text-xs text-muted-foreground">Bedrag wordt gemaximeerd op resterend bedrag.</p>
               )}
+
             </div>
           </CardContent>
         </Card>
 
       </div>
-      <div className="lg:col-span-4">
+      <div className="lg:col-span-4 flex">
         <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
           <StatCard
             icon={<Notebook size={20} />}
@@ -463,6 +692,7 @@ export default function OverviewTab({
             description="Persoonlijke opmerkingen."
             tab="notities"
             setTab={setTab}
+            className="h-full"
             content={
               <p className="text-sm text-muted-foreground">
                 Notities worden alleen in deze browser opgeslagen.

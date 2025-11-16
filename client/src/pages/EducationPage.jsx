@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import PageHeader from '@/components/shared/PageHeader';
 import {
-  Users,
-  DoorOpen,
   Clock,
+  DoorOpen,
   LayoutDashboard,
+  Users,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const items = [
   {
@@ -37,9 +38,15 @@ const items = [
 const EducationPage = () => {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-regular">Onderwijs</h1>
-      </div>
+      {/* <div className="flex items-center gap-2">
+        <LayoutDashboard className="size-9" />  
+        <h1 className="text-2xl font-semibold text-regular"> Onderwijs</h1>
+      </div> */}
+      <PageHeader
+        title="Onderwijs"
+        icon={<LayoutDashboard className="size-9" />}
+        description="Beheer klassen, lokalen en roosters."
+      />
 
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((item) => {

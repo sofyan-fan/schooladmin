@@ -11,7 +11,7 @@ import GegevensTab from '@/pages/students/GegevensTab';
 import OverviewTab from '@/pages/students/OverviewTab';
 import { ArrowLeft, ArrowUpDown, Download, User } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import ComboboxField from '@/components/ui/combobox';
@@ -32,6 +32,7 @@ import { X } from 'lucide-react';
 
 import classAPI from '@/apis/classAPI';
 import enrollmentAPI from '@/apis/enrollmentAPI';
+import financeAPI from '@/apis/financeAPI';
 import moduleAPI from '@/apis/moduleAPI';
 import resultAPI from '@/apis/resultAPI';
 import studentAPI from '@/apis/studentAPI';
@@ -41,6 +42,14 @@ import exportScheduleToPDF from '@/utils/exportScheduleToPDF';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
+
+const normalizePaymentMethod = (method) => {
+  if (!method) return 'Onbekend';
+  const m = String(method).toLowerCase();
+  if (m === 'ideal' || m === 'bank') return 'Bank';
+  if (m === 'cash' || m === 'contant') return 'Contant';
+  return method;
+};
 
 // const fmtDate = (d) =>
 //   d
@@ -69,9 +78,23 @@ export default function StudentDetailsPage2() {
   const [moduleFilters, setModuleFilters] = useState([]);
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' });
   const [studentNotes, setStudentNotes] = useState([]);
-  const [tab, setTab] = useState('overzicht');
+  const location = useLocation();
+  const initialTab = useMemo(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      return params.get('tab') || 'overzicht';
+    } catch {
+      return 'overzicht';
+    }
+  }, [location.search]);
+  const [tab, setTab] = useState(initialTab);
   const [savingEnroll, setSavingEnroll] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [financeLogs, setFinanceLogs] = useState([]);
+  const [coursePaymentSummary, setCoursePaymentSummary] = useState(null);
+  const [coursePaymentTransactions, setCoursePaymentTransactions] = useState(
+    []
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -89,16 +112,26 @@ export default function StudentDetailsPage2() {
           setKlass(cl);
         }
 
-        const [allResults, allAbsences, allModules] = await Promise.all([
-          resultAPI.get_results(),
-          absenceAPI.getAllAbsences(),
-          moduleAPI.get_modules(),
-        ]);
+        const sidNum = Number(id);
+        const financePromise = Number.isFinite(sidNum)
+          ? financeAPI.get_financial_logs({ student_id: sidNum })
+          : financeAPI.get_financial_logs();
+
+        const [allResults, allAbsences, allModules, studentFinanceLogs] =
+          await Promise.all([
+            resultAPI.get_results(),
+            absenceAPI.getAllAbsences(),
+            moduleAPI.get_modules(),
+            financePromise,
+          ]);
         if (!mounted) return;
 
         const sid = Number(id);
         setResults((allResults || []).filter((r) => r.student_id === sid));
         setAbsences((allAbsences || []).filter((a) => a.student_id === sid));
+        setFinanceLogs(
+          Array.isArray(studentFinanceLogs) ? studentFinanceLogs : []
+        );
 
         // Build a lookup from course_module_subject.id -> course_module.name
         const bySubjectId = Object.create(null);
@@ -188,6 +221,127 @@ export default function StudentDetailsPage2() {
       },
     };
   }, [student, results, absences, klass]);
+
+  // Load course payment data for Betalingen tab from localStorage
+  useEffect(() => {
+    if (tab !== 'betalingen') return;
+    if (!student || !studentStats) {
+      setCoursePaymentSummary(null);
+      setCoursePaymentTransactions([]);
+      return;
+    }
+    try {
+      if (typeof window === 'undefined') {
+        setCoursePaymentSummary(null);
+        setCoursePaymentTransactions([]);
+        return;
+      }
+      const courseName =
+        studentStats?.meta?.course ||
+        studentStats?.lesson_package ||
+        student?.lesson_package ||
+        '—';
+      const studentKey =
+        student?.id ??
+        student?.email ??
+        studentStats?.fullName ??
+        'onbekende_student';
+      const storageKey = `payments:${studentKey}:${courseName}`;
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) {
+        setCoursePaymentSummary({
+          courseName,
+          totalPrice: 0,
+          paid: 0,
+          remaining: 0,
+        });
+        setCoursePaymentTransactions([]);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      const totalPrice = Number(parsed?.totalPrice) || 0;
+      const paid = Math.max(
+        0,
+        Math.min(Number(parsed?.paid) || 0, totalPrice)
+      );
+      const remaining = Math.max((totalPrice || 0) - paid, 0);
+      const txRaw = Array.isArray(parsed?.transactions)
+        ? parsed.transactions
+        : [];
+      const txNormalized = txRaw
+        .map((t, idx) => ({
+          id: t.id ?? `local-${idx}`,
+          date: t.date || t.createdAt || null,
+          amount: Number(t.amount) || 0,
+          method: normalizePaymentMethod(t.method),
+          source: t.source || 'Lesgeldkaart',
+          description: 'Lesgeldbetaling',
+          transactionType: 'income',
+          course: courseName,
+        }))
+        .sort((a, b) => {
+          const da = a.date ? new Date(a.date).getTime() : 0;
+          const db = b.date ? new Date(b.date).getTime() : 0;
+          return db - da;
+        });
+
+      setCoursePaymentSummary({
+        courseName,
+        totalPrice,
+        paid,
+        remaining,
+      });
+      setCoursePaymentTransactions(txNormalized);
+    } catch (e) {
+      console.error('Failed to load course payments from localStorage:', e);
+      setCoursePaymentSummary(null);
+      setCoursePaymentTransactions([]);
+    }
+  }, [tab, student, studentStats]);
+
+  const combinedTransactions = useMemo(() => {
+    const backendTx = (financeLogs || []).map((l) => ({
+      id: `fin-${l.id}`,
+      date: l.date,
+      amount: Number(l.amount) || 0,
+      method: normalizePaymentMethod(l.method),
+      source: 'Financiën',
+      description: l.type,
+      transactionType: l.transaction_type,
+      course: l.course || null,
+    }));
+
+    const localTx = (coursePaymentTransactions || []).map((t) => ({
+      id: `local-${t.id}`,
+      date: t.date,
+      amount: Number(t.amount) || 0,
+      method: normalizePaymentMethod(t.method),
+      source: t.source || 'Lesgeldkaart',
+      description: t.description || 'Lesgeldbetaling',
+      transactionType: t.transactionType || 'income',
+      course:
+        t.course ||
+        coursePaymentSummary?.courseName ||
+        studentStats?.meta?.course ||
+        studentStats?.lesson_package ||
+        student?.lesson_package ||
+        null,
+    }));
+
+    const all = [...localTx, ...backendTx];
+    all.sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return db - da;
+    });
+    return all;
+  }, [
+    coursePaymentSummary,
+    coursePaymentTransactions,
+    financeLogs,
+    student,
+    studentStats,
+  ]);
 
   const studentNotesKey =
     student?.id ??
@@ -845,8 +999,119 @@ export default function StudentDetailsPage2() {
           </Card>
         </TabsContent>
 
+        {/* BETALINGEN */}
+        <TabsContent value="betalingen" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Betalingen</CardTitle>
+              <CardDescription>
+                Overzicht van lesgeldbetalingen en andere transacties voor deze
+                student.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* {coursePaymentSummary ? (
+                <div className="grid gap-3 text-sm sm:grid-cols-4">
+                  <div className="sm:col-span-2 flex items-center justify-between">
+                    <span>Lespakket</span>
+                    <span className="font-medium">
+                      {coursePaymentSummary.courseName || '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Totaalprijs</span>
+                    <span className="font-medium">
+                      {new Intl.NumberFormat('nl-NL', {
+                        style: 'currency',
+                        currency: 'EUR',
+                      }).format(coursePaymentSummary.totalPrice || 0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Nog te betalen</span>
+                    <span
+                      className={`font-medium ${(coursePaymentSummary.remaining || 0) > 0
+                        ? 'text-orange-600'
+                        : 'text-green-700'
+                        }`}
+                    >
+                      {new Intl.NumberFormat('nl-NL', {
+                        style: 'currency',
+                        currency: 'EUR',
+                      }).format(coursePaymentSummary.remaining || 0)}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Er is nog geen lesgeldinformatie beschikbaar voor dit
+                  lespakket.
+                </p>
+              )} */}
+              
+              
+
+              <div>
+                <p className="mb-2 text-sm font-medium">Transacties</p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Datum</TableHead>
+                      <TableHead>Omschrijving</TableHead>
+                      <TableHead>Lespakket</TableHead>
+                      <TableHead>Methode</TableHead>
+                      <TableHead className="text-right">Bedrag</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {combinedTransactions.map((tx) => (
+                      <TableRow key={`${tx.source}-${tx.id}`}>
+                        <TableCell>
+                          {tx.date
+                            ? format(new Date(tx.date), 'dd-MM-yyyy', {
+                              locale: nl,
+                            })
+                            : '–'}
+                        </TableCell>
+                        <TableCell>{tx.description || '-'}</TableCell>
+                        <TableCell>
+                          {tx.course ||
+                            coursePaymentSummary?.courseName ||
+                            '–'}
+                        </TableCell>
+                        <TableCell>{tx.method || 'Onbekend'}</TableCell>
+                        <TableCell
+                          className={`text-right ${tx.transactionType === 'expense'
+                            ? 'text-red-600'
+                            : 'text-green-700'
+                            }`}
+                        >
+                          {new Intl.NumberFormat('nl-NL', {
+                            style: 'currency',
+                            currency: 'EUR',
+                          }).format(tx.amount || 0)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {combinedTransactions.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-center text-muted-foreground"
+                        >
+                          Geen transacties gevonden voor deze student.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Simple placeholders (consistent tone) */}
-        {['betalingen', 'voortgang'].map((v) => (
+        {['voortgang'].map((v) => (
           <TabsContent key={v} value={v} className="mt-6">
             <Card>
               <CardHeader>
