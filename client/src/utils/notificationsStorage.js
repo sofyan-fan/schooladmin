@@ -1,35 +1,23 @@
-const NOTIFICATIONS_STORAGE_KEY = 'schooladmin_notifications';
+import notificationAPI from '@/apis/notificationAPI';
 
-export const loadNotifications = () => {
-  if (typeof window === 'undefined') return [];
+// Load notifications from backend API
+export const loadNotifications = async () => {
   try {
-    const raw = window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const data = await notificationAPI.get_notifications();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error('Failed to load notifications from localStorage:', error);
+    console.error('Failed to load notifications from API:', error);
     return [];
   }
 };
 
-export const saveNotifications = (notifications) => {
-  if (typeof window === 'undefined') return;
+// Add a new notification via backend API
+export const addNotification = async ({ subject, message }) => {
   try {
-    window.localStorage.setItem(
-      NOTIFICATIONS_STORAGE_KEY,
-      JSON.stringify(notifications)
-    );
+    const created = await notificationAPI.add_notification({ subject, message });
+    return created;
   } catch (error) {
-    console.error('Failed to save notifications to localStorage:', error);
+    console.error('Failed to add notification via API:', error);
+    throw error;
   }
 };
-
-export const addNotification = (notification) => {
-  const current = loadNotifications();
-  const updated = [notification, ...current];
-  saveNotifications(updated);
-  return updated;
-};
-
-

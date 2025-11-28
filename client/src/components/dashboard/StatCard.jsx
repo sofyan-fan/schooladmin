@@ -31,17 +31,21 @@ const StatCard = ({
 }) => {
   return (
     <Link to={link} aria-label={`View details for ${title}`}>
-      <Card className="h-[140px] p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+      <Card className="h-[120px] sm:h-[140px] p-4 sm:p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
         <div className="flex flex-row items-center gap-5 h-full">
           <div className={cn(iconContainerVariants({ variant }))}>
             {icon}
 
           </div>
-          <div className="flex flex-col justify-center h-full gap-2">
-            <p className="text-xl font-medium text-regular">{title}</p>
-            <p className="text-4xl font-medium text-regular">{value}</p>
+          <div className="flex flex-col justify-center h-full gap-1 sm:gap-2 min-w-0">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-regular leading-snug break-words">
+              {title}
+            </p>
+            <p className="text-2xl sm:text-3xl md:text-4xl font-medium text-regular leading-tight break-words">
+              {value}
+            </p>
             {subtitle ? (
-              <p className="text-sm text-muted-foreground line-clamp-1">
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
                 {subtitle}
               </p>
             ) : null}

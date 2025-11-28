@@ -1,10 +1,5 @@
 import PostRegisterDialog from '@/components/shared/PostRegisterDialog';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
 import { useAuth } from '@/hooks/useAuth';
 import { formatHijri } from '@/utils/hijri';
 import { loadNotifications } from '@/utils/notificationsStorage';
@@ -19,7 +14,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Label, Pie, PieChart } from 'recharts';
+// Pie chart imports removed for a simplified, consistent StatCard layout
 import StatCard from '../components/dashboard/StatCard';
 import { UpcomingLessons } from '../components/dashboard/UpcomingLessons';
 import YearPlanning from '../components/dashboard/YearPlanning';
@@ -493,9 +488,19 @@ const DashboardPage = () => {
   }, [isAdmin, isStudent, user]);
 
   useEffect(() => {
-    // Load notifications count from localStorage
-    const notifications = loadNotifications();
-    setNotificationsCount(Array.isArray(notifications) ? notifications.length : 0);
+    const loadNotificationsCount = async () => {
+      try {
+        const notifications = await loadNotifications();
+        setNotificationsCount(
+          Array.isArray(notifications) ? notifications.length : 0
+        );
+      } catch (error) {
+        console.error('Error loading notifications for dashboard:', error);
+        setNotificationsCount(0);
+      }
+    };
+
+    loadNotificationsCount();
   }, []);
 
   if (!stats) {
@@ -582,73 +587,28 @@ const DashboardPage = () => {
           }
         }}
       />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      {/* Stat cards - compact 2-column grid on mobile, expanding on larger screens */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 mb-6">
         {isAdmin && (
-          <Card className="flex flex-row items-center p-8 rounded-lg border shadow-sm bg-[#FEFEFD] h-[140px] transition-all hover:shadow-md">
-            <div className="mr-2">
-              <ChartContainer className="h-[90px] w-[90px]" config={{}}>
-                <PieChart width={90} height={90}>
-                  <Pie
-                    data={(() => {
-                      const total = stats.totalStudents || 0;
-                      const present = stats.studentsPresent || 0;
-                      const absent = Math.max(total - present, 0);
-                      return [
-                        { name: 'Aanwezig', value: present, fill: '#88bb18' },
-                        { name: 'Afwezig', value: absent, fill: '#f7c322' },
-                      ];
-                    })()}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={30}
-                    outerRadius={42}
-                    strokeWidth={2}
-                  >
-                    <Label
-                      position="center"
-                      content={(props) => {
-                        const total = stats.totalStudents || 0;
-                        const absent = total - (stats.studentsPresent || 0);
-                        const pct =
-                          total > 0 ? Math.round((absent / total) * 100) : 0;
-                        return (
-                          <text
-                            x={props.viewBox.cx}
-                            y={props.viewBox.cy}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                          >
-                            <tspan className="fill-foreground text-xl font-bold">
-                              {pct}%
-                            </tspan>
-                          </text>
-                        );
-                      }}
-                    />
-                  </Pie>
-                  <ChartTooltip
-                    cursor={{ fill: 'transparent' }}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                </PieChart>
-              </ChartContainer>
-            </div>
-            <CardContent className="p-0">
-              <div className="text-xl font-medium text-regular mb-2">
-                <h1>Leerlingen</h1>
-                <h2 className="text-base text-regular">Afwezig</h2>
-              </div>
-              <div className="text-3xl font-medium text-regular">
-                {stats.totalStudents - stats.studentsPresent}
-                <span className="text-xl font-medium text-regular">
-                  {' '}
-                  / {stats.totalStudents}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Leerlingen (afwezig)"
+            value={Math.max(
+              (stats.totalStudents || 0) - (stats.studentsPresent || 0),
+              0
+            )}
+            subtitle={
+              stats.totalStudents
+                ? `Totaal: ${stats.totalStudents}`
+                : 'Geen leerlingen'
+            }
+            link="/afwezigheid"
+            icon={<UserX className="h-8 w-8" />}
+            variant={
+              (stats.totalStudents || 0) - (stats.studentsPresent || 0) > 0
+                ? 'warning'
+                : 'success'
+            }
+          />
         )}
 
         {!isAdmin && !isStudent && (
@@ -663,33 +623,33 @@ const DashboardPage = () => {
 
         {isStudent && (
           <>
-            <StatCard
-              title="Resultaat"
-              value={latestGradeValue}
-              link={studentProfileResultsLink}
-              icon={<TrendingUp className="h-8 w-8" />}
-              subtitle={latestAssessmentSubtitle}
-              variant="default"
-              // className={cn('bg-primary/10 text-primary')}
-              
-            />
-            {/* <Link to={studentProfileResultsLink} aria-label={`View details for Laatste resultaat`}>
-              <Card className="h-[140px] p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+            <Link
+              to={studentProfileResultsLink}
+              aria-label="View details for Laatste resultaat"
+            >
+              <Card className="h-[120px] sm:h-[140px] p-4 sm:p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
                 <div className="flex flex-row items-center gap-5 h-full">
-                  <TrendingUp className=" bg-primary/10 text-primary h-8 w-8 p-4 rounded-full flex items-center justify-center hidden md:hidden lg:flex" />
-                  <div className="flex flex-col justify-center h-full gap-2">
-                    <p className="text-xl font-medium text-regular">Laatste resultaat</p>
+                  <div className="p-4 rounded-full flex items-center justify-center hidden md:hidden lg:flex bg-primary/10 text-primary">
+                    <TrendingUp className="h-8 w-8" />
+                  </div>
+                  <div className="flex flex-col justify-center h-full gap-1 sm:gap-2 min-w-0">
+                    <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-regular leading-snug break-words">
+                      Laatste resultaat
+                    </p>
                     <div className="flex gap-2">
-                      <p className="text-xl font-medium text-regular">{latestGradeValue}</p>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {latestAssessmentSubtitle}
+                      <p className="text-lg sm:text-xl font-medium text-regular leading-tight">
+                        {latestGradeValue}
                       </p>
+                      {latestAssessmentSubtitle && (
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                          {latestAssessmentSubtitle}
+                        </p>
+                      )}
                     </div>
-
                   </div>
                 </div>
               </Card>
-            </Link> */}
+            </Link>
             <StatCard
               title="Aanwezigheid"
               value={attendanceValue}
@@ -708,20 +668,20 @@ const DashboardPage = () => {
               aria-label="Bekijk volgende les"
               className="block"
             >
-              <Card className="h-[140px] p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+              <Card className="h-[120px] sm:h-[140px] p-4 sm:p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
                 <div className="flex flex-row items-center gap-5 h-full">
                   <div className="p-4 rounded-full flex items-center justify-center hidden md:hidden lg:flex bg-primary/10 text-primary">
                     <Calendar className="h-8 w-8" />
                   </div>
-                  <div className="flex flex-col justify-center h-full gap-1">
-                    <p className="text-xl font-medium text-regular">
+                  <div className="flex flex-col justify-center h-full gap-1 sm:gap-2 min-w-0">
+                    <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-regular leading-snug break-words">
                       Volgende les
                     </p>
-                    <p className="text-lg font-semibold text-regular">
+                    <p className="text-base sm:text-lg font-semibold text-regular leading-tight break-words">
                       {nextLesson?.title || 'Geen les'}
                     </p>
                     {(nextLesson?.group || nextLesson?.classroom) && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {nextLesson?.group || ''}
                         {nextLesson?.group && nextLesson?.classroom ? ' · ' : ''}
                         {nextLesson?.classroom || ''}

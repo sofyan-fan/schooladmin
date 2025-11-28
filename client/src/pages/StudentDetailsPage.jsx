@@ -17,6 +17,13 @@ import { Badge } from '@/components/ui/badge';
 import ComboboxField from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -202,6 +209,17 @@ export default function StudentDetailsPage2() {
       meta: {
         klas: klass?.name ?? 'Onbekend',
         course: klass?.course?.name ?? 'Onbekend',
+        // Koppel backend-cursusinformatie zodat andere tabs (zoals Betalingen)
+        // de juiste prijs en course-id kunnen gebruiken.
+        courseId: klass?.course?.id ?? klass?.courseId ?? null,
+        coursePrice: (() => {
+          const rawPrice =
+            klass?.course && klass.course.price != null
+              ? klass.course.price
+              : null;
+          const num = Number(rawPrice);
+          return Number.isFinite(num) && num > 0 ? num : null;
+        })(),
         registered: format(student.created_at, 'PPP', { locale: nl }),
       },
       lastResult,
@@ -726,7 +744,7 @@ export default function StudentDetailsPage2() {
   ];
 
   return (
-    <div className="w-full space-y-6 px-2 sm:px-6">
+    <div className="w-full space-y-6 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -770,25 +788,46 @@ export default function StudentDetailsPage2() {
 
       {/* Sticky sub-nav (styled TabsList) */}
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <div className="sticky top-16 z-30 -mx-2  px-2 backdrop-blur ">
-          <TabsList className="border-b bp-0">
-            <div className="flex w-full gap-2 overflow-x-auto pb-0.5">
-              {TABS.map(({ value, label }) => (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                  className="
-                    relative h-10 hover:cursor-pointer rounded-none px-3 text-sm font-medium
-                    data-[state=active]:text-foreground
-                    after:absolute after:inset-x-2 after:-bottom-[1px] after:h-0.5 after:rounded-full after:bg-transparent
-                    data-[state=active]:after:bg-primary
-                  "
-                >
-                  {label}
-                </TabsTrigger>
-              ))}
-            </div>
-          </TabsList>
+        <div className="sticky top-16 z-30 -mx-4 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2">
+          {/* Mobile: Dropdown */}
+          <div className="block sm:hidden">
+            <Select value={tab} onValueChange={setTab}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Navigatie" />
+              </SelectTrigger>
+              <SelectContent>
+                {TABS.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop: TabsList */}
+          <div className="hidden sm:block">
+            <TabsList className="border-b p-0 h-auto bg-transparent w-full justify-start">
+              <div className="flex w-full gap-2 overflow-x-auto pb-0.5">
+                {TABS.map(({ value, label }) => (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className="
+                      relative h-10 hover:cursor-pointer rounded-none px-3 text-sm font-medium
+                      data-[state=active]:text-foreground
+                      after:absolute after:inset-x-2 after:-bottom-[1px] after:h-0.5 after:rounded-full after:bg-transparent
+                      data-[state=active]:after:bg-primary
+                      data-[state=active]:shadow-none
+                      bg-transparent
+                    "
+                  >
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </div>
+            </TabsList>
+          </div>
         </div>
 
         {/* OVERZICHT */}
@@ -811,15 +850,16 @@ export default function StudentDetailsPage2() {
         <TabsContent value="resultaten" className="mt-6">
           <Card>
             <CardHeader>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex-1">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                <div className="flex-1 w-full">
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Zoek resultaten op naam of vak"
+                    className="w-full"
                   />
                 </div>
-                <div className="w-full sm:w-64">
+                <div className="w-full md:w-64">
                   <ComboboxField
                     label={null}
                     items={moduleOptions}
@@ -840,8 +880,9 @@ export default function StudentDetailsPage2() {
                   <Button
                     variant="default"
                     onClick={() => setIsExportDialogOpen(true)}
+                    className="w-full md:w-auto"
                   >
-                    <Download className="size-4" />
+                    <Download className="size-4 mr-2" />
                     Exporteren
                   </Button>
                 </div>
@@ -891,89 +932,91 @@ export default function StudentDetailsPage2() {
               )}
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="text-lg">
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => toggleSort('module')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Vak <ArrowUpDown className="size-4 opacity-60" />
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => toggleSort('type')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Type <ArrowUpDown className="size-4 opacity-60" />
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => toggleSort('name')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Naam <ArrowUpDown className="size-4 opacity-60" />
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => toggleSort('date')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Datum <ArrowUpDown className="size-4 opacity-60" />
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => toggleSort('grade')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Cijfer <ArrowUpDown className="size-4 opacity-60" />
-                      </span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="text-base">
-                  {filteredSortedResults.map((result) => (
-                    <TableRow key={result.id}>
-                      <TableCell>{getModuleName(result)}</TableCell>
-                      <TableCell>
-                        {result.assessment.type === 'test' ? 'Toets' : 'Examen'}
-                      </TableCell>
-                      <TableCell>{result.assessment.name}</TableCell>
-                      <TableCell>
-                        {format(result.date, 'dd-MM-yyyy', { locale: nl })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`${result.grade >= 8
-                            ? 'text-white bg-green-700 size-8 rounded-full text-base'
-                            : result.grade >= 6
-                              ? 'text-white bg-primary size-8 rounded-full text-base'
-                              : 'text-white bg-red-500 size-8 rounded-full text-base'
-                            }`}
-                          variant="default"
-                        >
-                          {result.grade}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {results.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center text-muted-foreground"
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="text-lg">
+                      <TableHead
+                        className="cursor-pointer select-none whitespace-nowrap"
+                        onClick={() => toggleSort('module')}
                       >
-                        Geen resultaten gevonden.
-                      </TableCell>
+                        <span className="inline-flex items-center gap-1">
+                          Vak <ArrowUpDown className="size-4 opacity-60" />
+                        </span>
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer select-none"
+                        onClick={() => toggleSort('type')}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Type <ArrowUpDown className="size-4 opacity-60" />
+                        </span>
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer select-none"
+                        onClick={() => toggleSort('name')}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Naam <ArrowUpDown className="size-4 opacity-60" />
+                        </span>
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer select-none"
+                        onClick={() => toggleSort('date')}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Datum <ArrowUpDown className="size-4 opacity-60" />
+                        </span>
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer select-none"
+                        onClick={() => toggleSort('grade')}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Cijfer <ArrowUpDown className="size-4 opacity-60" />
+                        </span>
+                      </TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody className="text-base">
+                    {filteredSortedResults.map((result) => (
+                      <TableRow key={result.id}>
+                        <TableCell className="whitespace-nowrap">{getModuleName(result)}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {result.assessment.type === 'test' ? 'Toets' : 'Examen'}
+                        </TableCell>
+                        <TableCell className="min-w-[150px]">{result.assessment.name}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {format(result.date, 'dd-MM-yyyy', { locale: nl })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={`${result.grade >= 8
+                              ? 'text-white bg-green-700 size-8 rounded-full text-base'
+                              : result.grade >= 6
+                                ? 'text-white bg-primary size-8 rounded-full text-base'
+                                : 'text-white bg-red-500 size-8 rounded-full text-base'
+                              }`}
+                            variant="default"
+                          >
+                            {result.grade}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {results.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center text-muted-foreground"
+                        >
+                          Geen resultaten gevonden.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
           <ExportDialog
@@ -1048,63 +1091,65 @@ export default function StudentDetailsPage2() {
                   lespakket.
                 </p>
               )} */}
-              
-              
+
+
 
               <div>
                 <p className="mb-2 text-sm font-medium">Transacties</p>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Datum</TableHead>
-                      <TableHead>Omschrijving</TableHead>
-                      <TableHead>Lespakket</TableHead>
-                      <TableHead>Methode</TableHead>
-                      <TableHead className="text-right">Bedrag</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {combinedTransactions.map((tx) => (
-                      <TableRow key={`${tx.source}-${tx.id}`}>
-                        <TableCell>
-                          {tx.date
-                            ? format(new Date(tx.date), 'dd-MM-yyyy', {
-                              locale: nl,
-                            })
-                            : '–'}
-                        </TableCell>
-                        <TableCell>{tx.description || '-'}</TableCell>
-                        <TableCell>
-                          {tx.course ||
-                            coursePaymentSummary?.courseName ||
-                            '–'}
-                        </TableCell>
-                        <TableCell>{tx.method || 'Onbekend'}</TableCell>
-                        <TableCell
-                          className={`text-right ${tx.transactionType === 'expense'
-                            ? 'text-red-600'
-                            : 'text-green-700'
-                            }`}
-                        >
-                          {new Intl.NumberFormat('nl-NL', {
-                            style: 'currency',
-                            currency: 'EUR',
-                          }).format(tx.amount || 0)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {combinedTransactions.length === 0 && (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="text-center text-muted-foreground"
-                        >
-                          Geen transacties gevonden voor deze student.
-                        </TableCell>
+                        <TableHead className="whitespace-nowrap">Datum</TableHead>
+                        <TableHead className="whitespace-nowrap">Omschrijving</TableHead>
+                        <TableHead className="whitespace-nowrap">Lespakket</TableHead>
+                        <TableHead className="whitespace-nowrap">Methode</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">Bedrag</TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {combinedTransactions.map((tx) => (
+                        <TableRow key={`${tx.source}-${tx.id}`}>
+                          <TableCell className="whitespace-nowrap">
+                            {tx.date
+                              ? format(new Date(tx.date), 'dd-MM-yyyy', {
+                                locale: nl,
+                              })
+                              : '–'}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{tx.description || '-'}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {tx.course ||
+                              coursePaymentSummary?.courseName ||
+                              '–'}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{tx.method || 'Onbekend'}</TableCell>
+                          <TableCell
+                            className={`text-right whitespace-nowrap ${tx.transactionType === 'expense'
+                              ? 'text-red-600'
+                              : 'text-green-700'
+                              }`}
+                          >
+                            {new Intl.NumberFormat('nl-NL', {
+                              style: 'currency',
+                              currency: 'EUR',
+                            }).format(tx.amount || 0)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {combinedTransactions.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={5}
+                            className="text-center text-muted-foreground"
+                          >
+                            Geen transacties gevonden voor deze student.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </CardContent>
           </Card>

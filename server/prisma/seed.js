@@ -181,6 +181,7 @@ async function cleanDatabase() {
   await prisma.class_layout.deleteMany();
   await prisma.teacher.deleteMany();
   await prisma.admin.deleteMany();
+   await prisma.notification?.deleteMany?.();
   await prisma.user.deleteMany();
   await prisma.classroom.deleteMany();
   await prisma.course_module_relation.deleteMany();

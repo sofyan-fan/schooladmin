@@ -48,7 +48,7 @@ import { useAuth } from '@/hooks/useAuth';
 const SidebarComponent = () => {
   const { logout, user } = useAuth();
   const { pathname } = useLocation();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, isMobile } = useSidebar();
   const firstSegment = pathname.split('/')[1] || '';
   const navigate = useNavigate();
 
@@ -207,6 +207,14 @@ const SidebarComponent = () => {
 
   const [onderwijsOpen, setOnderwijsOpen] = useState(isOnderwijsActive);
 
+  const handleNavigate = (to) => {
+    navigate(to);
+    if (isMobile) {
+      // Close the mobile sidebar (Sheet) after navigation
+      toggleSidebar();
+    }
+  };
+
   useLayoutEffect(() => {
     setOnderwijsOpen(isOnderwijsActive);
   }, [isOnderwijsActive]);
@@ -240,7 +248,7 @@ const SidebarComponent = () => {
                   tooltip="Mijn Gegevens"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate(`/mijn-profiel`);
+                    handleNavigate(`/mijn-profiel`);
                   }}
                 >
                   <Link to={`/mijn-profiel`}>
@@ -263,7 +271,7 @@ const SidebarComponent = () => {
                   <SidebarMenuButton
                     onClick={() => {
                       setOnderwijsOpen(!onderwijsOpen);
-                      navigate('/onderwijs');
+                      handleNavigate('/onderwijs');
                     }}
                     isActive={activeItemName === item.name}
                     tooltip={item.name}
@@ -306,6 +314,11 @@ const SidebarComponent = () => {
                                 isActive={
                                   firstSegment === subItem.path.toLowerCase()
                                 }
+                                onClick={() => {
+                                  if (isMobile) {
+                                    toggleSidebar();
+                                  }
+                                }}
                               >
                                 <Link to={`/${subItem.path.toLowerCase()}`}>
                                   {subItem.name}
@@ -329,7 +342,7 @@ const SidebarComponent = () => {
                     tooltip={item.name}
                     onClick={(e) => {
                       e.preventDefault();
-                      navigate(`/${item.path.toLowerCase()}`);
+                      handleNavigate(`/${item.path.toLowerCase()}`);
                     }}
                   >
                     <Link to={`/${item.path.toLowerCase()}`}>

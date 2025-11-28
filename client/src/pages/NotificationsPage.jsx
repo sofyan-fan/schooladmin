@@ -20,26 +20,43 @@ const NotificationsPage = () => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        setNotifications(loadNotifications());
+        const fetchNotifications = async () => {
+            try {
+                const data = await loadNotifications();
+                setNotifications(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                setNotifications([]);
+            }
+        };
+
+        fetchNotifications();
     }, []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!message.trim()) {
+
+        const trimmedMessage = message.trim();
+        const trimmedSubject = subject.trim();
+
+        if (!trimmedMessage) {
             return;
         }
 
-        const newNotification = {
-            id: Date.now(),
-            subject: subject.trim() || 'Melding',
-            message: message.trim(),
-            createdAt: new Date().toISOString(),
-        };
+        try {
+            const created = await addNotification({
+                subject: trimmedSubject || 'Melding',
+                message: trimmedMessage,
+            });
 
-        const updated = addNotification(newNotification);
-        setNotifications(updated);
-        setSubject('');
-        setMessage('');
+            setNotifications((prev) =>
+                created ? [created, ...(Array.isArray(prev) ? prev : [])] : prev
+            );
+            setSubject('');
+            setMessage('');
+        } catch (error) {
+            console.error('Error creating notification:', error);
+        }
     };
 
     const formatDateTime = (isoString) => {
@@ -125,7 +142,7 @@ const NotificationsPage = () => {
                                                 {n.subject || 'Melding'}
                                             </h3>
                                             <span className="text-xs text-muted-foreground">
-                                                {formatDateTime(n.createdAt)}
+                                                {formatDateTime(n.createdAt || n.created_at)}
                                             </span>
                                         </div>
                                         <p className="text-sm text-regular whitespace-pre-wrap">

@@ -1,3 +1,4 @@
+import financeAPI from '@/apis/financeAPI';
 import { getChapters } from '@/apis/quranAPI';
 import quranLogAPI from '@/apis/quranLogAPI';
 import { AttendanceCard } from '@/components/other/AttendanceCard';
@@ -10,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 function StatCard({
   icon,
@@ -261,6 +262,12 @@ export default function OverviewTab({
     student?.lesson_package ||
     '—';
 
+  const backendCourseId = studentStats?.meta?.courseId ?? null;
+  const backendCoursePrice =
+    studentStats?.meta?.coursePrice != null
+      ? Number(studentStats.meta.coursePrice)
+      : null;
+
   const studentKey =
     student?.id ??
     student?.email ??
@@ -269,6 +276,9 @@ export default function OverviewTab({
   const paymentStorageKey = `payments:${studentKey}:${courseName}`;
 
   const getDefaultCoursePrice = () => {
+    if (Number.isFinite(backendCoursePrice) && backendCoursePrice > 0) {
+      return backendCoursePrice;
+    }
     try {
       const map = JSON.parse(localStorage.getItem('coursePrices') || '{}');
       const raw = map?.[courseName];
@@ -328,6 +338,36 @@ export default function OverviewTab({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState('Bank');
+  const [tuitionTypeId, setTuitionTypeId] = useState(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+
+  // Load financial types once so we know under welk type we boeken (bijv. "Lesgeld")
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const types = await financeAPI.get_financial_types();
+        if (!active || !Array.isArray(types)) return;
+        const preferredNames = ['Lesgeld', 'Lesgeldbetaling', 'Course fee'];
+        let found =
+          types.find((t) => preferredNames.includes(t.name)) ||
+          types.find((t) =>
+            String(t.name || '').toLowerCase().includes('lesgeld')
+          );
+        if (!found && types[0]) {
+          found = types[0];
+        }
+        if (found) {
+          setTuitionTypeId(found.id);
+        }
+      } catch (e) {
+        console.error('Failed to load financial types for Betalingen-kaart', e);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Re-sync when the key (student/course) changes
   useEffect(() => {
@@ -351,12 +391,38 @@ export default function OverviewTab({
     } catch { }
   }, [paymentState, paymentStorageKey]);
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     const apply = Math.min(parsedAmount, remainingToPay);
     if (apply <= 0) {
       setIsConfirmOpen(false);
       return;
     }
+
+    // Bereid API-payload voor voordat state verandert
+    const studentIdNumeric =
+      student?.id != null ? Number(student.id) : null;
+    const courseIdNumeric =
+      backendCourseId != null ? Number(backendCourseId) : null;
+    const apiMethod =
+      paymentMethod === 'Bank'
+        ? 'iDEAL'
+        : paymentMethod === 'Contant'
+          ? 'Cash'
+          : paymentMethod;
+
+    const financePayload =
+      tuitionTypeId && studentIdNumeric
+        ? {
+          type_id: Number(tuitionTypeId),
+          student_id: studentIdNumeric,
+          course_id: courseIdNumeric ?? undefined,
+          amount: apply,
+          method: apiMethod,
+          notes: `Betaling via studentenkaart voor ${courseName}`,
+          transaction_type: 'income',
+        }
+        : null;
+
     setPaymentState((prev) => {
       const total = prev.totalPrice || 0;
       const nextPaid = Math.min((prev.paid || 0) + apply, total);
@@ -378,6 +444,35 @@ export default function OverviewTab({
     });
     setPaymentAmountInput('');
     setIsConfirmOpen(false);
+
+    if (!financePayload) {
+      if (!studentIdNumeric) {
+        console.warn(
+          'Betalingen-kaart: geen student_id beschikbaar, sla finance-log over.'
+        );
+      } else if (!tuitionTypeId) {
+        console.warn(
+          'Betalingen-kaart: geen financieel type gevonden, sla finance-log over.'
+        );
+      }
+      return;
+    }
+
+    try {
+      setIsSubmittingPayment(true);
+      await financeAPI.create_financial_log(financePayload);
+      toast.success('Betaling is compleet!');
+    } catch (e) {
+      console.error(
+        'Kon betaling niet opslaan in financiële transacties:',
+        e
+      );
+      toast.error(
+        'Betaling is lokaal opgeslagen, maar niet in Financiën. Probeer later opnieuw.'
+      );
+    } finally {
+      setIsSubmittingPayment(false);
+    }
   };
 
   const handleCreateNote = (e) => {
@@ -396,9 +491,9 @@ export default function OverviewTab({
   };
 
   return (
-    <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12">
+    <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-12">
       <AttendanceCard
-        className="lg:col-span-4"
+        className="md:col-span-6 lg:col-span-4 min-h-[220px]"
         stats={studentStats.attendance}
         title="Aanwezigheid"
         colorVars={{
@@ -413,11 +508,11 @@ export default function OverviewTab({
 
       <RecentResultsCard
         studentStats={studentStats}
-        className="lg:col-span-4"
+        className="md:col-span-6 lg:col-span-4 min-h-[220px]"
         onOpenResults={() => setTab('resultaten')}
       />
 
-      <Card className="lg:col-span-4 gap-4">
+      <Card className="md:col-span-6 lg:col-span-4 gap-4 h-full flex flex-col min-h-[220px]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-2xl">
             <Info size={25} /> Gegevens
@@ -425,32 +520,38 @@ export default function OverviewTab({
         </CardHeader>
         <CardContent>
           <div className="space-y-1 flex flex-col gap-2">
-            <div className="text-base ml-2 flex  text-regular mb-1 items-center gap-2">
-              <IdCard className="size-5" />
-              Lespakket:{' '}
-              <span className="font-bold">
+            <div className="text-base ml-2 flex text-regular mb-1 items-center gap-2 overflow-hidden">
+              <IdCard className="size-5 shrink-0" />
+              <span className="shrink-0">Lespakket:</span>
+              <span className="font-bold truncate" title={studentStats?.meta?.course || studentStats?.lesson_package}>
                 {studentStats?.meta?.course ||
                   studentStats?.lesson_package ||
                   '—'}
               </span>
             </div>
-            <div className="text-base ml-2 flex  text-regular mb-1 items-center gap-2">
-              <Mail className="size-5" />
-              {student?.email || student?.parent_email || '—'}
+            <div className="text-base ml-2 flex text-regular mb-1 items-center gap-2 overflow-hidden">
+              <Mail className="size-5 shrink-0" />
+              <span className="truncate" title={student?.email || student?.parent_email}>
+                {student?.email || student?.parent_email || '—'}
+              </span>
             </div>
-            <div className="text-base ml-2 flex  text-regular mb-1 items-center gap-2">
-              <Phone className="size-5" />
-              {student?.phone || '—'}
+            <div className="text-base ml-2 flex text-regular mb-1 items-center gap-2 overflow-hidden">
+              <Phone className="size-5 shrink-0" />
+              <span className="truncate" title={student?.phone}>
+                {student?.phone || '—'}
+              </span>
             </div>
-            <div className="text-base ml-2 flex  text-regular mb-1 items-center gap-2">
-              <MapPin className="size-5" />
-              {student?.address || '—'}
+            <div className="text-base ml-2 flex text-regular mb-1 items-center gap-2 overflow-hidden">
+              <MapPin className="size-5 shrink-0" />
+              <span className="truncate" title={student?.address}>
+                {student?.address || '—'}
+              </span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-4 flex flex-col h-full">
+      <Card className="md:col-span-6 lg:col-span-4 flex flex-col h-full min-h-[220px]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <TrendingUp size={20} />
@@ -481,19 +582,19 @@ export default function OverviewTab({
                 <div className="text-xs text-muted-foreground mb-0.5">
                   Bereik
                 </div>
-                <div className="text-sm font-medium">
+                <div className="text-sm font-medium truncate" title={formatPointLabel(latestQuranLog.start_log)}>
                   Van: {formatPointLabel(latestQuranLog.start_log)}
                 </div>
-                <div className="text-sm">
+                <div className="text-sm truncate" title={formatPointLabel(latestQuranLog.end_log)}>
                   Tot: {formatPointLabel(latestQuranLog.end_log)}
                 </div>
               </div>
               {latestQuranLog.comment ? (
-                <div>
+                <div className="min-w-0">
                   <div className="text-xs text-muted-foreground mb-0.5">
                     Omschrijving
                   </div>
-                  <div className="text-sm">
+                  <div className="text-sm truncate" title={latestQuranLog.comment}>
                     {latestQuranLog.comment}
                   </div>
                 </div>
@@ -520,7 +621,7 @@ export default function OverviewTab({
         </div>
       </Card>
 
-      <div className="lg:col-span-4">
+      <div className="md:col-span-6 lg:col-span-4 flex flex-col">
         {/* <StatCard
           icon={<CreditCard size={20} />}
           title="Betalingen"
@@ -530,7 +631,7 @@ export default function OverviewTab({
         /> */}
 
         {/* Betalingen */}
-        <Card className={'flex flex-col gap-1'}>
+        <Card className={'flex flex-col gap-1 h-full min-h-[220px]'}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CreditCard className="size-5" />
@@ -543,9 +644,11 @@ export default function OverviewTab({
           </CardHeader>
           <CardContent>
             <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span>Lespakket</span>
-                <span className="font-medium">{courseName || '—'}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="shrink-0">Lespakket</span>
+                <span className="font-medium truncate text-right" title={courseName}>
+                  {courseName || '—'}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Totaalprijs</span>
@@ -612,7 +715,7 @@ export default function OverviewTab({
             </div>
             <div className="mt-4 space-y-3">
               {/* <Label htmlFor="payment-amount">Bedrag</Label> */}
-              <div className="flex items-center gap-2 justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Input
                   id="payment-amount"
                   type="number"
@@ -622,7 +725,7 @@ export default function OverviewTab({
                   value={paymentAmountInput}
                   onChange={(e) => setPaymentAmountInput(e.target.value)}
                   placeholder="Voer bedrag in"
-                  className="max-w-[200px]"
+                  className="w-full sm:max-w-[200px]"
                   disabled={(paymentState.totalPrice || 0) <= 0 || remainingToPay <= 0}
                 />
 
@@ -630,6 +733,7 @@ export default function OverviewTab({
                   <DialogTrigger asChild>
                     <Button
                       variant="default"
+                      className="w-full sm:w-auto"
                       onClick={() => {
                         if (
                           !(
@@ -684,7 +788,7 @@ export default function OverviewTab({
         </Card>
 
       </div>
-      <div className="lg:col-span-4 flex">
+      <div className="md:col-span-6 lg:col-span-4 flex w-full">
         <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
           <StatCard
             icon={<Notebook size={20} />}
@@ -692,7 +796,7 @@ export default function OverviewTab({
             description="Persoonlijke opmerkingen."
             tab="notities"
             setTab={setTab}
-            className="h-full"
+            className="h-full w-full min-h-[220px]"
             content={
               <p className="text-sm text-muted-foreground">
                 Notities worden alleen in deze browser opgeslagen.
@@ -751,7 +855,7 @@ export default function OverviewTab({
         </Dialog>
       </div>
 
-      <div className="lg:col-span-12">
+      {/* <div className="lg:col-span-12">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
@@ -842,7 +946,7 @@ export default function OverviewTab({
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -7,11 +7,13 @@ const general_routes = require('./general_routes');
 const course_routes = require('./course_routes');
 const subject_routes = require('./subject_routes');
 const dummy_routes = require('./dummy_routes');
+const notification_routes = require('./notification_routes');
 
 // core features
 router.use('/auth', auth_routes);
 router.use('/dashboard', dashboard_routes);
 router.use('/general', general_routes);
+router.use('/notifications', notification_routes);
 
 // course and subject routes
 router.use('/courses', course_routes);

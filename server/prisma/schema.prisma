@@ -14,6 +14,9 @@ model user {
   role       String
   active     Boolean  @default(true)
   created_at DateTime @default(now())
+
+  notifications notification[]
+  notes         student_note[]
 }
 
 model student {
@@ -48,6 +51,7 @@ model student {
   student_log student_log[]
 
   financial_log financial_log[]
+  student_notes student_note[]
 }
 
 model teacher {
@@ -86,7 +90,7 @@ model class_layout {
   id   Int    @id @default(autoincrement())
   name String
 
-  school_year   school_year @relation(fields: [school_year_id], references: [id])
+  school_year    school_year @relation(fields: [school_year_id], references: [id])
   school_year_id Int
 
   mentor_id Int?     @unique
@@ -114,7 +118,7 @@ model assessment {
   subject    course_module_subject @relation(fields: [subject_id], references: [id])
   subject_id Int
 
-  school_year   school_year @relation(fields: [school_year_id], references: [id])
+  school_year    school_year @relation(fields: [school_year_id], references: [id])
   school_year_id Int
 
   leverage    Float    @default(1)
@@ -365,6 +369,15 @@ model events {
   location    String?
 }
 
+model notification {
+  id         Int      @id @default(autoincrement())
+  subject    String
+  message    String
+  created_at DateTime @default(now())
+  user       user     @relation(fields: [user_id], references: [id])
+  user_id    Int
+}
+
 model time_registration {
   id Int @id @default(autoincrement())
 
@@ -413,53 +426,71 @@ model student_log {
 
   @@index([student_id, date])
 }
+
+model student_note {
+  id Int @id @default(autoincrement())
+
+  student    student @relation(fields: [student_id], references: [id])
+  student_id Int
+
+  author    user @relation(fields: [author_id], references: [id])
+  author_id Int
+
+  subject    String
+  text       String
+  created_at DateTime @default(now())
+
+  @@index([student_id])
+  @@index([author_id])
+}
+
 model financial_type {
-  id          Int              @id @default(autoincrement())
-  name        String           @unique
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
   description String?
-  created_at  DateTime         @default(now())
-  updated_at  DateTime         @updatedAt
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
   logs financial_log[]
 }
 
 model financial_log {
-  id               Int             @id @default(autoincrement())
-  type             financial_type  @relation(fields: [type_id], references: [id])
-  type_id          Int
+  id      Int            @id @default(autoincrement())
+  type    financial_type @relation(fields: [type_id], references: [id])
+  type_id Int
 
   // student and course are optional
-  student          student?        @relation(fields: [student_id], references: [id])
-  student_id       Int?
+  student    student? @relation(fields: [student_id], references: [id])
+  student_id Int?
 
-  course           courses?        @relation(fields: [course_id], references: [id])
-  course_id        Int?
+  course    courses? @relation(fields: [course_id], references: [id])
+  course_id Int?
 
-  school_year      school_year     @relation(fields: [school_year_id], references: [id])
-  school_year_id   Int
+  school_year    school_year @relation(fields: [school_year_id], references: [id])
+  school_year_id Int
 
-  amount           Float
-  method           String
-  notes            String?
+  amount Float
+  method String
+  notes  String?
 
   // "income" or "expense"
   transaction_type String
 
-  date             DateTime @default(now())
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  date       DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@index([type_id])
   @@index([school_year_id])
 }
 
 model school_year {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   start_date  DateTime
   end_date    DateTime
-  is_active   Boolean   @default(false)
-  is_archived Boolean   @default(false)
+  is_active   Boolean  @default(false)
+  is_archived Boolean  @default(false)
 
   class_layout     class_layout[]
   tuition_payments tuition_payment[]
