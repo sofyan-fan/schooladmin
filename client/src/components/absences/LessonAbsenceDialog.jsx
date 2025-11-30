@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Clock, UserCheck, Users, UserX } from 'lucide-react';
+import { Clock, Thermometer, UserCheck, Users, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LessonAbsenceDialog = ({
@@ -76,8 +76,12 @@ const LessonAbsenceDialog = ({
           }));
         }
       } else {
-        // 'late' or 'absent'
-        const reason = newStatus === 'late' ? 'Te Laat' : 'Afwezig';
+        // 'late', 'absent', or 'sick'
+        let reason;
+        if (newStatus === 'late') reason = 'Te Laat';
+        else if (newStatus === 'absent') reason = 'Afwezig';
+        else if (newStatus === 'sick') reason = 'Ziek';
+
         const absenceData = {
           user_id: studentId,
           role: 'student',
@@ -162,6 +166,11 @@ const LessonAbsenceDialog = ({
                     status: 'present',
                   };
 
+                  const isSickReported =
+                    (studentState.reason &&
+                      String(studentState.reason).toLowerCase().includes('ziek')) ||
+                    studentState.isSick;
+
                   return (
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">
@@ -169,97 +178,135 @@ const LessonAbsenceDialog = ({
                       </TableCell>
                       <TableCell>
                         <TooltipProvider>
-                          <div className="flex gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant={
-                                    studentState.status === 'present'
-                                      ? 'default'
-                                      : 'outline'
-                                  }
-                                  size="icon"
-                                  className={`
-                                    ${
+                          <div className="flex flex-col gap-1">
+                            <div className="flex gap-2">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={
                                       studentState.status === 'present'
+                                        ? 'default'
+                                        : 'outline'
+                                    }
+                                    size="icon"
+                                    className={`
+                                      ${studentState.status === 'present'
                                         ? 'bg-green-500 hover:bg-green-600'
                                         : ''
+                                      }
+                                    `}
+                                    onClick={() =>
+                                      handleStatusChangeAndSave(
+                                        student.id,
+                                        'present'
+                                      )
                                     }
-                                  `}
-                                  onClick={() =>
-                                    handleStatusChangeAndSave(
-                                      student.id,
-                                      'present'
-                                    )
-                                  }
-                                >
-                                  <UserCheck className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Aanwezig</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant={
-                                    studentState.status === 'late'
-                                      ? 'default'
-                                      : 'outline'
-                                  }
-                                  size="icon"
-                                  className={`
-                                    ${
+                                  >
+                                    <UserCheck className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Aanwezig</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={
                                       studentState.status === 'late'
+                                        ? 'default'
+                                        : 'outline'
+                                    }
+                                    size="icon"
+                                    className={`
+                                      ${studentState.status === 'late'
                                         ? 'bg-orange-500 hover:bg-orange-600'
                                         : ''
+                                      }
+                                    `}
+                                    onClick={() =>
+                                      handleStatusChangeAndSave(
+                                        student.id,
+                                        'late'
+                                      )
                                     }
-                                  `}
-                                  onClick={() =>
-                                    handleStatusChangeAndSave(
-                                      student.id,
-                                      'late'
-                                    )
-                                  }
-                                >
-                                  <Clock className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Te Laat</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant={
-                                    studentState.status === 'absent'
-                                      ? 'default'
-                                      : 'outline'
-                                  }
-                                  size="icon"
-                                  className={`
-                                    ${
+                                  >
+                                    <Clock className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Te Laat</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={
                                       studentState.status === 'absent'
+                                        ? 'default'
+                                        : 'outline'
+                                    }
+                                    size="icon"
+                                    className={`
+                                      ${studentState.status === 'absent'
                                         ? 'bg-red-500 hover:bg-red-600'
                                         : ''
+                                      }
+                                    `}
+                                    onClick={() =>
+                                      handleStatusChangeAndSave(
+                                        student.id,
+                                        'absent'
+                                      )
                                     }
-                                  `}
-                                  onClick={() =>
-                                    handleStatusChangeAndSave(
-                                      student.id,
-                                      'absent'
-                                    )
-                                  }
-                                >
-                                  <UserX className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Afwezig</p>
-                              </TooltipContent>
-                            </Tooltip>
+                                  >
+                                    <UserX className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Afwezig</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={
+                                      studentState.status === 'sick'
+                                        ? 'default'
+                                        : 'outline'
+                                    }
+                                    size="icon"
+                                    className={`
+                                      ${studentState.status === 'sick'
+                                        ? 'bg-rose-600 hover:bg-rose-700'
+                                        : ''
+                                      }
+                                    `}
+                                    onClick={() =>
+                                      handleStatusChangeAndSave(
+                                        student.id,
+                                        'sick'
+                                      )
+                                    }
+                                  >
+                                    <Thermometer className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Ziek</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+
+                            {isSickReported ? (
+                              <p className="text-xs text-red-600">
+                                Ziek gemeld voor deze les.
+                              </p>
+                            ) : studentState.reason ? (
+                              <p className="text-xs text-muted-foreground">
+                                Reden: {studentState.reason}
+                              </p>
+                            ) : null}
                           </div>
                         </TooltipProvider>
                       </TableCell>

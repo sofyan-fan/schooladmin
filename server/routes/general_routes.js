@@ -52,6 +52,7 @@ const {
   create_time_registration,
   update_time_registration,
   approve_time_registration,
+  unapprove_time_registration,
   get_teacher_time_registrations,
   get_all_time_registrations,
 } = require('../controllers/general/time_registration');
@@ -172,6 +173,7 @@ router.delete('/absences/:id', delete_absence);
 router.post('/time-registrations', create_time_registration);
 router.put('/time-registrations/:id', update_time_registration);
 router.put('/time-registrations/:id/approve', approve_time_registration);
+router.put('/time-registrations/:id/unapprove', unapprove_time_registration);
 router.get(
   '/time-registrations/teacher/:teacher_id',
   get_teacher_time_registrations

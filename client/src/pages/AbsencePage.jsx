@@ -11,7 +11,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { addDays, endOfWeek, format, startOfWeek, subDays } from 'date-fns';
-import { CalendarDays, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { CalendarDays, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -72,19 +72,21 @@ const AbsencePage = () => {
   };
 
   const getTeacherName = (teacherId) => {
-    const teacher = teachers.find((t) => t.id === teacherId);
+    const teacher = teachers.find((t) => String(t.id) === String(teacherId));
     return teacher ? `${teacher.first_name} ${teacher.last_name}` : 'Onbekend';
   };
 
   const getStudentName = (studentId) => {
-    const student = students.find((s) => s.id === studentId);
+    const student = students.find((s) => String(s.id) === String(studentId));
     return student ? `${student.first_name} ${student.last_name}` : 'Onbekend';
   };
 
   const getClassStudents = (roster) => {
     // Get students from the class that this roster belongs to
     if (roster.class_id) {
-      return students.filter((student) => student.class_id === roster.class_id);
+      return students.filter(
+        (student) => String(student.class_id) === String(roster.class_id)
+      );
     }
     // If no specific class, return empty array since we can't determine which students should be in this lesson
     return [];
@@ -93,10 +95,21 @@ const AbsencePage = () => {
   const getStudentAbsenceForRoster = (studentId, rosterId, date) => {
     return absences.find(
       (absence) =>
-        absence.student_id === studentId &&
-        absence.roster_id === rosterId &&
+        String(absence.student_id) === String(studentId) &&
+        String(absence.roster_id) === String(rosterId) &&
         new Date(absence.date).toDateString() === date.toDateString()
     );
+  };
+
+  /**
+   * Check if a student has explicitly been reported sick ("Ziek") for a given
+   * lesson (roster_id) on a specific date.
+   */
+  const isStudentReportedSick = (studentId, rosterId, date) => {
+    const absence = getStudentAbsenceForRoster(studentId, rosterId, date);
+    if (!absence || !absence.reason) return false;
+    const reason = String(absence.reason).toLowerCase();
+    return reason.includes('ziek');
   };
 
   const uniqueClasses = useMemo(() => {
@@ -134,16 +147,24 @@ const AbsencePage = () => {
         roster.id,
         lessonDate
       );
+
+      const absenceReason = existingAbsence?.reason || '';
+      const normalizedReason = String(absenceReason).toLowerCase();
+      const isSick = normalizedReason.includes('ziek');
+
       const status = existingAbsence
         ? existingAbsence.reason === 'Te Laat'
           ? 'late'
-          : 'absent'
+          : isSick
+            ? 'sick'
+            : 'absent'
         : 'present';
       initialStates[student.id] = {
         status,
-        reason: existingAbsence?.reason || '',
+        reason: absenceReason,
         custom_reason: '',
         absenceId: existingAbsence?.id || null,
+        isSick,
       };
     });
 
@@ -240,9 +261,9 @@ const AbsencePage = () => {
             onClick={() => setIsClassSelectionDialogOpen(true)}
           >
             {getSelectedClassesNames()}
-          <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4" />
 
-          </Button>   
+          </Button>
 
           {/* <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={goToPreviousWeek}>

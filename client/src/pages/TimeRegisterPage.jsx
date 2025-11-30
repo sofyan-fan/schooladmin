@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/table';
 
 import { useAuth } from '@/hooks/useAuth';
-import { Check, Clock, Edit } from 'lucide-react';
+import { Check, Clock, Edit, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -142,6 +142,26 @@ const TimeRegisterPage = () => {
       fetchData();
     } catch {
       toast.error('Goedkeuren tijd registratie mislukt');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleApproval = async (registration) => {
+    if (user?.role !== 'admin') return;
+
+    setLoading(true);
+    try {
+      if (registration.approved) {
+        await timeRegisterAPI.unapproveTimeRegistration(registration.id);
+        toast.success('Tijd registratie teruggezet naar in afwachting');
+      } else {
+        await timeRegisterAPI.approveTimeRegistration(registration.id, user.id);
+        toast.success('Tijd registratie succesvol goedgekeurd');
+      }
+      fetchData();
+    } catch {
+      toast.error('Wijzigen van goedkeuringsstatus mislukt');
     } finally {
       setLoading(false);
     }
@@ -351,7 +371,26 @@ const TimeRegisterPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {registration.approved ? (
+                      {user?.role === 'admin' ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="px-0"
+                          onClick={() => handleToggleApproval(registration)}
+                        >
+                          {registration.approved ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              <Check className="w-3 h-3 mr-1" />
+                              Goedgekeurd
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              <Clock className="w-3 h-3 mr-1" />
+                              In afwachting
+                            </Badge>
+                          )}
+                        </Button>
+                      ) : registration.approved ? (
                         <Badge className="bg-green-100 text-green-800">
                           <Check className="w-3 h-3 mr-1" />
                           Goedgekeurd
@@ -372,15 +411,17 @@ const TimeRegisterPage = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        {!registration.approved && user?.role === 'admin' && (
+                        {user?.role === 'admin' && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              handleApproveTimeRegistration(registration.id)
-                            }
+                            onClick={() => handleToggleApproval(registration)}
                           >
-                            <Check className="w-4 h-4" />
+                            {registration.approved ? (
+                              <X className="w-4 h-4" />
+                            ) : (
+                              <Check className="w-4 h-4" />
+                            )}
                           </Button>
                         )}
                       </div>

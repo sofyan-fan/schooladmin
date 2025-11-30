@@ -33,6 +33,14 @@ export const timeRegisterAPI = {
     return response.data;
   },
 
+  // Unapprove a time registration (admin only)
+  unapproveTimeRegistration: async (id) => {
+    const response = await RequestHandler.put(
+      `${BASE_URL}/time-registrations/${id}/unapprove`
+    );
+    return response.data;
+  },
+
   // Get all time registrations for a specific teacher
   getTeacherTimeRegistrations: async (teacherId) => {
     const response = await RequestHandler.get(

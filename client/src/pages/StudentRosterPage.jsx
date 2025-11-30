@@ -7,9 +7,12 @@ import startOfWeek from 'date-fns/startOfWeek';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 
-import rosterAPI from '@/apis/rosterAPI';
 import RequestHandler from '@/apis/RequestHandler';
+import rosterAPI from '@/apis/rosterAPI';
+import { absenceAPI } from '@/apis/timeregisterAPI';
 import PageHeader from '@/components/shared/PageHeader';
+import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -98,6 +101,10 @@ const LessonReadOnlyDialog = ({ open, onOpenChange, event }) => {
     'HH:mm'
   )}`;
 
+  const absence = resource.absence;
+  const absenceReason = absence?.reason || '';
+  const isSick = absence?.isSick;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -125,6 +132,16 @@ const LessonReadOnlyDialog = ({ open, onOpenChange, event }) => {
               <span className="font-medium">Lokaal: </span>
               <span>{resource.classroomName || 'Onbekend'}</span>
             </div>
+            {absence && (
+              <div>
+                <span className="font-medium">Aanwezigheid: </span>
+                <span className={isSick ? 'text-red-600' : 'text-orange-600'}>
+                  {isSick
+                    ? 'Ziek gemeld'
+                    : absenceReason || 'Afwezig'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
@@ -139,6 +156,13 @@ const StudentRosterPage = () => {
   const [error, setError] = useState('');
   const [student, setStudent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [absences, setAbsences] = useState([]);
+
+  // Sick-report dialog state
+  const [sickDialogOpen, setSickDialogOpen] = useState(false);
+  const [sickFrom, setSickFrom] = useState(null);
+  const [sickTo, setSickTo] = useState(null);
+  const [savingSick, setSavingSick] = useState(false);
 
   const fetchStudentAndRosters = useCallback(async () => {
     try {
@@ -151,15 +175,27 @@ const StudentRosterPage = () => {
 
       if (!s?.class_id) {
         setRawRosters([]);
+        setAbsences([]);
         return;
       }
 
-      const rosters = await rosterAPI.get_rosters({ class_id: s.class_id });
+      const [rosters, allAbsences] = await Promise.all([
+        rosterAPI.get_rosters({ class_id: s.class_id }),
+        absenceAPI.getAllAbsences(),
+      ]);
+
       setRawRosters(Array.isArray(rosters) ? rosters : []);
+
+      const sid = Number(s.id);
+      const studentAbsences = Array.isArray(allAbsences)
+        ? allAbsences.filter((a) => Number(a.student_id) === sid)
+        : [];
+      setAbsences(studentAbsences);
     } catch (e) {
       console.error('Failed to load student rosters', e);
       setError('Het lesrooster kon niet worden geladen.');
       setRawRosters([]);
+      setAbsences([]);
     } finally {
       setLoading(false);
     }
@@ -194,6 +230,20 @@ const StudentRosterPage = () => {
       }
 
       const eventDate = addDays(weekStart, dayOffset);
+
+      const matchingAbsence =
+        Array.isArray(absences) && student
+          ? absences.find(
+            (a) =>
+              Number(a.roster_id) === Number(roster.id) &&
+              a.date &&
+              new Date(a.date).toDateString() === eventDate.toDateString()
+          )
+          : null;
+
+      const reason = matchingAbsence?.reason || '';
+      const normalizedReason = String(reason).toLowerCase();
+      const isSick = normalizedReason.includes('ziek');
 
       let startHour = 9;
       let startMinute = 0;
@@ -236,12 +286,20 @@ const StudentRosterPage = () => {
             ? `${teacher.first_name} ${teacher.last_name}`
             : '',
           classroomName: classroom?.name || '',
+          absence: matchingAbsence
+            ? {
+              id: matchingAbsence.id,
+              reason,
+              isSick,
+              date: matchingAbsence.date,
+            }
+            : null,
         },
       };
     });
-  }, [rawRosters, currentDate]);
+  }, [rawRosters, currentDate, absences, student]);
 
-  const eventStyleGetter = () => {
+  const eventStyleGetter = (event) => {
     const style = {
       backgroundColor: '#10b981',
       borderRadius: '6px',
@@ -250,7 +308,129 @@ const StudentRosterPage = () => {
       border: '0px',
       display: 'block',
     };
+
+    const absence = event?.resource?.absence;
+    if (absence?.isSick) {
+      style.backgroundColor = '#ef4444'; // red for sick
+    } else if (absence) {
+      style.backgroundColor = '#f97316'; // orange for other absences
+    }
+
     return { style };
+  };
+
+  const openSickDialog = () => {
+    setSickFrom(new Date());
+    setSickTo(null);
+    setSickDialogOpen(true);
+  };
+
+  const handleSubmitSick = async (e) => {
+    e?.preventDefault?.();
+    if (!student) {
+      return;
+    }
+
+    if (!sickFrom) {
+      // simple guard; UI-level validation could be added if needed
+      return;
+    }
+
+    const from = sickFrom instanceof Date ? sickFrom : new Date(sickFrom);
+    const toRaw = sickTo || sickFrom;
+    const to = toRaw instanceof Date ? toRaw : new Date(toRaw);
+
+    if (to < from) {
+      return;
+    }
+
+    const rosters = Array.isArray(rawRosters) ? rawRosters : [];
+    if (rosters.length === 0) {
+      setSickDialogOpen(false);
+      return;
+    }
+
+    setSavingSick(true);
+    try {
+      const allAbsences = await absenceAPI.getAllAbsences();
+      const currentStudentAbsences = Array.isArray(allAbsences)
+        ? allAbsences.filter(
+          (a) => Number(a.student_id) === Number(student.id)
+        )
+        : [];
+
+      const operations = [];
+
+      // Iterate over all days in the selected range
+      for (
+        let d = new Date(from);
+        d <= to;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const dateCopy = new Date(d);
+        // Set to noon to avoid timezone shifting issues when converting to ISO string
+        dateCopy.setHours(12, 0, 0, 0);
+
+        const jsDay = getDay(dateCopy); // 0 (Sunday) - 6 (Saturday)
+        const normalizedDay = jsDay === 0 ? 7 : jsDay; // 1-7, Monday=1
+
+        rosters.forEach((roster) => {
+          if (!roster.day_of_week) return;
+
+          let rosterDayNum;
+          const parsed = parseInt(roster.day_of_week, 10);
+          if (!Number.isNaN(parsed)) {
+            rosterDayNum = parsed === 0 ? 7 : parsed;
+          } else {
+            rosterDayNum = dayNameToNumber(roster.day_of_week);
+          }
+
+          if (!rosterDayNum || rosterDayNum !== normalizedDay) return;
+
+          const existing = currentStudentAbsences.find(
+            (a) =>
+              Number(a.roster_id) === Number(roster.id) &&
+              a.date &&
+              new Date(a.date).toDateString() === dateCopy.toDateString()
+          );
+
+          const payload = {
+            user_id: student.id,
+            role: 'student',
+            roster_id: roster.id,
+            date: dateCopy.toISOString(),
+            reason: 'Ziek',
+          };
+
+          if (existing) {
+            operations.push(
+              absenceAPI.updateAbsence(existing.id, payload)
+            );
+          } else {
+            operations.push(absenceAPI.createAbsence(payload));
+          }
+        });
+      }
+
+      if (operations.length > 0) {
+        await Promise.all(operations);
+      }
+
+      // Refresh student's absences so calendar reflects new state
+      const updatedAllAbsences = await absenceAPI.getAllAbsences();
+      const updatedStudentAbsences = Array.isArray(updatedAllAbsences)
+        ? updatedAllAbsences.filter(
+          (a) => Number(a.student_id) === Number(student.id)
+        )
+        : [];
+      setAbsences(updatedStudentAbsences);
+
+      setSickDialogOpen(false);
+    } catch (err) {
+      console.error('Failed to report sick for student', err);
+    } finally {
+      setSavingSick(false);
+    }
   };
 
   const calendarContent = () => {
@@ -334,7 +514,14 @@ const StudentRosterPage = () => {
         icon={<CalendarDays className="size-9" />}
         description="Bekijk je lesrooster per week of per dag."
       />
-      <div className="mt-4 flex-1 rounded-lg bg-white p-4 shadow-sm">
+      <div className="mt-4 mb-4 flex items-center justify-end gap-3">
+        {student && (
+          <Button variant="outline" onClick={openSickDialog}>
+            Ziek melden
+          </Button>
+        )}
+      </div>
+      <div className="flex-1 rounded-lg bg-white p-4 shadow-sm">
         {calendarContent()}
       </div>
       <LessonReadOnlyDialog
@@ -344,6 +531,55 @@ const StudentRosterPage = () => {
         }}
         event={selectedEvent}
       />
+
+      <Dialog open={sickDialogOpen} onOpenChange={setSickDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ziek melden</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={handleSubmitSick}
+            className="mt-2 space-y-4 text-sm"
+          >
+            <p className="text-muted-foreground">
+              Kies de periode waarvoor je je ziek wilt melden. Alle lessen
+              in deze periode worden gemarkeerd als &quot;Ziek&quot;.
+            </p>
+            <div className="space-y-2">
+              <span className="block text-xs font-medium text-muted-foreground">
+                Vanaf
+              </span>
+              <DatePicker
+                value={sickFrom}
+                onChange={setSickFrom}
+                buttonClassName="w-full justify-start"
+              />
+            </div>
+            <div className="space-y-2">
+              <span className="block text-xs font-medium text-muted-foreground">
+                Tot en met
+              </span>
+              <DatePicker
+                value={sickTo}
+                onChange={setSickTo}
+                buttonClassName="w-full justify-start"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSickDialogOpen(false)}
+              >
+                Annuleren
+              </Button>
+              <Button type="submit" disabled={savingSick || !sickFrom}>
+                {savingSick ? 'Opslaan...' : 'Ziek melden'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

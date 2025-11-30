@@ -499,7 +499,7 @@ export default function QuranLogPage() {
                     { header: 'Begin', key: 'from', width: 22 },
                     { header: 'Einde', key: 'to', width: 22 },
                     { header: 'Datum', key: 'date', width: 14 },
-                    { header: 'Memo', key: 'memo', width: 10 },
+                    { header: 'Gememoriseerd', key: 'memo', width: 10 },
                   ];
                   rowsToExport.forEach((r) => {
                     const o = r.original;

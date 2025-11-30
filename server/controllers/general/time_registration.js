@@ -349,6 +349,34 @@ exports.approve_time_registration = async (req, res) => {
   }
 };
 
+// Unapprove a time registration (toggle back to pending)
+exports.unapprove_time_registration = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const registration = await prisma.time_registration.update({
+      where: {
+        id: parseInt(id),
+      },
+      data: {
+        approved: false,
+        approved_by: null,
+        approved_at: null,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: registration,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // Get all time registrations for a specific teacher
 exports.get_teacher_time_registrations = async (req, res) => {
   try {
