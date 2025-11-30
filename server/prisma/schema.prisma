@@ -14,6 +14,11 @@ model user {
   role       String
   active     Boolean  @default(true)
   created_at DateTime @default(now())
+  
+  created_tickets    ticket[]         @relation("TicketCreator")
+  assigned_tickets   ticket[]         @relation("TicketAssignee")
+  ticket_comments    ticket_comment[] @relation("TicketCommentUser")
+  ticket_history     ticket_history[] @relation("TicketHistoryUser")
 }
 
 model school_year {
@@ -483,4 +488,61 @@ model financial_log {
   updated_at       DateTime @updatedAt
 
   @@index([type_id])
+}
+
+model ticket {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  status      String   @default("open") // "open", "in_progress", "resolved", "closed"
+  priority    String   @default("medium") // "low", "medium", "high", "urgent"
+  
+  created_by_user user @relation("TicketCreator", fields: [created_by_user_id], references: [id])
+  created_by_user_id Int
+  
+  assigned_to_user user? @relation("TicketAssignee", fields: [assigned_to_user_id], references: [id])
+  assigned_to_user_id Int?
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  comments ticket_comment[]
+  history   ticket_history[]
+  
+  @@index([created_by_user_id])
+  @@index([assigned_to_user_id])
+  @@index([status])
+}
+
+model ticket_comment {
+  id        Int      @id @default(autoincrement())
+  ticket    ticket   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  ticket_id Int
+  
+  user      user     @relation("TicketCommentUser", fields: [user_id], references: [id])
+  user_id   Int
+  
+  content   String
+  created_at DateTime @default(now())
+  
+  @@index([ticket_id])
+  @@index([user_id])
+}
+
+model ticket_history {
+  id              Int      @id @default(autoincrement())
+  ticket          ticket   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  ticket_id       Int
+  
+  field_changed   String   // "status", "assignee", "priority", etc.
+  old_value       String?
+  new_value       String?
+  
+  changed_by_user user     @relation("TicketHistoryUser", fields: [changed_by_user_id], references: [id])
+  changed_by_user_id Int
+  
+  created_at      DateTime @default(now())
+  
+  @@index([ticket_id])
+  @@index([changed_by_user_id])
 }

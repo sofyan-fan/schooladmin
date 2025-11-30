@@ -7,6 +7,7 @@ const general_routes = require('./general_routes');
 const course_routes = require('./course_routes');
 const subject_routes = require('./subject_routes');
 const school_year_routes = require('./school_year_routes');
+const ticket_routes = require('./ticket_routes');
 
 // core features
 router.use('/auth', auth_routes);
@@ -19,5 +20,8 @@ router.use('/subjects', subject_routes);
 
 // school year routes (admin only)
 router.use('/school-years', school_year_routes);
+
+// ticket routes
+router.use('/', ticket_routes);
 
 module.exports = router;
