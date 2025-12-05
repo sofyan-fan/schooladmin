@@ -75,7 +75,7 @@ const NotificationsPage = () => {
     };
 
     return (
-        <div className="container mx-auto">
+        <div className="mx-auto">
             <PageHeader
                 title="Meldingen"
                 icon={<Bell className="size-9" />}

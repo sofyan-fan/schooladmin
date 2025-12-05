@@ -32,6 +32,7 @@ const ResultsPage = () => {
     assessment: 'all',
     gradeRange: 'all',
     status: 'all',
+    assessmentType: 'all',
   });
 
   useEffect(() => {
@@ -194,6 +195,9 @@ const ResultsPage = () => {
       const matchesSubject =
         filters.subject === 'all' ||
         assessment.subject?.subject?.name === filters.subject;
+      const matchesType =
+        filters.assessmentType === 'all' ||
+        assessment.type === filters.assessmentType;
       const gradedStudents = assessment.results?.length || 0;
       const totalStudents = assessment.class_layout?.student_count || 0;
       let matchesStatus = true;
@@ -203,7 +207,13 @@ const ResultsPage = () => {
         matchesStatus = gradedStudents === 0;
       else if (filters.status === 'completed')
         matchesStatus = gradedStudents === totalStudents;
-      return matchesSearch && matchesClass && matchesSubject && matchesStatus;
+      return (
+        matchesSearch &&
+        matchesClass &&
+        matchesSubject &&
+        matchesStatus &&
+        matchesType
+      );
     });
   }, [assessments, filters, view]);
 
@@ -220,6 +230,10 @@ const ResultsPage = () => {
       const matchesAssessment =
         filters.assessment === 'all' ||
         result.assessment_name === filters.assessment;
+      const assessmentType = result.assessment?.type;
+      const matchesType =
+        filters.assessmentType === 'all' ||
+        assessmentType === filters.assessmentType;
       const grade = result.grade;
       let matchesGrade = true;
       if (filters.gradeRange === 'excellent') matchesGrade = grade >= 8;
@@ -229,7 +243,13 @@ const ResultsPage = () => {
         matchesGrade = grade >= 5.5 && grade < 6.5;
       else if (filters.gradeRange === 'insufficient')
         matchesGrade = grade < 5.5;
-      return matchesSearch && matchesClass && matchesAssessment && matchesGrade;
+      return (
+        matchesSearch &&
+        matchesClass &&
+        matchesAssessment &&
+        matchesGrade &&
+        matchesType
+      );
     });
   }, [allResults, filters, view]);
 

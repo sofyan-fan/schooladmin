@@ -3,6 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import ComboboxField from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
 import { Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import AssessmentsLayoutToggle from './AssessmentsLayoutToggle';
@@ -31,6 +34,7 @@ const initialFilters = {
   assessment: 'all',
   gradeRange: 'all',
   status: 'all',
+  assessmentType: 'all',
 };
 
 // --- Helper Components (unchanged) ---
@@ -125,29 +129,40 @@ const ResultsFilters = ({
   // --- Active chips logic (unchanged) ---
   const activeChips = useMemo(() => {
     const chips = [];
-    if (filters.search.trim())
-      chips.push({ key: 'search', label: `Zoek: “${filters.search.trim()}”` });
-    if (filters.class !== 'all')
-      chips.push({ key: 'class', label: `Klas: ${filters.class}` });
+    const f = activeFilters;
+    if (f.search.trim())
+      chips.push({ key: 'search', label: `Zoek: “${f.search.trim()}”` });
+    if (f.class !== 'all')
+      chips.push({ key: 'class', label: `Klas: ${f.class}` });
+    if (f.assessmentType && f.assessmentType !== 'all') {
+      chips.push({
+        key: 'assessmentType',
+        label:
+          f.assessmentType === 'Test'
+            ? 'Soort: Toetsen'
+            : f.assessmentType === 'Exam'
+              ? 'Soort: Examens'
+              : `Soort: ${f.assessmentType}`,
+      });
+    }
     if (view === 'assessments') {
-      if (filters.subject !== 'all')
-        chips.push({ key: 'subject', label: `Vak: ${filters.subject}` });
-      if (filters.status !== 'all')
+      if (f.subject !== 'all')
+        chips.push({ key: 'subject', label: `Vak: ${f.subject}` });
+      if (f.status !== 'all')
         chips.push({
           key: 'status',
-          label: statusOptions.find((o) => o.value === filters.status)?.label,
+          label: statusOptions.find((o) => o.value === f.status)?.label,
         });
     } else {
-      if (filters.assessment !== 'all')
+      if (f.assessment !== 'all')
         chips.push({
           key: 'assessment',
-          label: `Toets: ${filters.assessment}`,
+          label: `Beoordeling: ${f.assessment}`,
         });
-      if (filters.gradeRange !== 'all')
+      if (f.gradeRange !== 'all')
         chips.push({
           key: 'gradeRange',
-          label: gradeRangeOptions.find((o) => o.value === filters.gradeRange)
-            ?.label,
+          label: gradeRangeOptions.find((o) => o.value === f.gradeRange)?.label,
         });
     }
     return chips;
@@ -219,8 +234,66 @@ const ResultsFilters = ({
           )}
         </div>
 
-        {/* Right Group: Toggles (unchanged) */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Right Group: Assessment type filter + Toggles */}
+        <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="hidden sm:flex flex-col items-start gap-1">
+
+            <RadioGroup
+              value={activeFilters.assessmentType}
+              onValueChange={(v) => handleFilterChange('assessmentType', v)}
+              className="flex gap-2 mt-0"
+            >
+              <Label
+                htmlFor="results-type-all"
+                className={cn(
+                  'inline-flex items-center justify-center rounded-md border h-9 px-4 text-sm font-medium transition-colors cursor-pointer',
+                  activeFilters.assessmentType === 'all'
+                    ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                    : 'hover:bg-accent hover:text-accent-foreground'
+                )}
+              >
+                <RadioGroupItem
+                  value="all"
+                  id="results-type-all"
+                  className="sr-only"
+                />
+                Alle
+              </Label>
+              <Label
+                htmlFor="results-type-test"
+                className={cn(
+                  'inline-flex items-center justify-center rounded-md border h-9 px-4 text-sm font-medium transition-colors cursor-pointer',
+                  activeFilters.assessmentType === 'Test'
+                    ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                    : 'hover:bg-accent hover:text-accent-foreground'
+                )}
+              >
+                <RadioGroupItem
+                  value="Test"
+                  id="results-type-test"
+                  className="sr-only"
+                />
+                Toetsen
+              </Label>
+              <Label
+                htmlFor="results-type-exam"
+                className={cn(
+                  'inline-flex items-center justify-center rounded-md border h-9 px-4 text-sm font-medium transition-colors cursor-pointer',
+                  activeFilters.assessmentType === 'Exam'
+                    ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                    : 'hover:bg-accent hover:text-accent-foreground'
+                )}
+              >
+                <RadioGroupItem
+                  value="Exam"
+                  id="results-type-exam"
+                  className="sr-only"
+                />
+                Examens
+              </Label>
+            </RadioGroup>
+          </div>
+
           {view === 'assessments' && (
             <AssessmentsLayoutToggle
               layout={assessmentsLayout}
