@@ -1,8 +1,8 @@
 // src/components/classes/columns.jsx
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown, Eye, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Download, Eye, Pencil, Trash2 } from 'lucide-react';
 
-export const createColumns = ({ onView, onEdit, onDelete }) => [
+export const createColumns = ({ onView, onEdit, onDelete, onExport }) => [
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -73,6 +73,17 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
           <span className="sr-only">Verwijderen</span>
           <Trash2 className="h-4 w-4" />
         </Button>
+        {onExport && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-8 text-xs"
+            onClick={() => onExport(row.original)}
+          >
+            <Download className="h-3 w-3" />
+
+          </Button>
+        )}
       </div>
     ),
     displayName: 'Acties',

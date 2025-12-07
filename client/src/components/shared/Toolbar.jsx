@@ -8,7 +8,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ChevronDown } from 'lucide-react';
 
-const Toolbar = ({ table, filterColumn }) => {
+const Toolbar = ({ table, filterColumn, rightActions }) => {
   const column = table.getColumn(filterColumn);
   const displayName = column?.columnDef?.displayName ?? filterColumn;
 
@@ -20,28 +20,31 @@ const Toolbar = ({ table, filterColumn }) => {
         onChange={(event) => column?.setFilterValue(event.target.value)}
         className="max-w-sm bg-card placeholder:italic"
       />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="ml-auto bg-white">
-            Kolommen <ChevronDown className="ml-2 h-4 w-4 " />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {table
-            .getAllColumns()
-            .filter((col) => col.getCanHide())
-            .map((col) => (
-              <DropdownMenuCheckboxItem
-                key={col.id}
-                className="capitalize cursor-pointer hover:text-white hover:bg-primary data-[highlighted]:text-white data-[highlighted]:bg-primary"
-                checked={col.getIsVisible()}
-                onCheckedChange={(value) => col.toggleVisibility(!!value)}
-              >
-                {col.columnDef.displayName ?? col.id}
-              </DropdownMenuCheckboxItem>
-            ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="ml-auto flex items-center space-x-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="bg-white">
+              Kolommen <ChevronDown className="ml-2 h-4 w-4 " />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((col) => col.getCanHide())
+              .map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  className="capitalize cursor-pointer hover:text-white hover:bg-primary data-[highlighted]:text-white data-[highlighted]:bg-primary"
+                  checked={col.getIsVisible()}
+                  onCheckedChange={(value) => col.toggleVisibility(!!value)}
+                >
+                  {col.columnDef.displayName ?? col.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {rightActions}
+      </div>
     </div>
   );
 };

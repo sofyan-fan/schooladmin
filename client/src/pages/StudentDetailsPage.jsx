@@ -759,13 +759,31 @@ export default function StudentDetailsPage2() {
           </Button>
 
           <div className="flex items-center gap-4">
-            <div className="grid size-14 place-items-center rounded-full bg-muted text-muted-foreground ring-1 ring-border/70">
+            <div className="grid size-14 self-start place-items-center rounded-full bg-muted text-muted-foreground ring-1 ring-border/70">
               <User className="size-7" />
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
                 {studentStats.fullName}
               </h1>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                {studentStats?.meta?.klas && (
+                  <Badge
+                    variant="outline"
+                    className="rounded-full px-3.5 py-1 text-xl font-medium"
+                  >
+                    {studentStats.meta.klas}
+                  </Badge>
+                )}
+                {studentStats?.meta?.course && (
+                  <Badge
+                    variant="outline"
+                    className="rounded-full px-3.5 py-1 text-xl font-medium"
+                  >
+                    Lespakket: {studentStats.meta.course}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>

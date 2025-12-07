@@ -23,7 +23,7 @@ export const createColumns = ({ onView, onEdit, onDelete }) => [
       return (
         <Link
           to={`/docenten/${t.id}`}
-          className="text-primary hover:underline"
+          className="text-regular hover:underline hover:text-primary"
           title="Bekijk details"
         >
           {t.firstName}

@@ -75,21 +75,30 @@ export default function AssessmentResultsExport({
 
   const exportToExcel = async () => {
     try {
+      const assessmentDate =
+        assessment?.date ? new Date(assessment.date) : new Date();
+      const assessmentDateLabel = assessment?.date
+        ? assessmentDate.toLocaleDateString('nl-NL', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+        : '';
+
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Resultaten');
 
       workbook.creator = 'School Admin System';
-      workbook.created = new Date();
-      workbook.modified = new Date();
+      workbook.created = assessmentDate;
+      workbook.modified = assessmentDate;
 
       worksheet.getColumn(1).width = 30; // Leerling
       worksheet.getColumn(2).width = 20; // Cijfer
 
       worksheet.mergeCells('A1:B1');
       const titleCell = worksheet.getCell('A1');
-      titleCell.value = `RESULTATEN – ${assessment?.name ?? ''} (Klas ${
-        assessment?.class ?? ''
-      })`;
+      titleCell.value = `RESULTATEN – ${assessment?.name ?? ''} (Klas ${assessment?.class ?? ''
+        })`;
       titleCell.font = {
         bold: true,
         size: 18,
@@ -98,7 +107,23 @@ export default function AssessmentResultsExport({
       };
       titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
       worksheet.getRow(1).height = 28;
-      worksheet.getRow(2).height = 8;
+
+      // Assessment date just under the title, using the assessment date (not export date)
+      if (assessmentDateLabel) {
+        worksheet.mergeCells('A2:B2');
+        const dateCell = worksheet.getCell('A2');
+        dateCell.value = `Datum beoordeling: ${assessmentDateLabel}`;
+        dateCell.font = {
+          italic: true,
+          size: 11,
+          color: { argb: 'FF6B7280' }, // muted gray
+          name: 'Calibri',
+        };
+        dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+        worksheet.getRow(2).height = 18;
+      } else {
+        worksheet.getRow(2).height = 8;
+      }
 
       const headerRow = worksheet.getRow(3);
       headerRow.values = ['Leerling', 'Cijfer'];
@@ -169,12 +194,11 @@ export default function AssessmentResultsExport({
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
+      const dateStr = assessmentDate.toISOString().split('T')[0];
       const fileName = `assessment_${(assessment?.name || 'assessment')
         .toLowerCase()
         .replace(/[^a-z0-9]+/gi, '_')
-        .replace(/^_+|_+$/g, '')}_${
-        new Date().toISOString().split('T')[0]
-      }.xlsx`;
+        .replace(/^_+|_+$/g, '')}_${dateStr}.xlsx`;
       saveAs(blob, fileName);
       toast.success('Resultaten succesvol geëxporteerd naar Excel!');
     } catch (e) {
@@ -185,6 +209,9 @@ export default function AssessmentResultsExport({
 
   const exportToPDF = () => {
     try {
+      const assessmentDate =
+        assessment?.date ? new Date(assessment.date) : new Date();
+
       const columns = [
         { header: 'Leerling', accessorKey: 'student' },
         { header: 'Cijfer', accessorKey: 'grade' },
@@ -198,20 +225,26 @@ export default function AssessmentResultsExport({
         };
       });
 
-      const title = `Resultaten – ${assessment?.name ?? ''} (Klas ${
-        assessment?.class ?? ''
-      })`;
+      const title = `Resultaten – ${assessment?.name ?? ''} (Klas ${assessment?.class ?? ''
+        })`;
+      const subtitle = assessment?.date
+        ? assessmentDate.toLocaleDateString('nl-NL', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+        : undefined;
+      const dateStr = assessmentDate.toISOString().split('T')[0];
       const fileName = `assessment_${(assessment?.name || 'assessment')
         .toLowerCase()
         .replace(/[^a-z0-9]+/gi, '_')
-        .replace(/^_+|_+$/g, '')}_${
-        new Date().toISOString().split('T')[0]
-      }.pdf`;
+        .replace(/^_+|_+$/g, '')}_${dateStr}.pdf`;
       exportScheduleToPDF({
         columns,
         rows,
         options: {
           title,
+          subtitle,
           fileName,
           orientation: 'portrait',
           headAlign: 'left',
@@ -231,9 +264,8 @@ export default function AssessmentResultsExport({
       onExportExcel={exportToExcel}
       onExportPDF={exportToPDF}
       title="Exporteer resultaten"
-      description={`Exporteer de resultaten van ${
-        assessment?.name ?? 'de toets'
-      }.`}
+      description={`Exporteer de resultaten van ${assessment?.name ?? 'de toets'
+        }.`}
     />
   );
 }
