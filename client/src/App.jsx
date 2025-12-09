@@ -21,6 +21,7 @@ import ResultsPage from './pages/ResultsPage';
 // import WelcomePage from './pages/WelcomePage';
 // import RosterPage from './pages/RosterPage';
 import EducationPage from './pages/EducationPage';
+import LandingPage from './pages/LangingPage';
 import NotificationsPage from './pages/NotificationsPage';
 import RostersPage from './pages/RostersPage';
 import SchoolYearDetailPage from './pages/SchoolYearDetailPage';
@@ -64,6 +65,7 @@ const App = () => {
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/home" element={<LandingPage />} />
 
       <Route
         element={isAuthenticated ? <LayoutWrapper /> : <Navigate to="/login" />}
