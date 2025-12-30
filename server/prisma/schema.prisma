@@ -421,6 +421,11 @@ model student_log {
   end_log   String
   completed Boolean  @default(false)
   comment   String?
+  // Optional Quran log assessment scores (0–10). Nullable for backwards compatibility.
+  nourania_score Int?
+  tilawa_score   Int?
+  tajweed_score  Int?
+  hifdh_score    Int?
 
   created_at DateTime @default(now())
 

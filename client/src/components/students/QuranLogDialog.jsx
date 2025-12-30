@@ -52,6 +52,10 @@ export default function QuranLogDialog({
     endSurah: '',
     endAyah: '',
     date: '',
+    nourania: '',
+    tilawa: '',
+    tajweed: '',
+    hifdh: '',
   });
 
   useEffect(() => {
@@ -85,6 +89,21 @@ export default function QuranLogDialog({
         endSurah: '',
         endAyah: '',
         date: '',
+        nourania: '',
+        tilawa: '',
+        tajweed: '',
+        hifdh: '',
+      });
+
+      // Prefill date with today if empty. The DatePicker UI defaults to today visually,
+      // but without this the underlying state can still be empty and fail validation.
+      setNewLog((s) => {
+        if (s?.date) return s;
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return { ...s, date: `${y}-${m}-${day}` };
       });
     }
   }, [open]);
@@ -169,6 +188,14 @@ export default function QuranLogDialog({
 
   const canSave = useMemo(() => !loading, [loading]);
 
+  function validateScore(raw, label) {
+    if (raw === undefined || raw === null || raw === '') return '';
+    const n = Number(raw);
+    if (!Number.isInteger(n)) return `${label}: voer een heel getal in (0–10).`;
+    if (n < 0 || n > 10) return `${label}: score moet tussen 0 en 10 liggen.`;
+    return '';
+  }
+
   function handleSave() {
     const nextErrors = {
       studentId: '',
@@ -177,6 +204,10 @@ export default function QuranLogDialog({
       endSurah: '',
       endAyah: '',
       date: '',
+      nourania: '',
+      tilawa: '',
+      tajweed: '',
+      hifdh: '',
     };
     let hasError = false;
 
@@ -204,6 +235,16 @@ export default function QuranLogDialog({
       nextErrors.date = 'Selecteer een datum.';
       hasError = true;
     }
+
+    // Scores are optional, but if provided must be an integer 0–10
+    nextErrors.nourania = validateScore(newLog.nourania, 'Nourania');
+    if (nextErrors.nourania) hasError = true;
+    nextErrors.tilawa = validateScore(newLog.tilawa, 'Tilāwa');
+    if (nextErrors.tilawa) hasError = true;
+    nextErrors.tajweed = validateScore(newLog.tajweed, 'Tajwīd');
+    if (nextErrors.tajweed) hasError = true;
+    nextErrors.hifdh = validateScore(newLog.hifdh, 'Hifdh');
+    if (nextErrors.hifdh) hasError = true;
 
     setErrors(nextErrors);
     if (hasError) return;
@@ -371,6 +412,104 @@ export default function QuranLogDialog({
             </div>
           </div>
 
+          {/* Scores */}
+          <div className="grid gap-2">
+            <h2 className="text-lg font-semibold">Beoordeling (0–10)</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="score-nourania">Nourania</Label>
+                <Input
+                  id="score-nourania"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={newLog.nourania ?? ''}
+                  onChange={(e) => {
+                    setNewLog((s) => ({ ...s, nourania: e.target.value }));
+                    setErrors((prev) => ({ ...prev, nourania: '' }));
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.nourania ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.nourania}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="score-tilawa">Tilāwa</Label>
+                <Input
+                  id="score-tilawa"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={newLog.tilawa ?? ''}
+                  onChange={(e) => {
+                    setNewLog((s) => ({ ...s, tilawa: e.target.value }));
+                    setErrors((prev) => ({ ...prev, tilawa: '' }));
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.tilawa ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.tilawa}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="score-tajweed">Tajwīd</Label>
+                <Input
+                  id="score-tajweed"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={newLog.tajweed ?? ''}
+                  onChange={(e) => {
+                    setNewLog((s) => ({ ...s, tajweed: e.target.value }));
+                    setErrors((prev) => ({ ...prev, tajweed: '' }));
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.tajweed ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.tajweed}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="score-hifdh">Hifdh</Label>
+                <Input
+                  id="score-hifdh"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={newLog.hifdh ?? ''}
+                  onChange={(e) => {
+                    setNewLog((s) => ({ ...s, hifdh: e.target.value }));
+                    setErrors((prev) => ({ ...prev, hifdh: '' }));
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.hifdh ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.hifdh}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
           {/* Date */}
           <hr />
           <div className="grid sm:grid-cols-3 gap-3 items-end">
@@ -380,6 +519,8 @@ export default function QuranLogDialog({
                 buttonClassName="bg-white py-5"
                 value={newLog.date}
                 toYear={new Date().getFullYear()}
+                maxDate={new Date()}
+                required
                 onChange={(date) => {
                   const toLocalYMD = (d) => {
                     if (!d) return '';

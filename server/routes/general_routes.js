@@ -8,6 +8,7 @@ const {
   create_student,
   update_student,
   delete_student,
+  get_mentor_students,
   get_all_teachers,
   create_teacher,
   update_teacher,
@@ -95,6 +96,11 @@ const {
 } = require('../controllers/general/student_log');
 
 const {
+  get_student_notes,
+  create_student_note,
+} = require('../controllers/general/student_note');
+
+const {
   get_all_school_years,
   get_school_year_by_id,
   get_active_school_year,
@@ -108,11 +114,18 @@ const {
 // Students routes
 // ==============================
 router.get('/students', get_all_students);
+router.get('/mentor/students', get_mentor_students);
 router.get('/student/:id', get_student_by_id);
 router.get('/search/student', search_students);
 router.post('/student', create_student);
 router.put('/student/:id', update_student);
 router.delete('/student/:id', delete_student);
+
+// ==============================
+// Student Notes (private teacher <-> student)
+// ==============================
+router.get('/students/:student_id/notes', get_student_notes);
+router.post('/students/:student_id/notes', create_student_note);
 
 // ==============================
 // Teachers routes

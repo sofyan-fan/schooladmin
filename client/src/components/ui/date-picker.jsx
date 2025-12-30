@@ -26,6 +26,7 @@ export function DatePicker({
   toYear, // optional override
   minDate, // optional override
   maxDate, // optional override
+  required = false,
   placeholder = 'Select date',
   id,
   className,
@@ -73,6 +74,7 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={selected}
+            required={required}
             // shadcn (react-day-picker v9) supports "dropdown" or "dropdown-buttons" depending on your version
             captionLayout="dropdown"
             highlightToday={false}

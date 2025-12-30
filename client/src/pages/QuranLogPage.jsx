@@ -38,6 +38,19 @@ export default function QuranLogPage() {
   const { hizbFor } = useQuranRelations();
   const STORAGE_KEY = 'quranLogs';
 
+  function isNumericId(id) {
+    return typeof id === 'number' || /^\d+$/.test(String(id));
+  }
+
+  function parseScoreOrNull(raw) {
+    if (raw === undefined || raw === null || raw === '') return null;
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < 0 || n > 10) {
+      throw new Error('Invalid score (must be an integer 0–10).');
+    }
+    return n;
+  }
+
   function readLocalLogs() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -80,6 +93,10 @@ export default function QuranLogPage() {
     date: '',
     description: '',
     memorized: false,
+    nourania: '',
+    tilawa: '',
+    tajweed: '',
+    hifdh: '',
   });
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
@@ -116,6 +133,10 @@ export default function QuranLogPage() {
           date: l.date ? new Date(l.date).toISOString().slice(0, 10) : '',
           description: l.comment || '',
           memorized: Boolean(l.completed),
+          nourania: l.nourania_score ?? null,
+          tilawa: l.tilawa_score ?? null,
+          tajweed: l.tajweed_score ?? null,
+          hifdh: l.hifdh_score ?? null,
         }));
         if (mapped.length) {
           setLogs(mapped);
@@ -160,22 +181,24 @@ export default function QuranLogPage() {
     }
     try {
       const selectedStudentId = newLog.studentId || '';
-      const hasSelectedStudent = Boolean(selectedStudentId);
-      const studentIdForLog = hasSelectedStudent
-        ? String(selectedStudentId)
-        : `local:${crypto.randomUUID()}`;
+      const studentIdForLog = String(selectedStudentId);
+      const canPersistToBackend = isNumericId(studentIdForLog);
 
       const payload = {
-        student_id: hasSelectedStudent ? Number(selectedStudentId) : undefined,
+        student_id: canPersistToBackend ? Number(studentIdForLog) : undefined,
         date: newLog.date,
         start_log: String(newLog.from),
         end_log: String(newLog.to),
         completed: Boolean(newLog.memorized),
         comment: newLog.description || null,
+        nourania_score: parseScoreOrNull(newLog.nourania),
+        tilawa_score: parseScoreOrNull(newLog.tilawa),
+        tajweed_score: parseScoreOrNull(newLog.tajweed),
+        hifdh_score: parseScoreOrNull(newLog.hifdh),
       };
       let created;
       try {
-        if (hasSelectedStudent) {
+        if (canPersistToBackend) {
           created = await studentLogAPI.create_log(payload);
         }
       } catch {
@@ -191,6 +214,10 @@ export default function QuranLogPage() {
             date: payload.date,
             description: payload.comment || '',
             memorized: payload.completed,
+            nourania: payload.nourania_score,
+            tilawa: payload.tilawa_score,
+            tajweed: payload.tajweed_score,
+            hifdh: payload.hifdh_score,
           },
           ...prev,
         ];
@@ -204,6 +231,10 @@ export default function QuranLogPage() {
         date: '',
         description: '',
         memorized: false,
+        nourania: '',
+        tilawa: '',
+        tajweed: '',
+        hifdh: '',
       });
       return true;
     } catch (e) {
@@ -307,13 +338,30 @@ export default function QuranLogPage() {
   const handleConfirmDelete = async () => {
     if (!pendingDeleteId) return;
     const loadingToast = toast.loading('Log wordt verwijderd...');
+    const numericId = isNumericId(pendingDeleteId);
     try {
-      await studentLogAPI.delete_log(pendingDeleteId);
-      setLogs((prev) => prev.filter((l) => l.id !== pendingDeleteId));
-      toast.success('Log is verwijderd.');
+      if (numericId) {
+        await studentLogAPI.delete_log(pendingDeleteId);
+      }
+      setLogs((prev) => {
+        const next = prev.filter((l) => l.id !== pendingDeleteId);
+        saveLocalLogs(next);
+        return next;
+      });
+      toast.success(numericId ? 'Log is verwijderd.' : 'Log is lokaal verwijderd.');
     } catch (e) {
       console.error(e);
-      toast.error('Verwijderen mislukt.');
+      // If it doesn't exist on the server anymore, treat as deleted in UI.
+      if (numericId && e?.response?.status === 404) {
+        setLogs((prev) => {
+          const next = prev.filter((l) => l.id !== pendingDeleteId);
+          saveLocalLogs(next);
+          return next;
+        });
+        toast.success('Log is verwijderd.');
+      } else {
+        toast.error('Verwijderen mislukt.');
+      }
     } finally {
       toast.dismiss(loadingToast);
       setOpenDeleteDialog(false);
@@ -323,24 +371,54 @@ export default function QuranLogPage() {
 
   const handleSaveEdit = async () => {
     if (!editValue) return;
+    const numericId = isNumericId(editValue.id);
+    const nextScores = {
+      nourania: parseScoreOrNull(editValue.nourania),
+      tilawa: parseScoreOrNull(editValue.tilawa),
+      tajweed: parseScoreOrNull(editValue.tajweed),
+      hifdh: parseScoreOrNull(editValue.hifdh),
+    };
     const payload = {
       date: editValue.date,
       start_log: String(editValue.from),
       end_log: String(editValue.to),
       completed: Boolean(editValue.memorized),
       comment: editValue.description || null,
+      nourania_score: nextScores.nourania,
+      tilawa_score: nextScores.tilawa,
+      tajweed_score: nextScores.tajweed,
+      hifdh_score: nextScores.hifdh,
     };
     const loadingToast = toast.loading('Opslaan...');
     try {
-      await studentLogAPI.update_log(editValue.id, payload);
-      setLogs((prev) =>
-        prev.map((l) => (l.id === editValue.id ? { ...l, ...editValue } : l))
-      );
+      if (numericId) {
+        await studentLogAPI.update_log(editValue.id, payload);
+      }
+      setLogs((prev) => {
+        const next = prev.map((l) =>
+          l.id === editValue.id ? { ...l, ...editValue, ...nextScores } : l
+        );
+        saveLocalLogs(next);
+        return next;
+      });
       setOpenEditDialog(false);
-      toast.success('Log opgeslagen.');
+      toast.success(numericId ? 'Log opgeslagen.' : 'Log lokaal opgeslagen.');
     } catch (e) {
       console.error(e);
-      toast.error('Opslaan mislukt.');
+      if (numericId && e?.response?.status === 404) {
+        // Treat as local-only if it no longer exists server-side
+        setLogs((prev) => {
+          const next = prev.map((l) =>
+            l.id === editValue.id ? { ...l, ...editValue, ...nextScores } : l
+          );
+          saveLocalLogs(next);
+          return next;
+        });
+        setOpenEditDialog(false);
+        toast.success('Log lokaal opgeslagen.');
+      } else {
+        toast.error('Opslaan mislukt.');
+      }
     } finally {
       toast.dismiss(loadingToast);
     }
@@ -500,6 +578,10 @@ export default function QuranLogPage() {
                     { header: 'Einde', key: 'to', width: 22 },
                     { header: 'Datum', key: 'date', width: 14 },
                     { header: 'Gememoriseerd', key: 'memo', width: 10 },
+                    { header: 'Nourania', key: 'nourania', width: 10 },
+                    { header: 'Tilawa', key: 'tilawa', width: 10 },
+                    { header: 'Tajweed', key: 'tajweed', width: 10 },
+                    { header: 'Hifdh', key: 'hifdh', width: 10 },
                   ];
                   rowsToExport.forEach((r) => {
                     const o = r.original;
@@ -509,6 +591,10 @@ export default function QuranLogPage() {
                       to: formatPointShort(o.to),
                       date: o.date || '',
                       memo: o.memorized ? 'Ja' : 'Nee',
+                      nourania: o.nourania ?? '',
+                      tilawa: o.tilawa ?? '',
+                      tajweed: o.tajweed ?? '',
+                      hifdh: o.hifdh ?? '',
                     });
                   });
                   ws.getRow(1).font = { bold: true };

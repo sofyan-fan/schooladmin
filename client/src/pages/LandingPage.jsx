@@ -34,8 +34,8 @@ const LandingPage = () => {
     });
 
     return (
-        <main className="min-h-screen bg-gray-100 px-4 py-6 dark:bg-gray-950 sm:px-6 sm:py-10">
-            <div className="w-full">
+        <main className="min-h-screen  ">
+            <div className="w-full ">
                 <section className="space-y-10 bg-card px-4 py-6 rounded-2xl shadow-sm sm:px-8 sm:py-8 lg:px-10 lg:py-0">
                     {/* Hero section */}
                     <section

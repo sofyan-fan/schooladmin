@@ -14,14 +14,16 @@ import CoursesPage from './pages/CoursesPage';
 import DashboardPage from './pages/DashboardPage';
 import FinancePage from './pages/FinancePage';
 import LoginPage from './pages/LoginPage';
+import MentorStudentsPage from './pages/MentorStudentsPage';
 import ModulesPage from './pages/ModulesPage';
 import QuranLogPage from './pages/QuranLogPage';
 import RegisterPage from './pages/RegisterPage';
 import ResultsPage from './pages/ResultsPage';
 // import WelcomePage from './pages/WelcomePage';
 // import RosterPage from './pages/RosterPage';
+import BooksStockPage from './pages/BooksStockPage';
 import EducationPage from './pages/EducationPage';
-import LandingPage from './pages/LangingPage';
+import LandingPage from './pages/LandingPage';
 import NotificationsPage from './pages/NotificationsPage';
 import RostersPage from './pages/RostersPage';
 import SchoolYearDetailPage from './pages/SchoolYearDetailPage';
@@ -107,6 +109,23 @@ const App = () => {
           }
         />
 
+        <Route
+          path="/mijn-leerlingen"
+          element={
+            <RequireRole allowedRoles={['teacher']}>
+              <MentorStudentsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/mijn-leerlingen/:id"
+          element={
+            <RequireRole allowedRoles={['teacher']}>
+              <StudentDetailsPage />
+            </RequireRole>
+          }
+        />
+
         {/* Admin-only */}
         <Route element={<RequireRole allowedRoles={['admin']} />}>
           <Route path="/school-jaar" element={<SchoolYearsPage />} />
@@ -124,9 +143,10 @@ const App = () => {
           <Route path="/lespakketten" element={<CoursesPage />} />
           <Route path="/lokalen" element={<ClassroomsPage />} />
           <Route path="/financien" element={<FinancePage />} />
+          <Route path="/boekenvoorraad" element={<BooksStockPage />} />
           <Route path="/leerlingen" element={<StudentsPage />} />
-          <Route path="/docenten" element={<TeachersPage />} />
           <Route path="/leerlingen/:id" element={<StudentDetailsPage />} />
+          <Route path="/docenten" element={<TeachersPage />} />
           <Route path="/docenten/:id" element={<TeacherDetailsPage />} />
           <Route path="/onderwijs" element={<EducationPage />} />
         </Route>

@@ -61,7 +61,13 @@ function ContactRow({ icon, value, href, multiline }) {
   );
 }
 
-export default function ViewModal({ open, onOpenChange, student, onEdit }) {
+export default function ViewModal({
+  open,
+  onOpenChange,
+  student,
+  onEdit,
+  detailsBasePath = '/leerlingen',
+}) {
   if (!student) return null;
 
   const status = student.status === 'Active' ? 'Actief' : 'Inactief';
@@ -89,8 +95,9 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
     : null;
 
-  const resultsHref = `/leerlingen/${student.id}/resultaten`;
-  const packageHref = `/leerlingen/${student.id}/lespakket`;
+  const studentId = student.studentId || student.id;
+  const overviewHref = `${detailsBasePath}/${studentId}`;
+  const resultsHref = `${detailsBasePath}/${studentId}?tab=resultaten`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -159,12 +166,12 @@ export default function ViewModal({ open, onOpenChange, student, onEdit }) {
 
               {/* Actions: identical styling */}
               <div className="pt-6 flex flex-wrap gap-4">
-                <Link to={packageHref}>
+                <Link to={overviewHref}>
                   <Button
                     variant="outline"
                     className="rounded-full  text-accent px-6 py-5 text-lg hover:bg-accent/10 hover:text-accent"
                   >
-                    Lespakket
+                    Overzicht
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

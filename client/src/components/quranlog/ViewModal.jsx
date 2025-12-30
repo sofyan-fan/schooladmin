@@ -11,7 +11,8 @@ import { parsePoint } from '@/utils/quran';
 import { BookCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 function valueOrDash(v) {
-  return v ? String(v) : '-';
+  if (v === null || v === undefined || v === '') return '-';
+  return String(v);
 }
 
 function formatDateNL(raw) {
@@ -42,7 +43,7 @@ export default function ViewQuranLogDialog({
   useEffect(() => {
     getChapters()
       .then((c) => setChapters(c || []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   const chapterById = useMemo(
     () => new Map(chapters.map((c) => [String(c.id), c])),
@@ -102,6 +103,28 @@ export default function ViewQuranLogDialog({
           <div className="grid sm:grid-cols-3 gap-3 items-center">
             <Label className="text-muted-foreground">Gememoriseerd</Label>
             <div className="sm:col-span-2">{log?.memorized ? 'Ja' : 'Nee'}</div>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-3 items-start">
+            <Label className="text-muted-foreground mt-1">Beoordeling</Label>
+            <div className="sm:col-span-2 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Nourania</span>
+                <span className="font-medium">{valueOrDash(log?.nourania)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Tilāwa</span>
+                <span className="font-medium">{valueOrDash(log?.tilawa)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Tajwīd</span>
+                <span className="font-medium">{valueOrDash(log?.tajweed)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Hifdh</span>
+                <span className="font-medium">{valueOrDash(log?.hifdh)}</span>
+              </div>
+            </div>
           </div>
 
           <hr className="my-2" />

@@ -19,6 +19,7 @@ import {
   BarChart,
   Bell,
   BookCheck,
+  // BookOpen,
   CalendarDays,
   ChevronDown,
   CircleDollarSign,
@@ -90,6 +91,12 @@ const SidebarComponent = () => {
       roles: ['admin'],
     },
     {
+      name: 'Mijn Leerlingen',
+      path: 'mijn-leerlingen',
+      Icon: GraduationCap,
+      roles: ['teacher'],
+    },
+    {
       name: 'Docenten',
       path: 'docenten',
       Icon: Presentation,
@@ -112,14 +119,20 @@ const SidebarComponent = () => {
       Icon: CalendarDays,
       roles: ['admin'],
     },
-    {
-      name: 'Schooljaren (dummy)',
-      path: 'school-jaar-dummy',
-      Icon: CalendarDays,
-      roles: ['admin'],
-    },
+    // {
+    //   name: 'Schooljaren (dummy)',
+    //   path: 'school-jaar-dummy',
+    //   Icon: CalendarDays,
+    //   roles: ['admin'],
+    // },
     { name: 'Vakken', path: 'vakken', Icon: LibraryBig, roles: ['admin'] },
     { name: 'Modules', path: 'modules', Icon: Component, roles: ['admin'] },
+    // {
+    //   name: 'Boekenvoorraad',
+    //   path: 'boekenvoorraad',
+    //   Icon: BookOpen,
+    //   roles: ['admin'],
+    // },
     {
       name: 'Lespakketten',
       path: 'lespakketten',

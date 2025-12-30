@@ -24,6 +24,11 @@ function asPointStrings(p) {
   };
 }
 
+function asScoreString(v) {
+  if (v === null || v === undefined || v === '') return '';
+  return String(v);
+}
+
 export default function EditQuranLogModal({
   open,
   onOpenChange,
@@ -43,12 +48,20 @@ export default function EditQuranLogModal({
   const [date, setDate] = useState(value?.date || '');
   const [description, setDescription] = useState(value?.description || '');
   const [memorized, setMemorized] = useState(Boolean(value?.memorized));
+  const [nourania, setNourania] = useState(asScoreString(value?.nourania));
+  const [tilawa, setTilawa] = useState(asScoreString(value?.tilawa));
+  const [tajweed, setTajweed] = useState(asScoreString(value?.tajweed));
+  const [hifdh, setHifdh] = useState(asScoreString(value?.hifdh));
   const [errors, setErrors] = useState({
     beginSurah: '',
     beginAyah: '',
     endSurah: '',
     endAyah: '',
     date: '',
+    nourania: '',
+    tilawa: '',
+    tajweed: '',
+    hifdh: '',
   });
 
   useEffect(() => {
@@ -68,6 +81,10 @@ export default function EditQuranLogModal({
     setDate(value.date || '');
     setDescription(value.description || '');
     setMemorized(Boolean(value.memorized));
+    setNourania(asScoreString(value.nourania));
+    setTilawa(asScoreString(value.tilawa));
+    setTajweed(asScoreString(value.tajweed));
+    setHifdh(asScoreString(value.hifdh));
   }, [value]);
 
   useEffect(() => {
@@ -78,9 +95,21 @@ export default function EditQuranLogModal({
         endSurah: '',
         endAyah: '',
         date: '',
+        nourania: '',
+        tilawa: '',
+        tajweed: '',
+        hifdh: '',
       });
     }
   }, [open]);
+
+  function validateScore(raw, label) {
+    if (raw === undefined || raw === null || raw === '') return '';
+    const n = Number(raw);
+    if (!Number.isInteger(n)) return `${label}: voer een heel getal in (0–10).`;
+    if (n < 0 || n > 10) return `${label}: score moet tussen 0 en 10 liggen.`;
+    return '';
+  }
 
   function deriveHizb(surahId, ayah) {
     const h = hizbFor(surahId, ayah);
@@ -133,11 +162,19 @@ export default function EditQuranLogModal({
     nextBegin,
     nextEnd,
     nextDate = date,
-    nextDesc = description
+    nextDesc = description,
+    nextScores = {}
   ) {
     if (!open || !value) return;
     const snapshotBegin = nextBegin ?? begin;
     const snapshotEnd = nextEnd ?? end;
+    const nextNourania =
+      nextScores.nourania !== undefined ? nextScores.nourania : nourania;
+    const nextTilawa =
+      nextScores.tilawa !== undefined ? nextScores.tilawa : tilawa;
+    const nextTajweed =
+      nextScores.tajweed !== undefined ? nextScores.tajweed : tajweed;
+    const nextHifdh = nextScores.hifdh !== undefined ? nextScores.hifdh : hifdh;
     const next = {
       ...value,
       from: serializePoint(snapshotBegin),
@@ -145,6 +182,10 @@ export default function EditQuranLogModal({
       date: nextDate,
       description: nextDesc,
       memorized,
+      nourania: nextNourania,
+      tilawa: nextTilawa,
+      tajweed: nextTajweed,
+      hifdh: nextHifdh,
     };
     const same =
       value &&
@@ -152,7 +193,11 @@ export default function EditQuranLogModal({
       value.to === next.to &&
       value.date === next.date &&
       (value.description || '') === (next.description || '') &&
-      Boolean(value.memorized) === Boolean(next.memorized);
+      Boolean(value.memorized) === Boolean(next.memorized) &&
+      String(value.nourania ?? '') === String(next.nourania ?? '') &&
+      String(value.tilawa ?? '') === String(next.tilawa ?? '') &&
+      String(value.tajweed ?? '') === String(next.tajweed ?? '') &&
+      String(value.hifdh ?? '') === String(next.hifdh ?? '');
     if (!same) onChange?.(next);
   }
   function handleSave() {
@@ -162,6 +207,10 @@ export default function EditQuranLogModal({
       endSurah: '',
       endAyah: '',
       date: '',
+      nourania: '',
+      tilawa: '',
+      tajweed: '',
+      hifdh: '',
     };
     let hasError = false;
 
@@ -185,6 +234,15 @@ export default function EditQuranLogModal({
       nextErrors.date = 'Selecteer een datum.';
       hasError = true;
     }
+
+    nextErrors.nourania = validateScore(nourania, 'Nourania');
+    if (nextErrors.nourania) hasError = true;
+    nextErrors.tilawa = validateScore(tilawa, 'Tilāwa');
+    if (nextErrors.tilawa) hasError = true;
+    nextErrors.tajweed = validateScore(tajweed, 'Tajwīd');
+    if (nextErrors.tajweed) hasError = true;
+    nextErrors.hifdh = validateScore(hifdh, 'Hifdh');
+    if (nextErrors.hifdh) hasError = true;
 
     setErrors(nextErrors);
     if (hasError) return;
@@ -331,6 +389,120 @@ export default function EditQuranLogModal({
             </div>
           </div>
 
+          {/* Scores */}
+          <div className="grid gap-2">
+            <h2 className="text-lg font-semibold">Beoordeling (0–10)</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-score-nourania">Nourania</Label>
+                <Input
+                  id="edit-score-nourania"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={nourania}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setNourania(v);
+                    setErrors((prev) => ({ ...prev, nourania: '' }));
+                    emitIfChanged(undefined, undefined, undefined, undefined, {
+                      nourania: v,
+                    });
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.nourania ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.nourania}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-score-tilawa">Tilāwa</Label>
+                <Input
+                  id="edit-score-tilawa"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={tilawa}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTilawa(v);
+                    setErrors((prev) => ({ ...prev, tilawa: '' }));
+                    emitIfChanged(undefined, undefined, undefined, undefined, {
+                      tilawa: v,
+                    });
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.tilawa ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.tilawa}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-score-tajweed">Tajwīd</Label>
+                <Input
+                  id="edit-score-tajweed"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={tajweed}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTajweed(v);
+                    setErrors((prev) => ({ ...prev, tajweed: '' }));
+                    emitIfChanged(undefined, undefined, undefined, undefined, {
+                      tajweed: v,
+                    });
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.tajweed ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.tajweed}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-score-hifdh">Hifdh</Label>
+                <Input
+                  id="edit-score-hifdh"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={hifdh}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setHifdh(v);
+                    setErrors((prev) => ({ ...prev, hifdh: '' }));
+                    emitIfChanged(undefined, undefined, undefined, undefined, {
+                      hifdh: v,
+                    });
+                  }}
+                  placeholder="0–10"
+                />
+                {errors.hifdh ? (
+                  <p className="text-sm text-destructive -mt-1">
+                    {errors.hifdh}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
           {/* Date & description */}
           <hr />
           <div className="grid sm:grid-cols-3 gap-3 items-end">
@@ -340,6 +512,8 @@ export default function EditQuranLogModal({
                 buttonClassName="bg-white py-5"
                 value={date}
                 toYear={new Date().getFullYear()}
+                maxDate={new Date()}
+                required
                 onChange={(d) => {
                   const toLocalYMD = (dt) => {
                     if (!dt) return '';

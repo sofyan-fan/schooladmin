@@ -59,19 +59,26 @@ export function AttendanceCard({
     '--color-absent': colorVars?.absent ?? 'oklch(0.67 0.22 28)',
   };
 
+  const isInteractive = typeof onOpenAttendance === 'function';
+
   return (
     <Card
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpenAttendance?.()}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onOpenAttendance?.();
-        }
-      }}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      onClick={isInteractive ? () => onOpenAttendance?.() : undefined}
+      onKeyDown={
+        isInteractive
+          ? (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onOpenAttendance?.();
+            }
+          }
+          : undefined
+      }
       className={[
-        'flex flex-col h-full cursor-pointer transition duration-200 hover:-translate-y-0.5 hover:shadow-lg',
+        'flex flex-col h-full transition duration-200',
+        isInteractive ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-lg' : '',
         className,
       ].join(' ')}
       style={{ ...cssVars, ...style }}

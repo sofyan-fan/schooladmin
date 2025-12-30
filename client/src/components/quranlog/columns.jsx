@@ -162,6 +162,48 @@ export const createColumns = ({
       },
     },
     {
+      id: 'scores',
+      header: () => (
+        <div className="w-full text-center text-lg font-medium">Beoordeling</div>
+      ),
+      displayName: 'Beoordeling',
+      size: 200,
+      cell: ({ row }) => {
+        const isSet = (v) => v !== null && v !== undefined && v !== '';
+        const fmt = (v) => (isSet(v) ? String(v) : '—');
+
+        const n = row.original?.nourania;
+        const t = row.original?.tilawa;
+        const j = row.original?.tajweed;
+        const h = row.original?.hifdh;
+
+        const hasAny = [n, t, j, h].some(isSet);
+        if (!hasAny) return <div className="text-center text-muted-foreground">—</div>;
+
+        const short = `N${fmt(n)} · T${fmt(t)} · J${fmt(j)} · H${fmt(h)}`;
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="inline-block w-full text-center truncate"
+                title={short}
+              >
+                {short}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="center" className="max-w-sm">
+              <div className="text-sm leading-relaxed">
+                <div>Nourania: {fmt(n)}</div>
+                <div>Tilāwa: {fmt(t)}</div>
+                <div>Tajwīd: {fmt(j)}</div>
+                <div>Hifdh: {fmt(h)}</div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        );
+      },
+    },
+    {
       id: 'memorized',
       header: () => <div className="w-full text-center">Afgerond</div>,
       size: 90,

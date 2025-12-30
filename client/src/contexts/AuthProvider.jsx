@@ -216,6 +216,22 @@ export const AuthProvider = ({ children }) => {
 
   const clearJustRegistered = () => setJustRegistered(false);
 
+  // Helper to merge updates into the current user and persist to localStorage
+  const updateUser = (patch) => {
+    setUser((prev) => {
+      const next =
+        typeof patch === 'function'
+          ? patch(prev)
+          : { ...(prev || {}), ...(patch || {}) };
+      try {
+        localStorage.setItem('user', JSON.stringify(next));
+      } catch {
+        // ignore storage write errors
+      }
+      return next;
+    });
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -268,6 +284,7 @@ export const AuthProvider = ({ children }) => {
         registerSilently,
         justRegistered,
         clearJustRegistered,
+        updateUser,
       }}
     >
       {children}

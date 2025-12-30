@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/useAuth';
 import { parsePoint } from '@/utils/quran';
 import format from 'date-fns/format';
 import { nl } from 'date-fns/locale';
@@ -100,6 +101,13 @@ export default function OverviewTab({
   setTab,
   onAddNote,
 }) {
+  const { user } = useAuth();
+  const role = (user?.role || '').toLowerCase();
+  const canSeePrivateNotes = role === 'teacher' || role === 'student';
+  const canPublishPrivateNotes =
+    role === 'teacher' && typeof onAddNote === 'function';
+  const canSeePaymentsCard = role === 'admin';
+
   const quranProgress = {
     summary: {
       lastSurah: 'Al-Baqarah',
@@ -238,9 +246,23 @@ export default function OverviewTab({
     return parts.join(' • ');
   };
 
+  const formatScoresShort = (log) => {
+    if (!log) return '—';
+    const isSet = (v) => v === 0 || (v !== null && v !== undefined && v !== '');
+    const fmt = (v) => (isSet(v) ? String(v) : '—');
+    const n = log.nourania_score;
+    const t = log.tilawa_score;
+    const j = log.tajweed_score;
+    const h = log.hifdh_score;
+    const hasAny = [n, t, j, h].some(isSet);
+    if (!hasAny) return '—';
+    return `N${fmt(n)} · T${fmt(t)} · J${fmt(j)} · H${fmt(h)}`;
+  };
+
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [noteSubject, setNoteSubject] = useState('');
   const [noteText, setNoteText] = useState('');
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
 
   // ----- Betalingen (lokaal met localStorage) -----
   const formatCurrency = (value) =>
@@ -475,19 +497,28 @@ export default function OverviewTab({
     }
   };
 
-  const handleCreateNote = (e) => {
+  const handleCreateNote = async (e) => {
     e.preventDefault();
     const text = noteText.trim();
     const subject = noteSubject.trim();
     if (!text) return;
 
-    if (typeof onAddNote === 'function') {
-      onAddNote({ subject, text });
-    }
+    if (!canPublishPrivateNotes) return;
+    if (typeof onAddNote !== 'function') return;
 
-    setNoteSubject('');
-    setNoteText('');
-    setIsNotesDialogOpen(false);
+    try {
+      setIsSubmittingNote(true);
+      await onAddNote({ subject, text });
+      setNoteSubject('');
+      setNoteText('');
+      setIsNotesDialogOpen(false);
+      toast.success('Notitie gepubliceerd.');
+    } catch (err) {
+      console.error('Failed to publish note from OverviewTab:', err);
+      toast.error('Kon notitie niet publiceren. Probeer opnieuw.');
+    } finally {
+      setIsSubmittingNote(false);
+    }
   };
 
   return (
@@ -607,6 +638,17 @@ export default function OverviewTab({
                     : 'Nog in behandeling'}
                 </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Beoordeling
+                </span>
+                <span
+                  className="font-medium truncate max-w-[60%] text-right"
+                  title={formatScoresShort(latestQuranLog)}
+                >
+                  {formatScoresShort(latestQuranLog)}
+                </span>
+              </div>
             </div>
           )}
         </CardContent>
@@ -621,8 +663,9 @@ export default function OverviewTab({
         </div>
       </Card>
 
-      <div className="md:col-span-6 lg:col-span-4 flex flex-col">
-        {/* <StatCard
+      {canSeePaymentsCard ? (
+        <div className="md:col-span-6 lg:col-span-4 flex flex-col">
+          {/* <StatCard
           icon={<CreditCard size={20} />}
           title="Betalingen"
           description="Status van lesgeldbetalingen."
@@ -630,230 +673,260 @@ export default function OverviewTab({
           setTab={setTab}
         /> */}
 
-        {/* Betalingen */}
-        <Card className={'flex flex-col gap-1 h-full min-h-[220px]'}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <CreditCard className="size-5" />
-              Betalingen
-            </CardTitle>
-            {/* <CardDescription>Status van lesgeldbetalingen.</CardDescription> */}
-            {/* <CardDescription className="text-sm text-muted-foreground">
+          {/* Betalingen */}
+          <Card className={'flex flex-col gap-1 h-full min-h-[220px]'}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CreditCard className="size-5" />
+                Betalingen
+              </CardTitle>
+              {/* <CardDescription>Status van lesgeldbetalingen.</CardDescription> */}
+              {/* <CardDescription className="text-sm text-muted-foreground">
               Status van lesgeldbetalingen.
             </CardDescription> */}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <span className="shrink-0">Lespakket</span>
-                <span className="font-medium truncate text-right" title={courseName}>
-                  {courseName || '—'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Totaalprijs</span>
-                <span className="font-medium">
-                  {paymentState.totalPrice > 0
-                    ? formatCurrency(paymentState.totalPrice)
-                    : '—'}
-                </span>
-              </div>
-              {remainingToPay > 0 ? (
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="shrink-0">Lespakket</span>
+                  <span className="font-medium truncate text-right" title={courseName}>
+                    {courseName || '—'}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between">
-                  <span>Nog te betalen</span>
-                  <span className="font-medium text-orange-600">
-                    {formatCurrency(remainingToPay)}
+                  <span>Totaalprijs</span>
+                  <span className="font-medium">
+                    {paymentState.totalPrice > 0
+                      ? formatCurrency(paymentState.totalPrice)
+                      : '—'}
                   </span>
                 </div>
-              ) : (
-                <div className="flex items-center justify-between text-green-700">
-                  <span className="inline-flex items-center gap-2 font-medium">
-                    <CheckCircle2 className="size-4" />
-                    Lespakket betaald
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-1 mt-2">
-              <Label className="text-xs text-muted-foreground">
-                Betaalmethode
-              </Label>
-              <RadioGroup
-                value={paymentMethod}
-                onValueChange={setPaymentMethod}
-                className="flex flex-wrap gap-4"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem
-                    id="method-bank"
-                    value="Bank"
-                    aria-label="Bankoverschrijving"
-                  />
-                  <Label
-                    htmlFor="method-bank"
-                    className="flex cursor-pointer items-center gap-1 text-xs sm:text-sm"
-                  >
-                    <CreditCard className="size-4" />
-                    <span>Bank</span>
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem
-                    id="method-cash"
-                    value="Contant"
-                    aria-label="Contant betalen"
-                  />
-                  <Label
-                    htmlFor="method-cash"
-                    className="flex cursor-pointer items-center gap-1 text-xs sm:text-sm"
-                  >
-                    <HandCoins className="size-4" />
-                    <span>Contant</span>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="mt-4 space-y-3">
-              {/* <Label htmlFor="payment-amount">Bedrag</Label> */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <Input
-                  id="payment-amount"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={paymentAmountInput}
-                  onChange={(e) => setPaymentAmountInput(e.target.value)}
-                  placeholder="Voer bedrag in"
-                  className="w-full sm:max-w-[200px]"
-                  disabled={(paymentState.totalPrice || 0) <= 0 || remainingToPay <= 0}
-                />
-
-                <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="default"
-                      className="w-full sm:w-auto"
-                      onClick={() => {
-                        if (
-                          !(
-                            parsedAmount <= 0 ||
-                            remainingToPay <= 0 ||
-                            (paymentState.totalPrice || 0) <= 0
-                          )
-                        ) {
-                          setIsConfirmOpen(true);
-                        }
-                      }}
-                      disabled={
-                        parsedAmount <= 0 ||
-                        remainingToPay <= 0 ||
-                        (paymentState.totalPrice || 0) <= 0
-                      }
+                {remainingToPay > 0 ? (
+                  <div className="flex items-center justify-between">
+                    <span>Nog te betalen</span>
+                    <span className="font-medium text-orange-600">
+                      {formatCurrency(remainingToPay)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between text-green-700">
+                    <span className="inline-flex items-center gap-2 font-medium">
+                      <CheckCircle2 className="size-4" />
+                      Lespakket betaald
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1 mt-2">
+                <Label className="text-xs text-muted-foreground">
+                  Betaalmethode
+                </Label>
+                <RadioGroup
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                  className="flex flex-wrap gap-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem
+                      id="method-bank"
+                      value="Bank"
+                      aria-label="Bankoverschrijving"
+                    />
+                    <Label
+                      htmlFor="method-bank"
+                      className="flex cursor-pointer items-center gap-1 text-xs sm:text-sm"
                     >
-                      Betalen
+                      <CreditCard className="size-4" />
+                      <span>Bank</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem
+                      id="method-cash"
+                      value="Contant"
+                      aria-label="Contant betalen"
+                    />
+                    <Label
+                      htmlFor="method-cash"
+                      className="flex cursor-pointer items-center gap-1 text-xs sm:text-sm"
+                    >
+                      <HandCoins className="size-4" />
+                      <span>Contant</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="mt-4 space-y-3">
+                {/* <Label htmlFor="payment-amount">Bedrag</Label> */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <Input
+                    id="payment-amount"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={paymentAmountInput}
+                    onChange={(e) => setPaymentAmountInput(e.target.value)}
+                    placeholder="Voer bedrag in"
+                    className="w-full sm:max-w-[200px]"
+                    disabled={(paymentState.totalPrice || 0) <= 0 || remainingToPay <= 0}
+                  />
+
+                  <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="default"
+                        className="w-full sm:w-auto"
+                        onClick={() => {
+                          if (
+                            !(
+                              parsedAmount <= 0 ||
+                              remainingToPay <= 0 ||
+                              (paymentState.totalPrice || 0) <= 0
+                            )
+                          ) {
+                            setIsConfirmOpen(true);
+                          }
+                        }}
+                        disabled={
+                          parsedAmount <= 0 ||
+                          remainingToPay <= 0 ||
+                          (paymentState.totalPrice || 0) <= 0
+                        }
+                      >
+                        Betalen
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent maxWidth="480px">
+                      <DialogHeader>
+                        <DialogTitle>Betaling bevestigen</DialogTitle>
+                        <DialogDescription>
+                          Weet je zeker dat je {formatCurrency(parsedAmount)} wilt
+                          betalen voor {courseName}?
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="text-sm">
+                        Nieuw resterend bedrag:{' '}
+                        <span className="font-medium">
+                          {formatCurrency(
+                            Math.max(remainingToPay - parsedAmount, 0)
+                          )}
+                        </span>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsConfirmOpen(false)}>
+                          Annuleren
+                        </Button>
+                        <Button onClick={handleConfirmPayment}>Bevestigen</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                {parsedAmount > remainingToPay && remainingToPay > 0 && (
+                  <p className="text-xs text-muted-foreground">Bedrag wordt gemaximeerd op resterend bedrag.</p>
+                )}
+
+              </div>
+            </CardContent>
+          </Card>
+
+        </div>
+      ) : null}
+      {canSeePrivateNotes ? (
+        <div className="md:col-span-6 lg:col-span-4 flex w-full">
+          {canPublishPrivateNotes ? (
+            <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+              <StatCard
+                icon={<Notebook size={20} />}
+                title="Notities"
+                description="Privé notities voor deze leerling."
+                tab="notities"
+                setTab={setTab}
+                className="h-full w-full min-h-[220px]"
+                content={
+                  <p className="text-sm text-muted-foreground">
+                    Alleen jij en de leerling kunnen deze notities bekijken.
+                  </p>
+                }
+                extraAction={
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      Nieuwe notitie
                     </Button>
                   </DialogTrigger>
-                  <DialogContent maxWidth="480px">
-                    <DialogHeader>
-                      <DialogTitle>Betaling bevestigen</DialogTitle>
-                      <DialogDescription>
-                        Weet je zeker dat je {formatCurrency(parsedAmount)} wilt
-                        betalen voor {courseName}?
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="text-sm">
-                      Nieuw resterend bedrag:{' '}
-                      <span className="font-medium">
-                        {formatCurrency(
-                          Math.max(remainingToPay - parsedAmount, 0)
-                        )}
-                      </span>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsConfirmOpen(false)}>
-                        Annuleren
-                      </Button>
-                      <Button onClick={handleConfirmPayment}>Bevestigen</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              {parsedAmount > remainingToPay && remainingToPay > 0 && (
-                <p className="text-xs text-muted-foreground">Bedrag wordt gemaximeerd op resterend bedrag.</p>
-              )}
-
-            </div>
-          </CardContent>
-        </Card>
-
-      </div>
-      <div className="md:col-span-6 lg:col-span-4 flex w-full">
-        <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
-          <StatCard
-            icon={<Notebook size={20} />}
-            title="Notities"
-            description="Persoonlijke opmerkingen."
-            tab="notities"
-            setTab={setTab}
-            className="h-full w-full min-h-[220px]"
-            content={
-              <p className="text-sm text-muted-foreground">
-                Notities worden alleen in deze browser opgeslagen.
-              </p>
-            }
-            extraAction={
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  Nieuwe notitie
-                </Button>
-              </DialogTrigger>
-            }
-          />
-          <DialogContent className="sm:max-w-[480px]">
-            <DialogHeader>
-              <DialogTitle>Nieuwe notitie</DialogTitle>
-              <DialogDescription>
-                Schrijf een persoonlijke notitie over deze student. Deze
-                notities worden alleen in deze browser opgeslagen.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreateNote} className="space-y-4 mt-2">
-              <div className="space-y-2">
-                <Label htmlFor="note-subject">Onderwerp</Label>
-                <Input
-                  id="note-subject"
-                  value={noteSubject}
-                  onChange={(e) => setNoteSubject(e.target.value)}
-                  placeholder="Bijv. Huiswerk, gedrag, voortgang"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="note-text">Notitie</Label>
-                <Textarea
-                  id="note-text"
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  rows={5}
-                  placeholder="Schrijf hier je notitie..."
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsNotesDialogOpen(false)}
-                >
-                  Annuleren
-                </Button>
-                <Button type="submit" disabled={!noteText.trim()}>
-                  Notitie opslaan
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                }
+              />
+              <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                  <DialogTitle>Nieuwe notitie</DialogTitle>
+                  <DialogDescription>
+                    Maak een notities aan voor deze leerling.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateNote} className="space-y-4 mt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="note-subject">Onderwerp</Label>
+                    <Input
+                      id="note-subject"
+                      value={noteSubject}
+                      onChange={(e) => setNoteSubject(e.target.value)}
+                      // placeholder=""
+                      maxLength={191}
+                      disabled={isSubmittingNote}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="note-text">Notitie</Label>
+                    <Textarea
+                      id="note-text"
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      rows={5}
+                      placeholder="Schrijf hier je notitie..."
+                      maxLength={191}
+                      disabled={isSubmittingNote}
+                    />
+                    {/* <div className="text-xs text-muted-foreground">
+                      Maximaal 191 tekens.
+                    </div> */}
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsNotesDialogOpen(false)}
+                      disabled={isSubmittingNote}
+                    >
+                      Annuleren
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={!noteText.trim() || isSubmittingNote}
+                    >
+                      Plaatsen
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <StatCard
+              icon={<Notebook size={20} />}
+              title="Notities"
+              description="Notities van docenten."
+              tab="notities"
+              setTab={setTab}
+              className="h-full w-full min-h-[220px]"
+              content={
+                <p className="text-sm text-muted-foreground">
+                  Alleen jij en de docent die de notitie schreef kunnen deze
+                  notities bekijken.
+                </p>
+              }
+            />
+          )}
+        </div>
+      ) : null}
 
       {/* <div className="lg:col-span-12">
         <Card>

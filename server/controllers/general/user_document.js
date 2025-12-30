@@ -1,5 +1,45 @@
 const { prisma } = require('../../prisma/connection');
 
+function getSessionUser(req) {
+  return req.session?.user || req.user || null;
+}
+
+async function resolveTeacherForSessionUser(sessionUser) {
+  if (!sessionUser?.email) return null;
+
+  // 1) Primary lookup: teacher linked by email === user email
+  let teacher = await prisma.teacher.findFirst({
+    where: { email: sessionUser.email },
+  });
+
+  // 2) Fallback for seeded users: derive first/last name from email pattern `first.last####@...`
+  if (!teacher) {
+    try {
+      const localPart = String(sessionUser.email).split('@')[0] || '';
+      const withoutDigits = localPart.replace(/\d+$/, '');
+      const parts = withoutDigits.split('.').filter(Boolean);
+      if (parts.length >= 2) {
+        const firstName = parts[0].replace(/\b\w/g, (c) => c.toUpperCase());
+        const lastName = parts
+          .slice(1)
+          .map((seg) => seg.replace(/\b\w/g, (c) => c.toUpperCase()))
+          .join(' ');
+
+        teacher = await prisma.teacher.findFirst({
+          where: {
+            first_name: firstName,
+            last_name: lastName,
+          },
+        });
+      }
+    } catch {
+      // ignore fallback parsing errors
+    }
+  }
+
+  return teacher;
+}
+
 /* ==============================
    TEACHERS
 ============================== */
@@ -167,6 +207,7 @@ exports.delete_student = async (req, res) => {
       where: { student_id: studentId },
     });
     await prisma.student_log.deleteMany({ where: { student_id: studentId } });
+    await prisma.student_note.deleteMany({ where: { student_id: studentId } });
 
     await prisma.student.delete({ where: { id: studentId } });
 
@@ -177,5 +218,57 @@ exports.delete_student = async (req, res) => {
       return res.status(404).json({ error: 'Student not found' });
     }
     res.status(500).json({ error: 'Error deleting student' });
+  }
+};
+
+/* ==============================
+   MENTOR TEACHER (own students)
+============================== */
+
+// GET students for the currently logged-in mentor teacher
+// Only teachers who are mentors of a class can access this.
+exports.get_mentor_students = async (req, res) => {
+  try {
+    const sessionUser = getSessionUser(req);
+    if (!sessionUser?.email || !sessionUser?.role) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    if (String(sessionUser.role).toLowerCase() !== 'teacher') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const teacher = await resolveTeacherForSessionUser(sessionUser);
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found for this user' });
+    }
+
+    const mentorClass = await prisma.class_layout.findFirst({
+      where: { mentor_id: Number(teacher.id) },
+      select: {
+        id: true,
+        name: true,
+        mentor_id: true,
+        course_id: true,
+        school_year_id: true,
+      },
+    });
+
+    if (!mentorClass) {
+      return res.status(403).json({
+        message: 'Only mentor teachers can view students.',
+      });
+    }
+
+    const students = await prisma.student.findMany({
+      where: { class_id: Number(mentorClass.id) },
+      include: { class_layout: true },
+      orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
+    });
+
+    return res.status(200).json({ mentor_class: mentorClass, students });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error retrieving mentor students' });
   }
 };

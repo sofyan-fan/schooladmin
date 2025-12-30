@@ -7,8 +7,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import AanwezigheidTab from '@/pages/students/AanwezigheidTab';
 import GegevensTab from '@/pages/students/GegevensTab';
 import OverviewTab from '@/pages/students/OverviewTab';
+import VoortgangTab from '@/pages/students/VoortgangTab';
 import { ArrowLeft, ArrowUpDown, Download, User } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -41,9 +43,13 @@ import classAPI from '@/apis/classAPI';
 import enrollmentAPI from '@/apis/enrollmentAPI';
 import financeAPI from '@/apis/financeAPI';
 import moduleAPI from '@/apis/moduleAPI';
+import RequestHandler from '@/apis/RequestHandler';
 import resultAPI from '@/apis/resultAPI';
+import rosterAPI from '@/apis/rosterAPI';
 import studentAPI from '@/apis/studentAPI';
+import studentNoteAPI from '@/apis/studentNoteAPI';
 import { absenceAPI } from '@/apis/timeregisterAPI';
+import NotitiesTab from '@/pages/students/NotitiesTab';
 import ExportDialog from '@/utils/ExportDialog';
 import exportScheduleToPDF from '@/utils/exportScheduleToPDF';
 import ExcelJS from 'exceljs';
@@ -56,6 +62,208 @@ const normalizePaymentMethod = (method) => {
   if (m === 'ideal' || m === 'bank') return 'Bank';
   if (m === 'cash' || m === 'contant') return 'Contant';
   return method;
+};
+
+const dayNameToNumber = (dayName) => {
+  const days = {
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+    Sunday: 7,
+  };
+  return days[dayName] || 1;
+};
+
+const rosterDayToNumber = (raw) => {
+  if (raw === null || raw === undefined) return null;
+  const parsed = parseInt(raw, 10);
+  if (!Number.isNaN(parsed)) return parsed === 0 ? 7 : parsed;
+  return dayNameToNumber(String(raw));
+};
+
+const jsDayToMon1Sun7 = (jsDay) => (jsDay === 0 ? 7 : jsDay);
+
+const timeLabelFromValue = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') {
+    // e.g. "09:00:00" or "09:00"
+    if (value.includes(':') && value.length >= 5) return value.slice(0, 5);
+  }
+  try {
+    const dt = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(dt.getTime())) return '';
+    const hh = String(dt.getHours()).padStart(2, '0');
+    const mm = String(dt.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  } catch {
+    return '';
+  }
+};
+
+const computeAttendanceData = ({ rosters, absences, days = 30 }) => {
+  const rosterArr = Array.isArray(rosters) ? rosters : [];
+  const absArr = Array.isArray(absences) ? absences : [];
+
+  const end = new Date();
+  end.setHours(12, 0, 0, 0);
+  const start = new Date(end);
+  start.setDate(end.getDate() - Math.max(days - 1, 0));
+  start.setHours(12, 0, 0, 0);
+
+  const rows = [];
+
+  // If there is no roster, we can still show recorded absences (no "present" inference).
+  if (rosterArr.length === 0 && absArr.length > 0) {
+    const mapped = absArr
+      .map((a, idx) => {
+        const reason = a?.reason || '';
+        const normalizedReason = String(reason).toLowerCase();
+        let status = 'absent';
+        if (normalizedReason.includes('te laat')) status = 'late';
+        else if (normalizedReason.includes('ziek')) status = 'sick';
+        else status = 'absent';
+
+        const date = a?.date ? new Date(a.date) : null;
+
+        return {
+          key: `abs-${a?.id ?? idx}`,
+          date,
+          rosterId: a?.roster_id ?? null,
+          lessonName: 'Les',
+          className: '',
+          startTime: '',
+          endTime: '',
+          status,
+          reason,
+        };
+      })
+      .filter((r) => !r.date || (r.date >= start && r.date <= end));
+
+    mapped.sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return db - da;
+    });
+
+    const totals = {
+      total: mapped.length,
+      present: 0,
+      late: mapped.filter((r) => r.status === 'late').length,
+      sick: mapped.filter((r) => r.status === 'sick').length,
+      absent: mapped.filter((r) => r.status === 'absent').length,
+    };
+    const absentCombined = totals.absent + totals.sick;
+    const donutTotal = Math.max(
+      totals.present + totals.late + absentCombined,
+      1
+    );
+    const presentPct = Math.round((totals.present / donutTotal) * 100);
+
+    return {
+      stats: {
+        present: totals.present,
+        late: totals.late,
+        absent: absentCombined,
+        presentPct,
+        donutData: [
+          {
+            name: 'present',
+            value: totals.present,
+            fill: 'var(--color-present)',
+          },
+          { name: 'late', value: totals.late, fill: 'var(--color-late)' },
+          {
+            name: 'absent',
+            value: absentCombined,
+            fill: 'var(--color-absent)',
+          },
+        ],
+      },
+      rows: mapped,
+      totals,
+      rangeLabel: `Laatste ${days} dagen`,
+    };
+  }
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dateCopy = new Date(d);
+    dateCopy.setHours(12, 0, 0, 0);
+
+    const normalizedDay = jsDayToMon1Sun7(dateCopy.getDay());
+
+    rosterArr.forEach((roster) => {
+      const rosterDay = rosterDayToNumber(roster?.day_of_week);
+      if (!rosterDay || rosterDay !== normalizedDay) return;
+
+      const matchingAbsence = absArr.find(
+        (a) =>
+          Number(a?.roster_id) === Number(roster?.id) &&
+          a?.date &&
+          new Date(a.date).toDateString() === dateCopy.toDateString()
+      );
+
+      const reason = matchingAbsence?.reason || '';
+      const normalizedReason = String(reason).toLowerCase();
+
+      let status = 'present';
+      if (matchingAbsence) {
+        if (normalizedReason.includes('te laat')) status = 'late';
+        else if (normalizedReason.includes('ziek')) status = 'sick';
+        else status = 'absent';
+      }
+
+      rows.push({
+        key: `${roster?.id ?? 'roster'}-${dateCopy.toISOString().slice(0, 10)}`,
+        date: dateCopy,
+        rosterId: roster?.id ?? null,
+        lessonName: roster?.subject?.name || roster?.title || 'Les',
+        className: roster?.class_layout?.name || '',
+        startTime: timeLabelFromValue(roster?.start_time || roster?.start),
+        endTime: timeLabelFromValue(roster?.end_time || roster?.end),
+        status,
+        reason,
+      });
+    });
+  }
+
+  rows.sort((a, b) => {
+    const da = a.date ? new Date(a.date).getTime() : 0;
+    const db = b.date ? new Date(b.date).getTime() : 0;
+    if (db !== da) return db - da;
+    return String(a.startTime || '').localeCompare(String(b.startTime || ''));
+  });
+
+  const totals = {
+    total: rows.length,
+    present: rows.filter((r) => r.status === 'present').length,
+    late: rows.filter((r) => r.status === 'late').length,
+    sick: rows.filter((r) => r.status === 'sick').length,
+    absent: rows.filter((r) => r.status === 'absent').length,
+  };
+
+  const absentCombined = totals.absent + totals.sick;
+  const donutTotal = Math.max(totals.present + totals.late + absentCombined, 1);
+  const presentPct = Math.round((totals.present / donutTotal) * 100);
+
+  return {
+    stats: {
+      present: totals.present,
+      late: totals.late,
+      absent: absentCombined, // includes sick
+      presentPct,
+      donutData: [
+        { name: 'present', value: totals.present, fill: 'var(--color-present)' },
+        { name: 'late', value: totals.late, fill: 'var(--color-late)' },
+        { name: 'absent', value: absentCombined, fill: 'var(--color-absent)' },
+      ],
+    },
+    rows,
+    totals,
+    rangeLabel: `Laatste ${days} dagen`,
+  };
 };
 
 // const fmtDate = (d) =>
@@ -73,18 +281,26 @@ export default function StudentDetailsPage2() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = (user?.role || '').toLowerCase() === 'admin';
+  const role = (user?.role || '').toLowerCase();
+  const isAdmin = role === 'admin';
+  const isTeacher = role === 'teacher';
+  const isStudent = role === 'student';
+  const canSeePaymentsTab = isAdmin || isStudent;
 
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState(null);
   const [klass, setKlass] = useState(null);
+  const [currentTeacher, setCurrentTeacher] = useState(null);
+  const [currentTeacherLoading, setCurrentTeacherLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [absences, setAbsences] = useState([]);
+  const [rosters, setRosters] = useState([]);
   const [moduleNameBySubjectId, setModuleNameBySubjectId] = useState({});
   const [search, setSearch] = useState('');
   const [moduleFilters, setModuleFilters] = useState([]);
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' });
   const [studentNotes, setStudentNotes] = useState([]);
+  const [studentNotesLoading, setStudentNotesLoading] = useState(false);
   const location = useLocation();
   const initialTab = useMemo(() => {
     try {
@@ -103,11 +319,48 @@ export default function StudentDetailsPage2() {
     []
   );
 
+  const isMentorTeacherForThisStudent =
+    isTeacher &&
+    Number(currentTeacher?.id) &&
+    Number(klass?.mentorId ?? klass?.mentor_id) === Number(currentTeacher?.id);
+
+  const canSeePrivateNotes = isStudent || isMentorTeacherForThisStudent;
+  const canPublishPrivateNotes = isMentorTeacherForThisStudent;
+
+  // Resolve the current logged-in teacher profile (to check mentor permissions)
+  useEffect(() => {
+    if (!isTeacher) {
+      setCurrentTeacher(null);
+      setCurrentTeacherLoading(false);
+      return;
+    }
+    let cancelled = false;
+    async function load() {
+      setCurrentTeacherLoading(true);
+      try {
+        const resp = await RequestHandler.get('/auth/me/teacher');
+        if (!cancelled) {
+          setCurrentTeacher(resp?.data || null);
+        }
+      } catch (e) {
+        console.error('Failed to load current teacher profile', e);
+        if (!cancelled) setCurrentTeacher(null);
+      } finally {
+        if (!cancelled) setCurrentTeacherLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [isTeacher]);
+
   useEffect(() => {
     let mounted = true;
     async function run() {
       setLoading(true);
       setStudent(null);
+      setRosters([]);
       try {
         const s = await studentAPI.get_student_by_id(id);
         if (!mounted) return;
@@ -124,18 +377,24 @@ export default function StudentDetailsPage2() {
           ? financeAPI.get_financial_logs({ student_id: sidNum })
           : financeAPI.get_financial_logs();
 
-        const [allResults, allAbsences, allModules, studentFinanceLogs] =
+        const rostersPromise = s?.class_id
+          ? rosterAPI.get_rosters({ class_id: s.class_id })
+          : Promise.resolve([]);
+
+        const [allResults, allAbsences, allModules, studentFinanceLogs, classRosters] =
           await Promise.all([
             resultAPI.get_results(),
             absenceAPI.getAllAbsences(),
             moduleAPI.get_modules(),
             financePromise,
+            rostersPromise,
           ]);
         if (!mounted) return;
 
         const sid = Number(id);
         setResults((allResults || []).filter((r) => r.student_id === sid));
         setAbsences((allAbsences || []).filter((a) => a.student_id === sid));
+        setRosters(Array.isArray(classRosters) ? classRosters : []);
         setFinanceLogs(
           Array.isArray(studentFinanceLogs) ? studentFinanceLogs : []
         );
@@ -161,6 +420,11 @@ export default function StudentDetailsPage2() {
     };
   }, [id]);
 
+  const attendanceData = useMemo(
+    () => computeAttendanceData({ rosters, absences, days: 30 }),
+    [rosters, absences]
+  );
+
   const studentStats = useMemo(() => {
     if (!student) return null;
 
@@ -176,17 +440,11 @@ export default function StudentDetailsPage2() {
         ).toFixed(1)
         : null;
 
-    const totalAbs = absences.length;
-    const late = absences.filter((a) => a.reason === 'Te Laat').length;
-    const absent = totalAbs - late;
-
-    // Placeholder total lessons; replace when you have real totals
-    const assumedTotalLessons = 30;
-    const present = Math.max(0, assumedTotalLessons - totalAbs);
-
-    const donutTotal = Math.max(present + late + absent, 1);
-    const presentPct = Math.round((present / donutTotal) * 100);
-    console.log('Student Data: ', student);
+    const present = attendanceData?.stats?.present ?? 0;
+    const late = attendanceData?.stats?.late ?? 0;
+    const absent = attendanceData?.stats?.absent ?? 0;
+    const presentPct = attendanceData?.stats?.presentPct ?? 0;
+    const donutData = attendanceData?.stats?.donutData ?? [];
 
     return {
       fullName: [student.first_name, student.last_name]
@@ -231,14 +489,10 @@ export default function StudentDetailsPage2() {
         late,
         absent,
         presentPct,
-        donutData: [
-          { name: 'present', value: present, fill: 'var(--color-present)' },
-          { name: 'late', value: late, fill: 'var(--color-late)' },
-          { name: 'absent', value: absent, fill: 'var(--color-absent)' },
-        ],
+        donutData,
       },
     };
-  }, [student, results, absences, klass]);
+  }, [student, results, klass, attendanceData]);
 
   // Load course payment data for Betalingen tab from localStorage
   useEffect(() => {
@@ -361,67 +615,45 @@ export default function StudentDetailsPage2() {
     studentStats,
   ]);
 
-  const studentNotesKey =
-    student?.id ??
-    student?.email ??
-    'onbekende_student';
-  const studentNotesStorageKey = `studentNotes:${studentNotesKey}`;
-
+  // Private notes (teacher <-> student): fetch from backend
   useEffect(() => {
-    if (!student) {
-      setStudentNotes([]);
-      return;
-    }
-    try {
-      if (typeof window === 'undefined') {
-        setStudentNotes([]);
+    let mounted = true;
+    async function run() {
+      if (!student?.id || !canSeePrivateNotes) {
+        if (mounted) setStudentNotes([]);
         return;
       }
-      const raw = window.localStorage.getItem(studentNotesStorageKey);
-      if (!raw) {
-        setStudentNotes([]);
-        return;
+      setStudentNotesLoading(true);
+      try {
+        const data = await studentNoteAPI.get_student_notes(student.id);
+        if (!mounted) return;
+        setStudentNotes(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error('Failed to load student notes:', e);
+        if (mounted) setStudentNotes([]);
+      } finally {
+        if (mounted) setStudentNotesLoading(false);
       }
-      const parsed = JSON.parse(raw);
-      setStudentNotes(Array.isArray(parsed) ? parsed : []);
-    } catch (e) {
-      console.error('Failed to load student notes from localStorage:', e);
-      setStudentNotes([]);
     }
-  }, [student, studentNotesStorageKey]);
-
-  const handleAddStudentNote = ({ subject, text }) => {
-    const trimmedText = (text || '').trim();
-    const trimmedSubject = (subject || '').trim();
-    if (!trimmedText) return;
-
-    const newNote = {
-      id: Date.now(),
-      subject: trimmedSubject || 'Notitie',
-      text: trimmedText,
-      createdAt: new Date().toISOString(),
+    run();
+    return () => {
+      mounted = false;
     };
+  }, [student?.id, canSeePrivateNotes]);
 
-    try {
-      let current = [];
-      if (typeof window !== 'undefined') {
-        const raw = window.localStorage.getItem(studentNotesStorageKey);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          current = Array.isArray(parsed) ? parsed : [];
-        }
-      }
-      const updated = [newNote, ...current];
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(
-          studentNotesStorageKey,
-          JSON.stringify(updated)
-        );
-      }
-      setStudentNotes(updated);
-    } catch (e) {
-      console.error('Failed to save student note to localStorage:', e);
+  const handleAddStudentNote = async ({ subject, text }) => {
+    if (!canPublishPrivateNotes) {
+      throw new Error('Forbidden');
     }
+    if (!student?.id) {
+      throw new Error('Student not loaded');
+    }
+    const created = await studentNoteAPI.create_student_note(student.id, {
+      subject,
+      text,
+    });
+    setStudentNotes((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+    return created;
   };
 
   const getModuleName = useCallback(
@@ -704,7 +936,7 @@ export default function StudentDetailsPage2() {
     }
   };
 
-  if (loading) {
+  if (loading || (isTeacher && currentTeacherLoading)) {
     return (
       <div className="mx-auto max-w-[1200px] px-2 sm:px-6">
         <div className="animate-pulse space-y-6">
@@ -733,15 +965,34 @@ export default function StudentDetailsPage2() {
     );
   }
 
+  // Mentor teacher access restriction: teachers can only view students in their mentored class.
+  if (isTeacher && !isMentorTeacherForThisStudent) {
+    return (
+      <div className="mx-auto max-w-[1200px] px-2 sm:px-6">
+        <Button variant="ghost" onClick={() => navigate('/mijn-leerlingen')}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Terug naar mijn leerlingen
+        </Button>
+        <div className="mt-8 text-center">
+          <h2 className="text-xl font-semibold">Geen toegang</h2>
+          <p className="mt-2 text-muted-foreground">
+            Je kunt alleen leerlingen bekijken uit jouw mentorklas.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const TABS = [
     { value: 'overzicht', label: 'Overzicht' },
     { value: 'gegevens', label: 'Gegevens' },
     { value: 'resultaten', label: 'Resultaten' },
     { value: 'aanwezigheid', label: 'Aanwezigheid' },
-    { value: 'betalingen', label: 'Betalingen' },
+    ...(canSeePaymentsTab ? [{ value: 'betalingen', label: 'Betalingen' }] : []),
     { value: 'voortgang', label: 'Voortgang' },
-    { value: 'notities', label: 'Notities' },
+    ...(canSeePrivateNotes ? [{ value: 'notities', label: 'Notities' }] : []),
   ];
+  const allowedTabValues = new Set(TABS.map((t) => t.value));
+  const activeTab = allowedTabValues.has(tab) ? tab : 'overzicht';
 
   return (
     <div className="w-full space-y-6 px-4 sm:px-6 lg:px-8">
@@ -805,11 +1056,11 @@ export default function StudentDetailsPage2() {
       </div>
 
       {/* Sticky sub-nav (styled TabsList) */}
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setTab} className="w-full">
         <div className="sticky top-16 z-30 -mx-4 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2">
           {/* Mobile: Dropdown */}
           <div className="block sm:hidden">
-            <Select value={tab} onValueChange={setTab}>
+            <Select value={activeTab} onValueChange={setTab}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Navigatie" />
               </SelectTrigger>
@@ -854,7 +1105,7 @@ export default function StudentDetailsPage2() {
             student={student}
             studentStats={studentStats}
             setTab={setTab}
-            onAddNote={handleAddStudentNote}
+            onAddNote={canPublishPrivateNotes ? handleAddStudentNote : undefined}
           />
         </TabsContent>
 
@@ -1049,15 +1300,10 @@ export default function StudentDetailsPage2() {
 
         {/* AANWEZIGHEID */}
         <TabsContent value="aanwezigheid" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Alle Aanwezigheidsregistraties</CardTitle>
-              <CardDescription>
-                Gedetailleerd overzicht van alle registraties.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>{/* absence table here */}</CardContent>
-          </Card>
+          <AanwezigheidTab
+            attendance={attendanceData}
+            klassName={studentStats?.meta?.klas ?? klass?.name ?? '—'}
+          />
         </TabsContent>
 
         {/* BETALINGEN */}
@@ -1173,68 +1419,22 @@ export default function StudentDetailsPage2() {
           </Card>
         </TabsContent>
 
-        {/* Simple placeholders (consistent tone) */}
-        {['voortgang'].map((v) => (
-          <TabsContent key={v} value={v} className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="capitalize">{v}</CardTitle>
-                <CardDescription>
-                  Nog geen gegevens beschikbaar.
-                </CardDescription>
-              </CardHeader>
-              <CardContent />
-            </Card>
-          </TabsContent>
-        ))}
-
-        {/* NOTITIES */}
-        <TabsContent value="notities" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notities</CardTitle>
-              <CardDescription>
-                Persoonlijke notities over deze student. Deze worden alleen in
-                deze browser opgeslagen.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {studentNotes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Er zijn nog geen notities. Gebruik de kaart &quot;Notities&quot;
-                  op het overzicht om een eerste notitie toe te voegen.
-                </p>
-              ) : (
-                <div className="space-y-4 max-h-[480px] overflow-y-auto pr-2">
-                  {studentNotes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="border rounded-lg p-4 bg-white/60 flex flex-col gap-1"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-semibold text-regular">
-                          {note.subject || 'Notitie'}
-                        </h3>
-                        {note.createdAt && (
-                          <span className="text-xs text-muted-foreground">
-                            {format(
-                              note.createdAt,
-                              'dd-MM-yyyy HH:mm',
-                              { locale: nl }
-                            )}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-regular whitespace-pre-wrap">
-                        {note.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* VOORTGANG */}
+        <TabsContent value="voortgang" className="mt-6">
+          <VoortgangTab student={student} />
         </TabsContent>
+
+        {/* NOTITIES (private teacher <-> student) */}
+        {canSeePrivateNotes ? (
+          <TabsContent value="notities" className="mt-6">
+            <NotitiesTab
+              notes={studentNotes}
+              isLoading={studentNotesLoading}
+              canPublish={canPublishPrivateNotes}
+              onAddNote={canPublishPrivateNotes ? handleAddStudentNote : undefined}
+            />
+          </TabsContent>
+        ) : null}
       </Tabs>
     </div>
   );
