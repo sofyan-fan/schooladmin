@@ -37,6 +37,7 @@ export default function StudentsPage() {
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState('');
   const [columnVisibility, setColumnVisibility] = useState({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -249,6 +250,22 @@ export default function StudentsPage() {
     </TableRow>
   );
 
+  // Global filter function to search across multiple columns
+  const globalFilterFn = useCallback((row, columnId, filterValue) => {
+    const search = filterValue.toLowerCase();
+    const firstName = (row.original.firstName ?? '').toLowerCase();
+    const lastName = (row.original.lastName ?? '').toLowerCase();
+    const email = (row.original.email ?? '').toLowerCase();
+    const className = (row.original.className ?? '').toLowerCase();
+
+    return (
+      firstName.includes(search) ||
+      lastName.includes(search) ||
+      email.includes(search) ||
+      className.includes(search)
+    );
+  }, []);
+
   const table = useReactTable({
     data: students,
     columns,
@@ -257,13 +274,16 @@ export default function StudentsPage() {
       columnVisibility,
       pagination,
       columnFilters,
+      globalFilter,
       rowSelection,
     },
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
+    globalFilterFn,
     enableRowSelection: true,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
@@ -368,7 +388,7 @@ export default function StudentsPage() {
         buttonText="Leerling Toevoegen"
         onAdd={() => setOpenCreateDialog(true)}
       />
-      <Toolbar table={table} filterColumn="firstName" />
+      <Toolbar table={table} useGlobalFilter filterPlaceholder="Zoek op naam, e-mail of klas" />
       {table.getSelectedRowModel().rows.length > 0 && (
         <div className="mb-2 flex items-center justify-between rounded-md border bg-muted/40 p-2">
           <div className="text-sm text-muted-foreground">

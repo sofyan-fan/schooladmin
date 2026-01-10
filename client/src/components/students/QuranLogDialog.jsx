@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X } from 'lucide-react';
 
 import ComboboxField from '@/components/ui/combobox';
@@ -262,299 +263,315 @@ export default function QuranLogDialog({
           <DialogTitle>Nieuwe Qur'an Log</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4">
-          {/* Student */}
-          <div className="grid gap-2">
-            <ComboboxField
-              label="Leerling"
-              items={studentItems}
-              value={newLog.studentId || ''}
-              onChange={(v) => {
-                setNewLog((s) => ({ ...s, studentId: v }));
-                setErrors((prev) => ({ ...prev, studentId: '' }));
-              }}
-              placeholder="Kies leerling"
-              error={errors.studentId}
-            />
-          </div>
+        <Tabs defaultValue="log" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4 border-b">
+            <TabsTrigger value="log" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              Qur'an Log
+            </TabsTrigger>
+            <TabsTrigger value="beoordeling" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              Beoordeling
+            </TabsTrigger>
+          </TabsList>
 
-          <div className="grid gap-2">
-            {/* Begin */}
-            <h2 className="text-lg font-semibold">Begin</h2>
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
-              <ComboboxField
-                label="Surah"
-                items={beginSurahItems}
-                value={begin.surahId}
-                onChange={(v) => {
-                  pushBegin({ surahId: v });
-                  setErrors((prev) => ({
-                    ...prev,
-                    beginSurah: '',
-                    beginAyah: '',
-                  }));
-                }}
-                placeholder="—"
-                error={errors.beginSurah}
-              />
-              <ComboboxField
-                label="Ayah"
-                items={beginAyahItems}
-                value={begin.ayah}
-                onChange={(v) => {
-                  pushBegin({ ayah: v });
-                  setErrors((prev) => ({ ...prev, beginAyah: '' }));
-                }}
-                placeholder={
-                  begin.surahId
-                    ? beginAyahItems.length
-                      ? 'Kies ayah'
-                      : 'Geen ayah'
-                    : 'Kies eerst surah'
-                }
-                disabled={!begin.surahId || beginAyahItems.length === 0}
-                error={errors.beginAyah}
-              />
-              <div className="flex flex-col">
-                <Label>Hizb</Label>
-                <div className={
-                  `h-10 flex items-center px-3 rounded-md border ` +
-                  (begin.surahId && begin.ayah
-                    ? 'bg-white text-muted-foreground'
-                    : 'bg-muted/30 text-muted-foreground')
-                }>
-                  {begin.surahId && begin.ayah ? `Hizb ${hizbFor(begin.surahId, begin.ayah) || '—'}` : '—'}
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <Label>&nbsp;</Label>
-                <Button
-                  variant="ghost"
-                  className="bg-white border h-10 w-10 rounded-full p-0 justify-center"
-                  onClick={clearBegin}
-                  aria-label="Begin wissen"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              {beginAyahHint ? (
-                <div className="sm:col-span-4 text-sm text-muted-foreground">
-                  {beginAyahHint}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Einde */}
-          <div className="grid gap-2">
-            <h2 className="text-lg font-semibold">Einde</h2>
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
-              <ComboboxField
-                label="Surah"
-                items={endSurahItems}
-                value={end.surahId}
-                onChange={(v) => {
-                  pushEnd({ surahId: v });
-                  setErrors((prev) => ({
-                    ...prev,
-                    endSurah: '',
-                    endAyah: '',
-                  }));
-                }}
-                placeholder="—"
-                error={errors.endSurah}
-              />
-              <ComboboxField
-                label="Ayah"
-                items={endAyahItems}
-                value={end.ayah}
-                onChange={(v) => {
-                  pushEnd({ ayah: v });
-                  setErrors((prev) => ({ ...prev, endAyah: '' }));
-                }}
-                placeholder={
-                  end.surahId
-                    ? endAyahItems.length
-                      ? 'Kies ayah'
-                      : 'Geen ayah'
-                    : 'Kies eerst surah'
-                }
-                disabled={!end.surahId || endAyahItems.length === 0}
-                error={errors.endAyah}
-              />
-              <div className="flex flex-col">
-                <Label>Hizb</Label>
-                <div className={
-                  `h-10 flex items-center px-3 rounded-md border ` +
-                  (end.surahId && end.ayah
-                    ? 'bg-white text-muted-foreground'
-                    : 'bg-muted/30 text-muted-foreground')
-                }>
-                  {end.surahId && end.ayah ? `Hizb ${hizbFor(end.surahId, end.ayah) || '—'}` : '—'}
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <Label>&nbsp;</Label>
-                <Button
-                  variant="ghost"
-                  className="bg-white border h-10 w-10 rounded-full p-0 justify-center"
-                  onClick={clearEnd}
-                  aria-label="Einde wissen"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              {endAyahHint ? (
-                <div className="sm:col-span-4 text-sm text-muted-foreground">
-                  {endAyahHint}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Scores */}
-          <div className="grid gap-2">
-            <h2 className="text-lg font-semibold">Beoordeling (0–10)</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
+          {/* Tab 1: Qur'an Log */}
+          <TabsContent value="log" className="min-h-[420px]">
+            <div className="grid gap-4">
+              {/* Student */}
               <div className="grid gap-2">
-                <Label htmlFor="score-nourania">Nourania</Label>
-                <Input
-                  id="score-nourania"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={newLog.nourania ?? ''}
-                  onChange={(e) => {
-                    setNewLog((s) => ({ ...s, nourania: e.target.value }));
-                    setErrors((prev) => ({ ...prev, nourania: '' }));
+                <ComboboxField
+                  label="Leerling"
+                  items={studentItems}
+                  value={newLog.studentId || ''}
+                  onChange={(v) => {
+                    setNewLog((s) => ({ ...s, studentId: v }));
+                    setErrors((prev) => ({ ...prev, studentId: '' }));
                   }}
-                  placeholder="0–10"
+                  placeholder="Kies leerling"
+                  error={errors.studentId}
                 />
-                {errors.nourania ? (
-                  <p className="text-sm text-destructive -mt-1">
-                    {errors.nourania}
-                  </p>
-                ) : null}
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="score-tilawa">Tilāwa</Label>
-                <Input
-                  id="score-tilawa"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={newLog.tilawa ?? ''}
-                  onChange={(e) => {
-                    setNewLog((s) => ({ ...s, tilawa: e.target.value }));
-                    setErrors((prev) => ({ ...prev, tilawa: '' }));
-                  }}
-                  placeholder="0–10"
-                />
-                {errors.tilawa ? (
-                  <p className="text-sm text-destructive -mt-1">
-                    {errors.tilawa}
-                  </p>
-                ) : null}
+                {/* Begin */}
+                <h2 className="text-lg font-semibold">Begin</h2>
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
+                  <ComboboxField
+                    label="Surah"
+                    items={beginSurahItems}
+                    value={begin.surahId}
+                    onChange={(v) => {
+                      pushBegin({ surahId: v });
+                      setErrors((prev) => ({
+                        ...prev,
+                        beginSurah: '',
+                        beginAyah: '',
+                      }));
+                    }}
+                    placeholder="—"
+                    error={errors.beginSurah}
+                  />
+                  <ComboboxField
+                    label="Ayah"
+                    items={beginAyahItems}
+                    value={begin.ayah}
+                    onChange={(v) => {
+                      pushBegin({ ayah: v });
+                      setErrors((prev) => ({ ...prev, beginAyah: '' }));
+                    }}
+                    placeholder={
+                      begin.surahId
+                        ? beginAyahItems.length
+                          ? 'Kies ayah'
+                          : 'Geen ayah'
+                        : 'Kies eerst surah'
+                    }
+                    disabled={!begin.surahId || beginAyahItems.length === 0}
+                    error={errors.beginAyah}
+                  />
+                  <div className="flex flex-col">
+                    <Label>Hizb</Label>
+                    <div className={
+                      `h-10 flex items-center px-3 rounded-md border ` +
+                      (begin.surahId && begin.ayah
+                        ? 'bg-white text-muted-foreground'
+                        : 'bg-muted/30 text-muted-foreground')
+                    }>
+                      {begin.surahId && begin.ayah ? `Hizb ${hizbFor(begin.surahId, begin.ayah) || '—'}` : '—'}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <Label>&nbsp;</Label>
+                    <Button
+                      variant="ghost"
+                      className="bg-white border h-10 w-10 rounded-full p-0 justify-center"
+                      onClick={clearBegin}
+                      aria-label="Begin wissen"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {beginAyahHint ? (
+                    <div className="sm:col-span-4 text-sm text-muted-foreground">
+                      {beginAyahHint}
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
+              {/* Einde */}
               <div className="grid gap-2">
-                <Label htmlFor="score-tajweed">Tajwīd</Label>
-                <Input
-                  id="score-tajweed"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={newLog.tajweed ?? ''}
-                  onChange={(e) => {
-                    setNewLog((s) => ({ ...s, tajweed: e.target.value }));
-                    setErrors((prev) => ({ ...prev, tajweed: '' }));
-                  }}
-                  placeholder="0–10"
-                />
-                {errors.tajweed ? (
-                  <p className="text-sm text-destructive -mt-1">
-                    {errors.tajweed}
-                  </p>
-                ) : null}
+                <h2 className="text-lg font-semibold">Einde</h2>
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
+                  <ComboboxField
+                    label="Surah"
+                    items={endSurahItems}
+                    value={end.surahId}
+                    onChange={(v) => {
+                      pushEnd({ surahId: v });
+                      setErrors((prev) => ({
+                        ...prev,
+                        endSurah: '',
+                        endAyah: '',
+                      }));
+                    }}
+                    placeholder="—"
+                    error={errors.endSurah}
+                  />
+                  <ComboboxField
+                    label="Ayah"
+                    items={endAyahItems}
+                    value={end.ayah}
+                    onChange={(v) => {
+                      pushEnd({ ayah: v });
+                      setErrors((prev) => ({ ...prev, endAyah: '' }));
+                    }}
+                    placeholder={
+                      end.surahId
+                        ? endAyahItems.length
+                          ? 'Kies ayah'
+                          : 'Geen ayah'
+                        : 'Kies eerst surah'
+                    }
+                    disabled={!end.surahId || endAyahItems.length === 0}
+                    error={errors.endAyah}
+                  />
+                  <div className="flex flex-col">
+                    <Label>Hizb</Label>
+                    <div className={
+                      `h-10 flex items-center px-3 rounded-md border ` +
+                      (end.surahId && end.ayah
+                        ? 'bg-white text-muted-foreground'
+                        : 'bg-muted/30 text-muted-foreground')
+                    }>
+                      {end.surahId && end.ayah ? `Hizb ${hizbFor(end.surahId, end.ayah) || '—'}` : '—'}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <Label>&nbsp;</Label>
+                    <Button
+                      variant="ghost"
+                      className="bg-white border h-10 w-10 rounded-full p-0 justify-center"
+                      onClick={clearEnd}
+                      aria-label="Einde wissen"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {endAyahHint ? (
+                    <div className="sm:col-span-4 text-sm text-muted-foreground">
+                      {endAyahHint}
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="score-hifdh">Hifdh</Label>
-                <Input
-                  id="score-hifdh"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={newLog.hifdh ?? ''}
-                  onChange={(e) => {
-                    setNewLog((s) => ({ ...s, hifdh: e.target.value }));
-                    setErrors((prev) => ({ ...prev, hifdh: '' }));
-                  }}
-                  placeholder="0–10"
-                />
-                {errors.hifdh ? (
-                  <p className="text-sm text-destructive -mt-1">
-                    {errors.hifdh}
-                  </p>
-                ) : null}
+              {/* Date */}
+              <hr />
+              <div className="grid sm:grid-cols-3 gap-3 items-end">
+                <div className="grid gap-2 col-span-1">
+                  <Label>Datum</Label>
+                  <DatePicker
+                    buttonClassName="bg-white py-5"
+                    value={newLog.date}
+                    toYear={new Date().getFullYear()}
+                    maxDate={new Date()}
+                    required
+                    onChange={(date) => {
+                      const toLocalYMD = (d) => {
+                        if (!d) return '';
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        return `${y}-${m}-${day}`; // nl-friendly YYYY-MM-DD
+                      };
+                      setNewLog((s) => ({
+                        ...s,
+                        date: date ? toLocalYMD(date) : '',
+                      }));
+                      setErrors((prev) => ({ ...prev, date: '' }));
+                    }}
+                  />
+                  {errors.date ? (
+                    <p className="text-sm text-destructive mt-1">{errors.date}</p>
+                  ) : null}
+                </div>
+                {/* Description */}
+                <div className="grid gap-2 w-full col-span-2">
+                  <Label htmlFor="description">Omschrijving</Label>
+                  <Input
+                    id="description"
+                    className="w-full"
+                    value={newLog.description}
+                    onChange={(e) =>
+                      setNewLog((s) => ({ ...s, description: e.target.value }))
+                    }
+                    placeholder="Optioneel"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </TabsContent>
 
-          {/* Date */}
-          <hr />
-          <div className="grid sm:grid-cols-3 gap-3 items-end">
-            <div className="grid gap-2 col-span-1">
-              <Label>Datum</Label>
-              <DatePicker
-                buttonClassName="bg-white py-5"
-                value={newLog.date}
-                toYear={new Date().getFullYear()}
-                maxDate={new Date()}
-                required
-                onChange={(date) => {
-                  const toLocalYMD = (d) => {
-                    if (!d) return '';
-                    const y = d.getFullYear();
-                    const m = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    return `${y}-${m}-${day}`; // nl-friendly YYYY-MM-DD
-                  };
-                  setNewLog((s) => ({
-                    ...s,
-                    date: date ? toLocalYMD(date) : '',
-                  }));
-                  setErrors((prev) => ({ ...prev, date: '' }));
-                }}
-              />
-              {errors.date ? (
-                <p className="text-sm text-destructive mt-1">{errors.date}</p>
-              ) : null}
+          {/* Tab 2: Beoordeling */}
+          <TabsContent value="beoordeling" className="min-h-[420px]">
+            <div className="grid gap-4">
+              <h2 className="text-lg font-semibold">Beoordeling (0–10)</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="score-nourania">Nourania</Label>
+                  <Input
+                    id="score-nourania"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={10}
+                    step={1}
+                    value={newLog.nourania ?? ''}
+                    onChange={(e) => {
+                      setNewLog((s) => ({ ...s, nourania: e.target.value }));
+                      setErrors((prev) => ({ ...prev, nourania: '' }));
+                    }}
+                    placeholder="0–10"
+                  />
+                  {errors.nourania ? (
+                    <p className="text-sm text-destructive -mt-1">
+                      {errors.nourania}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="score-tilawa">Tilāwa</Label>
+                  <Input
+                    id="score-tilawa"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={10}
+                    step={1}
+                    value={newLog.tilawa ?? ''}
+                    onChange={(e) => {
+                      setNewLog((s) => ({ ...s, tilawa: e.target.value }));
+                      setErrors((prev) => ({ ...prev, tilawa: '' }));
+                    }}
+                    placeholder="0–10"
+                  />
+                  {errors.tilawa ? (
+                    <p className="text-sm text-destructive -mt-1">
+                      {errors.tilawa}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="score-tajweed">Tajwīd</Label>
+                  <Input
+                    id="score-tajweed"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={10}
+                    step={1}
+                    value={newLog.tajweed ?? ''}
+                    onChange={(e) => {
+                      setNewLog((s) => ({ ...s, tajweed: e.target.value }));
+                      setErrors((prev) => ({ ...prev, tajweed: '' }));
+                    }}
+                    placeholder="0–10"
+                  />
+                  {errors.tajweed ? (
+                    <p className="text-sm text-destructive -mt-1">
+                      {errors.tajweed}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="score-hifdh">Hifdh</Label>
+                  <Input
+                    id="score-hifdh"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={10}
+                    step={1}
+                    value={newLog.hifdh ?? ''}
+                    onChange={(e) => {
+                      setNewLog((s) => ({ ...s, hifdh: e.target.value }));
+                      setErrors((prev) => ({ ...prev, hifdh: '' }));
+                    }}
+                    placeholder="0–10"
+                  />
+                  {errors.hifdh ? (
+                    <p className="text-sm text-destructive -mt-1">
+                      {errors.hifdh}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
             </div>
-            {/* Description */}
-            <div className="grid gap-2 w-full col-span-2">
-              <Label htmlFor="description">Omschrijving</Label>
-              <Input
-                id="description"
-                className="w-full"
-                value={newLog.description}
-                onChange={(e) =>
-                  setNewLog((s) => ({ ...s, description: e.target.value }))
-                }
-                placeholder="Optioneel"
-              />
-            </div>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

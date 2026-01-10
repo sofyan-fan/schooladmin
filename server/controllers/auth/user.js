@@ -1,4 +1,5 @@
 const { prisma } = require('../../prisma/connection');
+const bcrypt = require('bcrypt');
 
 function getSessionUser(req) {
   return req.session?.user || req.user || null;
@@ -340,5 +341,131 @@ exports.update_enrollment = async (req, res) => {
     res.status(500).json({
       message: 'Internal Server Error',
     });
+  }
+};
+
+// Change password for the current logged-in user (student, teacher, or admin)
+exports.change_password = async (req, res) => {
+  try {
+    const sessionUser = getSessionUser(req);
+    if (!sessionUser || !sessionUser.id) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const role = (sessionUser.role || '').toLowerCase();
+    if (role !== 'student' && role !== 'teacher' && role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const { current_password, new_password, confirm_password } = req.body;
+
+    if (!current_password || !new_password || !confirm_password) {
+      return res.status(400).json({
+        message: 'Alle velden zijn verplicht.',
+      });
+    }
+
+    if (new_password !== confirm_password) {
+      return res.status(400).json({
+        message: 'Nieuwe wachtwoorden komen niet overeen.',
+      });
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({
+        message: 'Wachtwoord moet minimaal 6 tekens bevatten.',
+      });
+    }
+
+    // Fetch the user from the database
+    const user = await prisma.user.findUnique({
+      where: { id: Number(sessionUser.id) },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Gebruiker niet gevonden.' });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(
+      current_password,
+      user.password
+    );
+
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({
+        message: 'Huidig wachtwoord is onjuist.',
+      });
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await bcrypt.hash(new_password, 10);
+
+    // Update the password
+    await prisma.user.update({
+      where: { id: Number(sessionUser.id) },
+      data: { password: hashedNewPassword },
+    });
+
+    return res.status(200).json({
+      message: 'Wachtwoord succesvol gewijzigd.',
+    });
+  } catch (error) {
+    console.error('change_password error:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+// Update email for the current logged-in admin
+exports.update_admin_email = async (req, res) => {
+  try {
+    const sessionUser = getSessionUser(req);
+    if (!sessionUser || !sessionUser.id) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const role = (sessionUser.role || '').toLowerCase();
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const newEmail = normalizeEmail(req.body?.email);
+
+    if (!newEmail) {
+      return res.status(400).json({ message: 'E-mailadres is verplicht.' });
+    }
+
+    // Check if email is already in use by another user
+    const existingUser = await prisma.user.findUnique({
+      where: { email: newEmail },
+    });
+
+    if (existingUser && existingUser.id !== Number(sessionUser.id)) {
+      return res.status(409).json({ message: 'E-mailadres is al in gebruik.' });
+    }
+
+    // Update the email
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(sessionUser.id) },
+      data: { email: newEmail },
+    });
+
+    // Keep the active session consistent
+    req.session.user.email = newEmail;
+
+    return res.status(200).json({
+      message: 'E-mailadres succesvol gewijzigd.',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error) {
+    console.error('update_admin_email error:', error);
+    if (error?.code === 'P2002') {
+      return res.status(409).json({ message: 'E-mailadres is al in gebruik.' });
+    }
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 };

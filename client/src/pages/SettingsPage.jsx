@@ -1,8 +1,7 @@
 import {
-  BookOpen,
-  CheckCircle2,
-  ClipboardList,
-  Notebook,
+  Eye,
+  EyeOff,
+  KeyRound,
   Settings,
   User,
 } from 'lucide-react';
@@ -20,7 +19,6 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 
 const SettingsPage = () => {
@@ -28,6 +26,7 @@ const SettingsPage = () => {
   const role = (user?.role || '').toLowerCase();
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
+  const isAdmin = role === 'admin';
 
   const [accountForm, setAccountForm] = useState({
     email: user?.email || '',
@@ -43,31 +42,24 @@ const SettingsPage = () => {
   const [accountError, setAccountError] = useState('');
   const [accountSaved, setAccountSaved] = useState(false);
 
-  const [subjectsSettings, setSubjectsSettings] = useState({
-    enabled: true,
-    retentionDays: 365,
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
   });
 
-  const [quranSettings, setQuranSettings] = useState({
-    enabled: true,
-    trackMemorization: true,
-    retentionDays: 365,
-  });
-
-  const [attendanceSettings, setAttendanceSettings] = useState({
-    requireReasonForLate: true,
-    allowTeacherNotes: true,
-  });
-
-  const [resultsSettings, setResultsSettings] = useState({
-    passingGrade: 5.5,
-    maxGrade: 10,
-  });
-
-  const save = (key, value) => {
-    // Replace with API call when backend is ready
-    console.log(`[settings] save ${key}:`, value);
-  };
+  const [adminEmail, setAdminEmail] = useState(user?.email || '');
+  const [adminEmailSaving, setAdminEmailSaving] = useState(false);
+  const [adminEmailError, setAdminEmailError] = useState('');
+  const [adminEmailSaved, setAdminEmailSaved] = useState(false);
 
   // Load the current student's/teacher's contact info
   useEffect(() => {
@@ -182,6 +174,80 @@ const SettingsPage = () => {
       );
     } finally {
       setAccountSaving(false);
+    }
+  };
+
+  const savePassword = async () => {
+    if (!isStudent && !isTeacher && !isAdmin) return;
+
+    setPasswordSaving(true);
+    setPasswordError('');
+    setPasswordSaved(false);
+
+    try {
+      if (passwordForm.new_password !== passwordForm.confirm_password) {
+        setPasswordError('Nieuwe wachtwoorden komen niet overeen.');
+        setPasswordSaving(false);
+        return;
+      }
+
+      if (passwordForm.new_password.length < 6) {
+        setPasswordError('Wachtwoord moet minimaal 6 tekens bevatten.');
+        setPasswordSaving(false);
+        return;
+      }
+
+      await RequestHandler.put('/auth/me/change-password', {
+        current_password: passwordForm.current_password,
+        new_password: passwordForm.new_password,
+        confirm_password: passwordForm.confirm_password,
+      });
+
+      setPasswordSaved(true);
+      setPasswordForm({
+        current_password: '',
+        new_password: '',
+        confirm_password: '',
+      });
+      setShowPassword({ current: false, new: false, confirm: false });
+    } catch (e) {
+      console.error('Failed to change password', e);
+      setPasswordError(
+        e?.response?.data?.message ||
+        'Wachtwoord wijzigen mislukt. Controleer je gegevens en probeer het opnieuw.'
+      );
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const saveAdminEmail = async () => {
+    if (!isAdmin) return;
+
+    setAdminEmailSaving(true);
+    setAdminEmailError('');
+    setAdminEmailSaved(false);
+
+    try {
+      const resp = await RequestHandler.put('/auth/me/admin/email', {
+        email: adminEmail,
+      });
+
+      const updatedUser = resp?.data?.user;
+      if (updatedUser?.email) {
+        updateUser({ email: updatedUser.email });
+        setAdminEmail(updatedUser.email);
+      }
+
+      setAdminEmailSaved(true);
+    } catch (e) {
+      console.error('Failed to update admin email', e);
+      setAdminEmailError(
+        e?.response?.data?.message ||
+        'E-mailadres wijzigen mislukt. Controleer je gegevens en probeer het opnieuw.'
+      );
+    } finally {
+      setAdminEmailSaving(false);
     }
   };
 
@@ -319,196 +385,323 @@ const SettingsPage = () => {
               </Button>
             </CardFooter>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound className="size-5" /> Wachtwoord wijzigen
+              </CardTitle>
+              <CardDescription>
+                Wijzig je wachtwoord voor je account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {passwordError ? (
+                <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {passwordError}
+                </div>
+              ) : null}
+              {passwordSaved ? (
+                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700">
+                  Wachtwoord succesvol gewijzigd.
+                </div>
+              ) : null}
+
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="pw-current">Huidig wachtwoord</Label>
+                  <div className="relative">
+                    <Input
+                      id="pw-current"
+                      type={showPassword.current ? 'text' : 'password'}
+                      value={passwordForm.current_password}
+                      disabled={passwordSaving}
+                      className="pr-10"
+                      onChange={(e) =>
+                        setPasswordForm((s) => ({
+                          ...s,
+                          current_password: e.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        setShowPassword((s) => ({ ...s, current: !s.current }))
+                      }
+                      tabIndex={-1}
+                    >
+                      {showPassword.current ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="pw-new">Nieuw wachtwoord</Label>
+                  <div className="relative">
+                    <Input
+                      id="pw-new"
+                      type={showPassword.new ? 'text' : 'password'}
+                      value={passwordForm.new_password}
+                      disabled={passwordSaving}
+                      className="pr-10"
+                      onChange={(e) =>
+                        setPasswordForm((s) => ({
+                          ...s,
+                          new_password: e.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        setShowPassword((s) => ({ ...s, new: !s.new }))
+                      }
+                      tabIndex={-1}
+                    >
+                      {showPassword.new ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="pw-confirm">Bevestig nieuw wachtwoord</Label>
+                  <div className="relative">
+                    <Input
+                      id="pw-confirm"
+                      type={showPassword.confirm ? 'text' : 'password'}
+                      value={passwordForm.confirm_password}
+                      disabled={passwordSaving}
+                      className="pr-10"
+                      onChange={(e) =>
+                        setPasswordForm((s) => ({
+                          ...s,
+                          confirm_password: e.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        setShowPassword((s) => ({ ...s, confirm: !s.confirm }))
+                      }
+                      tabIndex={-1}
+                    >
+                      {showPassword.confirm ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button
+                onClick={savePassword}
+                disabled={
+                  passwordSaving ||
+                  !passwordForm.current_password ||
+                  !passwordForm.new_password ||
+                  !passwordForm.confirm_password
+                }
+              >
+                {passwordSaving ? 'Wijzigen…' : 'Wachtwoord wijzigen'}
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       )}
 
-      {!(isStudent || isTeacher) && (
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {/* Subjects logs */}
+      {isAdmin && (
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookOpen className="size-5" /> Vakkenlogboek
-              </CardTitle>
-              <CardDescription>Instellingen voor vakkenlogs.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="subjects-enabled">Inschakelen</Label>
-                <Switch
-                  id="subjects-enabled"
-                  checked={subjectsSettings.enabled}
-                  onCheckedChange={(v) =>
-                    setSubjectsSettings((s) => ({ ...s, enabled: v }))
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="subjects-retention">Bewaartermijn (dagen)</Label>
-                <Input
-                  id="subjects-retention"
-                  type="number"
-                  min={0}
-                  value={subjectsSettings.retentionDays}
-                  onChange={(e) =>
-                    setSubjectsSettings((s) => ({
-                      ...s,
-                      retentionDays: Number(e.target.value || 0),
-                    }))
-                  }
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => save('subjects', subjectsSettings)}>
-                Opslaan
-              </Button>
-            </CardFooter>
-          </Card>
-
-          {/* Quran logs */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Notebook className="size-5" /> Koranlogboek
+                <User className="size-5" /> Accountgegevens
               </CardTitle>
               <CardDescription>
-                Instellingen voor Qur'an voortgang en notities.
+                Wijzig je e-mailadres.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="quran-enabled">Inschakelen</Label>
-                <Switch
-                  id="quran-enabled"
-                  checked={quranSettings.enabled}
-                  onCheckedChange={(v) =>
-                    setQuranSettings((s) => ({ ...s, enabled: v }))
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="quran-mem">Memorisatie bijhouden</Label>
-                <Switch
-                  id="quran-mem"
-                  checked={quranSettings.trackMemorization}
-                  onCheckedChange={(v) =>
-                    setQuranSettings((s) => ({ ...s, trackMemorization: v }))
-                  }
-                />
-              </div>
+              {adminEmailError ? (
+                <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {adminEmailError}
+                </div>
+              ) : null}
+              {adminEmailSaved ? (
+                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700">
+                  E-mailadres opgeslagen.
+                </div>
+              ) : null}
+
               <div className="grid gap-2">
-                <Label htmlFor="quran-retention">Bewaartermijn (dagen)</Label>
+                <Label htmlFor="admin-email">E-mail</Label>
                 <Input
-                  id="quran-retention"
-                  type="number"
-                  min={0}
-                  value={quranSettings.retentionDays}
-                  onChange={(e) =>
-                    setQuranSettings((s) => ({
-                      ...s,
-                      retentionDays: Number(e.target.value || 0),
-                    }))
-                  }
+                  id="admin-email"
+                  type="email"
+                  value={adminEmail}
+                  disabled={adminEmailSaving}
+                  onChange={(e) => setAdminEmail(e.target.value)}
                 />
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => save('quran', quranSettings)}>
-                Opslaan
+              <Button
+                onClick={saveAdminEmail}
+                disabled={adminEmailSaving || !adminEmail}
+              >
+                {adminEmailSaving ? 'Opslaan…' : 'Opslaan'}
               </Button>
             </CardFooter>
           </Card>
 
-          {/* Attendance */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="size-5" /> Aanwezigheid
+                <KeyRound className="size-5" /> Wachtwoord wijzigen
               </CardTitle>
               <CardDescription>
-                Basisinstellingen voor aanwezigheidsregistratie.
+                Wijzig je wachtwoord voor je account.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="att-late-reason">
-                  Reden verplicht bij te laat
-                </Label>
-                <Switch
-                  id="att-late-reason"
-                  checked={attendanceSettings.requireReasonForLate}
-                  onCheckedChange={(v) =>
-                    setAttendanceSettings((s) => ({
-                      ...s,
-                      requireReasonForLate: v,
-                    }))
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="att-notes">Docentnotities toestaan</Label>
-                <Switch
-                  id="att-notes"
-                  checked={attendanceSettings.allowTeacherNotes}
-                  onCheckedChange={(v) =>
-                    setAttendanceSettings((s) => ({ ...s, allowTeacherNotes: v }))
-                  }
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => save('attendance', attendanceSettings)}>
-                Opslaan
-              </Button>
-            </CardFooter>
-          </Card>
+              {passwordError ? (
+                <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {passwordError}
+                </div>
+              ) : null}
+              {passwordSaved ? (
+                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700">
+                  Wachtwoord succesvol gewijzigd.
+                </div>
+              ) : null}
 
-          {/* Results */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="size-5" /> Resultaten
-              </CardTitle>
-              <CardDescription>Instellingen voor beoordeling.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="res-pass">Voldoende vanaf cijfer</Label>
-                <Input
-                  id="res-pass"
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  value={resultsSettings.passingGrade}
-                  onChange={(e) =>
-                    setResultsSettings((s) => ({
-                      ...s,
-                      passingGrade: Number(e.target.value || 0),
-                    }))
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="res-max">Maximum cijfer</Label>
-                <Input
-                  id="res-max"
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  value={resultsSettings.maxGrade}
-                  onChange={(e) =>
-                    setResultsSettings((s) => ({
-                      ...s,
-                      maxGrade: Number(e.target.value || 0),
-                    }))
-                  }
-                />
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="admin-pw-current">Huidig wachtwoord</Label>
+                  <div className="relative">
+                    <Input
+                      id="admin-pw-current"
+                      type={showPassword.current ? 'text' : 'password'}
+                      value={passwordForm.current_password}
+                      disabled={passwordSaving}
+                      className="pr-10"
+                      onChange={(e) =>
+                        setPasswordForm((s) => ({
+                          ...s,
+                          current_password: e.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        setShowPassword((s) => ({ ...s, current: !s.current }))
+                      }
+                      tabIndex={-1}
+                    >
+                      {showPassword.current ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="admin-pw-new">Nieuw wachtwoord</Label>
+                  <div className="relative">
+                    <Input
+                      id="admin-pw-new"
+                      type={showPassword.new ? 'text' : 'password'}
+                      value={passwordForm.new_password}
+                      disabled={passwordSaving}
+                      className="pr-10"
+                      onChange={(e) =>
+                        setPasswordForm((s) => ({
+                          ...s,
+                          new_password: e.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        setShowPassword((s) => ({ ...s, new: !s.new }))
+                      }
+                      tabIndex={-1}
+                    >
+                      {showPassword.new ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="admin-pw-confirm">Bevestig nieuw wachtwoord</Label>
+                  <div className="relative">
+                    <Input
+                      id="admin-pw-confirm"
+                      type={showPassword.confirm ? 'text' : 'password'}
+                      value={passwordForm.confirm_password}
+                      disabled={passwordSaving}
+                      className="pr-10"
+                      onChange={(e) =>
+                        setPasswordForm((s) => ({
+                          ...s,
+                          confirm_password: e.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        setShowPassword((s) => ({ ...s, confirm: !s.confirm }))
+                      }
+                      tabIndex={-1}
+                    >
+                      {showPassword.confirm ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => save('results', resultsSettings)}>
-                Opslaan
+              <Button
+                onClick={savePassword}
+                disabled={
+                  passwordSaving ||
+                  !passwordForm.current_password ||
+                  !passwordForm.new_password ||
+                  !passwordForm.confirm_password
+                }
+              >
+                {passwordSaving ? 'Wijzigen…' : 'Wachtwoord wijzigen'}
               </Button>
             </CardFooter>
           </Card>

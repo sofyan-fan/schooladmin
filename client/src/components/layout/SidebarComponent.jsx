@@ -23,6 +23,7 @@ import {
   CalendarDays,
   ChevronDown,
   CircleDollarSign,
+  ClipboardList,
   Clock,
   Component,
   GraduationCap,
@@ -174,6 +175,12 @@ const SidebarComponent = () => {
       path: 'quran-log',
       Icon: LibraryBig,
       roles: ['admin', 'teacher'],
+    },
+    {
+      name: 'Rapport',
+      path: 'rapport',
+      Icon: ClipboardList,
+      roles: ['admin'],
     },
     {
       name: 'Instellingen',

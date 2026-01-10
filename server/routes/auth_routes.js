@@ -10,6 +10,8 @@ const {
   get_current_teacher,
   update_current_student_contact,
   update_current_teacher_contact,
+  change_password,
+  update_admin_email,
 } = require('../controllers/auth/user');
 const { register } = require('../controllers/auth/register');
 
@@ -25,6 +27,12 @@ router.get('/users', get_users);
 // Self-service account settings (contact info only; no password changes)
 router.put('/me/student/contact', update_current_student_contact);
 router.put('/me/teacher/contact', update_current_teacher_contact);
+
+// Password change for students, teachers, and admins
+router.put('/me/change-password', change_password);
+
+// Admin email update
+router.put('/me/admin/email', update_admin_email);
 
 // Update enrollment status for a specific student
 router.put('/students/:student_id/enrollment', update_enrollment);
