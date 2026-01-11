@@ -60,7 +60,7 @@ export default function EditModal({ open, onOpenChange, onSave, config }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Vak Bewerken</DialogTitle>
+          <DialogTitle>Module Bewerken</DialogTitle>
         </DialogHeader>
         <form
           className="space-y-4"
@@ -69,12 +69,12 @@ export default function EditModal({ open, onOpenChange, onSave, config }) {
             handleSave();
           }}
         >
-          {/* Row 1: Vak display + Required switch */}
+          {/* Row 1: Module name + Required switch */}
           <div className="space-y-2">
-            <Label>Vak</Label>
+            <Label>Module</Label>
             <div className="flex items-center gap-4">
               <div className="flex-1 py-2 px-3 border rounded-md bg-muted/50 text-sm">
-                {config?.subject_name}
+                {config?.module_name}
               </div>
               <div className="flex items-center gap-2">
                 <Switch

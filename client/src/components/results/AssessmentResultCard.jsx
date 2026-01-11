@@ -68,6 +68,7 @@ const AssessmentResultCard = ({ assessment, onSelect }) => {
               {/* <span>Beoordelingen:</span> */}
               <span className="font-bold text-foreground mr-1.5 mt-0.5">
                 {gradedStudents} / {totalStudents}
+                {console.log("assessment: ", assessment)}
               </span>
               <Users className="size-4.5 mr-2" />
             </div>
