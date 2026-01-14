@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ClipboardList, Eye, Pencil, X } from 'lucide-react';
+import { Check, ChevronLeft, ClipboardList, Download, Eye, Pencil, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -6,6 +6,16 @@ import classAPI from '@/apis/classAPI';
 import courseAPI from '@/apis/courseAPI';
 import resultAPI from '@/apis/resultAPI';
 import EditModal from '@/components/report/EditModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,8 +27,10 @@ import {
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import ComboboxField from '@/components/ui/combobox';
+import exportReportCardToPDF from '@/utils/exportReportCardToPDF';
 
 const STORAGE_KEY = 'rapport_config';
+const VIEW_STATE_KEY = 'rapport_view_state';
 
 const loadConfigFromStorage = () => {
   try {
@@ -37,29 +49,76 @@ const saveConfigToStorage = (config) => {
   }
 };
 
-const RapportPage = () => {
+const loadViewStateFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(VIEW_STATE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveViewStateToStorage = (state) => {
+  try {
+    localStorage.setItem(VIEW_STATE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save view state to localStorage', e);
+  }
+};
+
+const RapportPageCopy = () => {
   const [classes, setClasses] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState('');
+  const [selectedClassId, setSelectedClassId] = useState(() => {
+    const stored = loadViewStateFromStorage();
+    return stored.selectedClassId || '';
+  });
   const [courseModules, setCourseModules] = useState([]);
   const [allResults, setAllResults] = useState([]);
   const [reportConfigByClass, setReportConfigByClass] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [viewMode, setViewMode] = useState('config');
+  const [viewMode, setViewMode] = useState(() => {
+    const stored = loadViewStateFromStorage();
+    return stored.viewMode || 'config';
+  });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState(null);
+
+  // Multi-select and export states
+  const [selectedStudentIds, setSelectedStudentIds] = useState(new Set());
+  const [studentSearchId, setStudentSearchId] = useState('');
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const stored = loadConfigFromStorage();
     setReportConfigByClass(stored);
   }, []);
 
+  // Persist view state to localStorage
+  useEffect(() => {
+    saveViewStateToStorage({ selectedClassId, viewMode });
+  }, [selectedClassId, viewMode]);
+
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  // Restore courseModules when data is loaded and we have a stored selectedClassId
+  useEffect(() => {
+    if (classes.length > 0 && courses.length > 0 && selectedClassId) {
+      const selectedClass = classes.find((c) => c.id.toString() === selectedClassId);
+      if (selectedClass?.course_id) {
+        const course = courses.find((c) => c.id === selectedClass.course_id);
+        setCourseModules(course?.course_module || []);
+      } else {
+        setCourseModules([]);
+      }
+    }
+  }, [classes, courses, selectedClassId]);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -145,6 +204,68 @@ const RapportPage = () => {
   const selectedClass = classes.find((c) => c.id.toString() === selectedClassId);
 
   const studentsInClass = selectedClass?.students || [];
+
+  // Student combobox items
+  const studentItems = studentsInClass.map((s) => ({
+    value: s.id.toString(),
+    label: `${s.first_name} ${s.last_name}`,
+  }));
+
+  // Filter students based on search
+  const filteredStudents = studentSearchId
+    ? studentsInClass.filter((s) => s.id.toString() === studentSearchId)
+    : studentsInClass;
+
+  // Toggle student selection
+  const toggleStudentSelection = (studentId) => {
+    setSelectedStudentIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  // Clear selections when class changes
+  const handleClassChangeWithReset = (classId) => {
+    handleClassChange(classId);
+    setSelectedStudentIds(new Set());
+    setStudentSearchId('');
+  };
+
+  // Get selected students data
+  const getSelectedStudents = () => {
+    return studentsInClass.filter((s) => selectedStudentIds.has(s.id));
+  };
+
+  // Handle multi-export
+  const handleMultiExport = async () => {
+    const selectedStudents = getSelectedStudents();
+    if (selectedStudents.length === 0) return;
+
+    setIsExporting(true);
+    setShowExportDialog(false);
+
+    try {
+      for (const student of selectedStudents) {
+        const studentGrades = calculateStudentGrades(student.id);
+        const overallPassed = checkOverallPassed(studentGrades);
+        await handleExportReportCard(student, studentGrades, overallPassed, false);
+        // Small delay between exports to avoid overwhelming the browser
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      toast.success(`${selectedStudents.length} rapport(en) succesvol geëxporteerd!`);
+      setSelectedStudentIds(new Set());
+    } catch (error) {
+      console.error('Failed to export report cards:', error);
+      toast.error('Exporteren van rapporten is mislukt. Probeer het opnieuw.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // const calculateStudentGrades = (studentId) => {
   //   const studentResults = allResults.filter((r) => r.student_id === studentId);
@@ -242,6 +363,49 @@ const RapportPage = () => {
     return true;
   };
 
+  const handleExportReportCard = async (student, studentGrades, overallPassed, showToast = true) => {
+    try {
+      // Prepare modules data for PDF export
+      const modulesForPDF = reportConfig.map((config) => {
+        const gradeData = studentGrades[config.module_id];
+        const passed = checkModulePassed(config, gradeData);
+
+        return {
+          module_name: config.module_name,
+          required: config.required,
+          average: gradeData?.average,
+          passed: passed,
+        };
+      });
+
+      // Determine school year
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
+      const schoolYear = currentMonth >= 8
+        ? `${currentYear}/${currentYear + 1}`
+        : `${currentYear - 1}/${currentYear}`;
+
+      await exportReportCardToPDF({
+        student,
+        className: selectedClass?.name || 'Onbekend',
+        schoolYear,
+        modules: modulesForPDF,
+        overallPassed,
+        comments: '', // Can be extended later to include teacher comments
+      });
+
+      if (showToast) {
+        toast.success(`Rapport voor ${student.first_name} ${student.last_name} succesvol geëxporteerd!`);
+      }
+    } catch (error) {
+      console.error('Failed to export report card:', error);
+      if (showToast) {
+        toast.error('Exporteren van rapport is mislukt. Probeer het opnieuw.');
+      }
+      throw error;
+    }
+  };
+
   return (
     <>
       <div className="flex items-center gap-2 mb-6">
@@ -256,15 +420,6 @@ const RapportPage = () => {
       )}
 
       <div className="mb-6 flex flex-wrap items-center gap-4">
-        <div className="text-sm text-muted-foreground">Klas:</div>
-        <ComboboxField
-          items={classItems}
-          value={selectedClassId}
-          onChange={handleClassChange}
-          placeholder="Selecteer een klas"
-          disabled={loading}
-          className="min-w-[200px] max-w-[280px]"
-        />
         {selectedClassId && courseModules.length > 0 && (
           <Button
             variant={viewMode === 'reportcard' ? 'default' : 'outline'}
@@ -284,7 +439,61 @@ const RapportPage = () => {
             )}
           </Button>
         )}
+
+        {/* Export button - shown when students are selected */}
+        {viewMode === 'reportcard' && selectedStudentIds.size > 0 && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setShowExportDialog(true)}
+            disabled={isExporting}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Exporteer ({selectedStudentIds.size})
+          </Button>
+        )}
+
+        <div className="flex items-center gap-4 ml-auto">
+          {/* Student search combobox - shown in reportcard view */}
+          {viewMode === 'reportcard' && studentsInClass.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-muted-foreground">Leerling:</div>
+              <ComboboxField
+                items={[{ value: '', label: 'Alle leerlingen' }, ...studentItems]}
+                value={studentSearchId}
+                onChange={setStudentSearchId}
+                placeholder="Zoek leerling"
+                disabled={loading}
+                className="min-w-[200px] max-w-[280px]"
+              />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <div className="text-sm text-muted-foreground">Klas:</div>
+            <ComboboxField
+              items={classItems}
+              value={selectedClassId}
+              onChange={handleClassChangeWithReset}
+              placeholder="Selecteer een klas"
+              disabled={loading}
+              className="min-w-[200px] max-w-[280px]"
+            />
+          </div>
+        </div>
       </div>
+
+      {!selectedClassId && (
+        <Card>
+          <CardContent className="py-16">
+            <div className="text-center text-muted-foreground">
+              <ClipboardList className="size-16 mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-medium mb-1">Geen klas geselecteerd</p>
+              <p className="text-sm">Selecteer een klas om de rapportconfiguratie te bekijken.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {selectedClassId && !selectedClass?.course_id && (
         <Card>
@@ -303,7 +512,7 @@ const RapportPage = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Normering voor {selectedClass?.name}</CardTitle>
             <CardDescription>
-              Lespakket: {selectedClass?.course?.name || 'Onbekend'} — Configureer de slaagnormen per module.
+              Lespakket: {selectedClass?.course?.name || 'Onbekend'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -353,49 +562,67 @@ const RapportPage = () => {
 
       {selectedClassId && selectedClass?.course_id && viewMode === 'reportcard' && (
         <div className="space-y-6">
-          {studentsInClass.length === 0 ? (
+          {filteredStudents.length === 0 ? (
             <Card>
               <CardContent className="py-8">
                 <div className="text-center text-muted-foreground">
-                  <p>Geen leerlingen in deze klas.</p>
+                  <p>{studentsInClass.length === 0 ? 'Geen leerlingen in deze klas.' : 'Geen leerlingen gevonden.'}</p>
                 </div>
               </CardContent>
             </Card>
           ) : (
-            studentsInClass.map((student) => {
+            filteredStudents.map((student) => {
               const studentGrades = calculateStudentGrades(student.id);
               const overallPassed = checkOverallPassed(studentGrades);
+              const isSelected = selectedStudentIds.has(student.id);
 
               return (
-                <Card key={student.id}>
+                <Card key={student.id} className={isSelected ? 'ring-2 ring-primary' : ''}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        {student.first_name} {student.last_name}
-                      </CardTitle>
-                      <Badge
-                        variant={
-                          overallPassed === true
-                            ? 'default'
-                            : overallPassed === false
-                              ? 'destructive'
-                              : 'secondary'
-                        }
-                      >
-                        {overallPassed === true ? (
-                          <>
-                            <Check className="h-3 w-3 mr-1" />
-                            Geslaagd
-                          </>
-                        ) : overallPassed === false ? (
-                          <>
-                            <X className="h-3 w-3 mr-1" />
-                            Niet Geslaagd
-                          </>
-                        ) : (
-                          'Onvolledig'
-                        )}
-                      </Badge>
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleStudentSelection(student.id)}
+                          aria-label={`Selecteer ${student.first_name} ${student.last_name}`}
+                        />
+                        <CardTitle className="text-lg">
+                          {student.first_name} {student.last_name}
+                        </CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleExportReportCard(student, studentGrades, overallPassed)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Exporteer PDF
+                        </Button>
+                        <Badge
+                          variant={
+                            overallPassed === true
+                              ? 'default'
+                              : overallPassed === false
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                        >
+                          {overallPassed === true ? (
+                            <>
+                              <Check className="h-3 w-3 mr-1" />
+                              Geslaagd
+                            </>
+                          ) : overallPassed === false ? (
+                            <>
+                              <X className="h-3 w-3 mr-1" />
+                              Niet Geslaagd
+                            </>
+                          ) : (
+                            'Onvolledig'
+                          )}
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
@@ -453,8 +680,37 @@ const RapportPage = () => {
         onSave={handleSaveConfig}
         config={editingConfig}
       />
+
+      {/* Export confirmation dialog */}
+      <AlertDialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rapporten exporteren</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p className="mb-3">
+                  Je gaat nu {selectedStudentIds.size} rapporten exporteren naar PDF voor:
+                </p>
+                <ul className="list-none list-inside space-y-1 text-sm max-h-48 overflow-y-auto">
+                  {getSelectedStudents().map((student) => (
+                    <li className="font-bold" key={student.id}>
+                      {student.first_name} {student.last_name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isExporting}>Annuleren</AlertDialogCancel>
+            <AlertDialogAction onClick={handleMultiExport} disabled={isExporting}>
+              {isExporting ? 'Exporteren...' : 'Exporteren'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
 
-export default RapportPage;
+export default RapportPageCopy;

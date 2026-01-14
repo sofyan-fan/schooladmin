@@ -26,6 +26,7 @@ import EducationPage from './pages/EducationPage';
 import LandingPage from './pages/LandingPage';
 import NotificationsPage from './pages/NotificationsPage';
 import RapportPage from './pages/RapportPage';
+import RapportPageCopy from './pages/RapportPageCopy';
 import RostersPage from './pages/RostersPage';
 import SchoolYearDetailPage from './pages/SchoolYearDetailPage';
 import SchoolYearDummyDetailPage from './pages/SchoolYearDummyDetailPage';
@@ -151,6 +152,7 @@ const App = () => {
           <Route path="/docenten/:id" element={<TeacherDetailsPage />} />
           <Route path="/onderwijs" element={<EducationPage />} />
           <Route path="/rapport" element={<RapportPage />} />
+          <Route path="/rapport-nieuw" element={<RapportPageCopy />} />
         </Route>
 
         {/* Admin + Teacher */}
