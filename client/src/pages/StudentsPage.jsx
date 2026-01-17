@@ -7,6 +7,7 @@ import Toolbar from '@/components/shared/Toolbar';
 import { createColumns } from '@/components/students/columns';
 import DeleteStudentDialog from '@/components/students/DeleteDialog';
 import EditModal from '@/components/students/EditModal';
+import StudentMobileCardView from '@/components/students/StudentMobileCardView';
 import ViewModal from '@/components/students/ViewModal';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -388,23 +389,35 @@ export default function StudentsPage() {
         buttonText="Leerling Toevoegen"
         onAdd={() => setOpenCreateDialog(true)}
       />
-      <Toolbar table={table} useGlobalFilter filterPlaceholder="Zoek op naam, e-mail of klas" />
-      {table.getSelectedRowModel().rows.length > 0 && (
-        <div className="mb-2 flex items-center justify-between rounded-md border bg-muted/40 p-2">
-          <div className="text-sm text-muted-foreground">
-            {table.getSelectedRowModel().rows.length} geselecteerd
+      {/* Desktop: Table View */}
+      <div className="hidden md:block">
+        <Toolbar table={table} useGlobalFilter filterPlaceholder="Zoek op naam, e-mail of klas" />
+        {table.getSelectedRowModel().rows.length > 0 && (
+          <div className="mb-2 flex items-center justify-between rounded-md border bg-muted/40 p-2">
+            <div className="text-sm text-muted-foreground">
+              {table.getSelectedRowModel().rows.length} geselecteerd
+            </div>
+            <Button onClick={handleExportSelectedResults}>
+              <Download className="mr-2 h-4 w-4" />
+              Download resultaten
+            </Button>
           </div>
-          <Button onClick={handleExportSelectedResults}>
-            <Download className="mr-2 h-4 w-4" />
-            Download resultaten
-          </Button>
-        </div>
-      )}
-      <DataTable
-        table={table}
+        )}
+        <DataTable
+          table={table}
+          loading={loading}
+          columns={columns}
+          NoDataComponent={NoDataRow}
+        />
+      </div>
+
+      {/* Mobile: Card View */}
+      <StudentMobileCardView
+        students={students}
         loading={loading}
-        columns={columns}
-        NoDataComponent={NoDataRow}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       <RegisterWizardDialog

@@ -110,6 +110,14 @@ const {
   archive_school_year,
 } = require('../controllers/general/school_year');
 
+const {
+  get_approved_unpaid_registrations,
+  process_teacher_payment,
+  get_payment_history,
+  get_payment_by_id,
+  update_teacher_compensation,
+} = require('../controllers/general/teacher_payment');
+
 // ==============================
 // Students routes
 // ==============================
@@ -248,5 +256,14 @@ router.post('/school-years', create_school_year);
 router.put('/school-years/:id', update_school_year);
 router.put('/school-years/:id/activate', activate_school_year);
 router.put('/school-years/:id/archive', archive_school_year);
+
+// ==============================
+// Teacher Payments routes
+// ==============================
+router.get('/teacher-payments/unpaid', get_approved_unpaid_registrations);
+router.get('/teacher-payments', get_payment_history);
+router.get('/teacher-payments/:id', get_payment_by_id);
+router.post('/teacher-payments', process_teacher_payment);
+router.put('/teachers/:id/compensation', update_teacher_compensation);
 
 module.exports = router;

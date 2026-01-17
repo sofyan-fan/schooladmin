@@ -11,12 +11,19 @@ const LayoutWrapper = ({ children }) => {
       <AppSidebar />
       <SidebarInset>
         <Topbar />
-        <div className="flex-1 overflow-y-auto p-6 bg-[#FDFBF7] ">
+        <div 
+          className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FDFBF7]"
+          style={{
+            paddingLeft: `max(1rem, env(safe-area-inset-left))`,
+            paddingRight: `max(1rem, env(safe-area-inset-right))`,
+            paddingBottom: `max(1rem, env(safe-area-inset-bottom))`,
+          }}
+        >
           {children ? children : <Outlet />}
         </div>
       </SidebarInset>
       <Toaster
-        position="top-right"
+        position="top-center"
         icons={{
           success: <CheckCircle className="size-6 text-primary" />,
           error: <XCircle className="size-6 text-destructive" />,
@@ -31,10 +38,10 @@ const LayoutWrapper = ({ children }) => {
             fontSize: '16px',
             fontWeight: '500',
             padding: '16px 20px',
-            minWidth: '300px',
-            maxWidth: '500px',
+            minWidth: '280px',
+            maxWidth: '90vw',
             width: 'max-content',
-            whiteSpace: 'nowrap',
+            whiteSpace: 'normal',
             flexDirection: 'row',
             gap: '10px',
           },

@@ -7,7 +7,7 @@ const Topbar = () => {
   const { user } = useAuth();
   const { toggleSidebar } = useSidebar();
   return (
-    <header className="bg-primary h-14 flex items-center px-4 w-full text-white ">
+    <header className="sticky top-0 z-10 bg-primary h-14 flex items-center px-4 w-full text-white pt-[env(safe-area-inset-top)]">
       <div className="flex items-center gap-2 mr-auto">
         <Button
           variant="ghost"
@@ -30,8 +30,8 @@ const Topbar = () => {
       </div>
 
       {user && (
-        <div className="flex items-center space-x-4">
-          <span>Welkom, {user.email}</span>
+        <div className="flex items-center space-x-4 min-w-0 max-w-[50%] sm:max-w-none">
+          <span className="truncate text-sm sm:text-base">Welkom, {user.email}</span>
         </div>
       )}
     </header>

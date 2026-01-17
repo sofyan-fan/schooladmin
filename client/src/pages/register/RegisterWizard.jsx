@@ -104,11 +104,11 @@ export default function RegisterWizard({
     () =>
       isStudentFlow
         ? [
-            schemaAccount,
-            schemaPersonalStudent,
-            schemaParentContact,
-            schemaEnrollStudent,
-          ]
+          schemaAccount,
+          schemaPersonalStudent,
+          schemaParentContact,
+          schemaEnrollStudent,
+        ]
         : [schemaAccount, schemaPersonalTeacher],
     [isStudentFlow]
   );
@@ -130,16 +130,16 @@ export default function RegisterWizard({
       return isStudentFlow
         ? ['firstName', 'lastName', 'birthDate', 'gender']
         : [
-            'firstName',
-            'lastName',
-            'birthDate',
-            'gender',
-            'address',
-            'city',
-            'postalCode',
-            'sosnumber',
-            'phone',
-          ];
+          'firstName',
+          'lastName',
+          'birthDate',
+          'gender',
+          'address',
+          'city',
+          'postalCode',
+          'sosnumber',
+          'phone',
+        ];
     }
     if (step === 2 && isStudentFlow)
       return [
@@ -266,7 +266,7 @@ export default function RegisterWizard({
 
   const outerClasses = inDialog
     ? 'w-full'
-    : 'flex items-start justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4 pt-10 sm:p-8';
+    : 'flex items-start justify-center min-h-svh bg-gray-100 dark:bg-gray-950 p-4 pt-10 sm:p-8';
 
   return (
     <div className={outerClasses}>

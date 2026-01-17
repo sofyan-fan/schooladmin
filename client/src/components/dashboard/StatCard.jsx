@@ -6,20 +6,24 @@ import { cva } from 'class-variance-authority';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-// Variants for the icon container styling (color, background)
-const iconContainerVariants = cva('p-4 rounded-full flex items-center justify-center hidden md:hidden lg:flex', {
-  variants: {
-    variant: {
-      default: 'bg-primary/10 text-primary',
-      success: 'bg-[#9bcf38]/80 text-white dark:bg-green-900/50',
-      warning: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50',
-      danger: 'bg-red-100 text-red-600 dark:bg-red-900/50',
+// Variants for the icon container styling
+// Breakpoints: xs:480px, s:560px, sm:640px, md:768px, lg:1024px, xl:1280px, 2xl:1536px, 3xl:1920px
+const iconContainerVariants = cva(
+  'shrink-0 rounded-full flex items-center justify-center',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary/10 text-primary',
+        success: 'bg-[#9bcf38]/80 text-white dark:bg-green-900/50',
+        warning: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50',
+        danger: 'bg-red-100 text-red-600 dark:bg-red-900/50',
+      },
     },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
 
 const StatCard = ({
   title,
@@ -27,29 +31,47 @@ const StatCard = ({
   icon,
   link,
   variant = 'default',
-  subtitle,
 }) => {
   return (
-    <Link to={link} aria-label={`View details for ${title}`}>
-      <Card className="h-[120px] sm:h-[140px] p-4 sm:p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
-        <div className="flex flex-row items-center gap-5 h-full">
-          <div className={cn(iconContainerVariants({ variant }))}>
-            {icon}
+    <Link to={link} aria-label={`View details for ${title}`} className="block">
+      <Card className="h-full p-2.5 xs:p-3 s:p-3.5 md:p-4 lg:p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+        {/* 
+          Responsive layout strategy:
+          - Mobile (< s/560px): Single column grid, horizontal card layout
+          - s+ (560px+): 2-column grid, vertical card layout
+          - lg+ (1024px+): 4-column grid, vertical card layout
+        */}
 
+        {/* Mobile layout (horizontal single row) - up to s breakpoint */}
+        <div className="flex s:hidden items-center gap-1.5 xs:gap-2 h-full">
+          <div className={cn(iconContainerVariants({ variant }), 'p-1.5 xs:p-2')}>
+            <span className="[&>svg]:size-3.5 xs:[&>svg]:size-4">
+              {icon}
+            </span>
           </div>
-          <div className="flex flex-col justify-center h-full gap-1 sm:gap-2 min-w-0">
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-regular leading-snug break-words">
+          <p className="text-[11px] xs:text-xs font-medium text-muted-foreground flex-1 min-w-0 leading-tight">
+            {title}
+          </p>
+          <p className="text-base xs:text-lg font-semibold text-regular whitespace-nowrap">
+            {value}
+          </p>
+        </div>
+
+        {/* Tablet & Desktop layout (vertical) - s breakpoint and up */}
+        <div className="hidden s:flex flex-col h-full gap-2 md:gap-2.5 lg:gap-3">
+          <div className="flex items-center gap-2 md:gap-2.5">
+            <div className={cn(iconContainerVariants({ variant }), 'p-2 md:p-2.5 lg:p-3')}>
+              <span className="[&>svg]:size-4 md:[&>svg]:size-5 lg:[&>svg]:size-6">
+                {icon}
+              </span>
+            </div>
+            <p className="text-sm md:text-base lg:text-lg font-medium text-muted-foreground leading-tight">
               {title}
             </p>
-            <p className="text-2xl sm:text-3xl md:text-4xl font-medium text-regular leading-tight break-words">
-              {value}
-            </p>
-            {subtitle ? (
-              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
-                {subtitle}
-              </p>
-            ) : null}
           </div>
+          <p className="text-lg s:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold text-regular leading-none">
+            {value}
+          </p>
         </div>
       </Card>
     </Link>
@@ -61,7 +83,6 @@ StatCard.propTypes = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   icon: PropTypes.node.isRequired,
   link: PropTypes.string.isRequired,
-  subtitle: PropTypes.string,
   variant: PropTypes.oneOf(['default', 'success', 'warning', 'danger']),
 };
 

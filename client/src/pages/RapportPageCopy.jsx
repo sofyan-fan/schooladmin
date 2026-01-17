@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import ComboboxField from '@/components/ui/combobox';
-import exportReportCardToPDF from '@/utils/exportReportCardToPDF';
+import exportReportCardToPDF, { exportMultipleReportCardsToPDF } from '@/utils/exportReportCardToPDF';
 
 const STORAGE_KEY = 'rapport_config';
 const VIEW_STATE_KEY = 'rapport_view_state';
@@ -241,7 +241,7 @@ const RapportPageCopy = () => {
     return studentsInClass.filter((s) => selectedStudentIds.has(s.id));
   };
 
-  // Handle multi-export
+  // Handle multi-export (selected students to single PDF)
   const handleMultiExport = async () => {
     const selectedStudents = getSelectedStudents();
     if (selectedStudents.length === 0) return;
@@ -250,17 +250,93 @@ const RapportPageCopy = () => {
     setShowExportDialog(false);
 
     try {
-      for (const student of selectedStudents) {
+      // Determine school year
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
+      const schoolYear = currentMonth >= 8
+        ? `${currentYear}/${currentYear + 1}`
+        : `${currentYear - 1}/${currentYear}`;
+
+      // Prepare all students data for single PDF export
+      const studentsData = selectedStudents.map((student) => {
         const studentGrades = calculateStudentGrades(student.id);
         const overallPassed = checkOverallPassed(studentGrades);
-        await handleExportReportCard(student, studentGrades, overallPassed, false);
-        // Small delay between exports to avoid overwhelming the browser
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-      toast.success(`${selectedStudents.length} rapport(en) succesvol geëxporteerd!`);
+        const modulesForPDF = reportConfig.map((config) => {
+          const gradeData = studentGrades[config.module_id];
+          const passed = checkModulePassed(config, gradeData);
+          return {
+            module_name: config.module_name,
+            required: config.required,
+            average: gradeData?.average,
+            passed: passed,
+          };
+        });
+        return {
+          student,
+          modules: modulesForPDF,
+          overallPassed,
+          comments: '',
+        };
+      });
+
+      await exportMultipleReportCardsToPDF({
+        students: studentsData,
+        className: selectedClass?.name || 'Onbekend',
+        schoolYear,
+      });
+
+      toast.success(`${selectedStudents.length} rapport(en) succesvol geëxporteerd naar één PDF!`);
       setSelectedStudentIds(new Set());
     } catch (error) {
       console.error('Failed to export report cards:', error);
+      toast.error('Exporteren van rapporten is mislukt. Probeer het opnieuw.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportAll = async () => {
+    if (studentsInClass.length === 0) return;
+
+    setIsExporting(true);
+
+    try {
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
+      const schoolYear = currentMonth >= 8
+        ? `${currentYear}/${currentYear + 1}`
+        : `${currentYear - 1}/${currentYear}`;
+
+      const studentsData = studentsInClass.map((student) => {
+        const studentGrades = calculateStudentGrades(student.id);
+        const overallPassed = checkOverallPassed(studentGrades);
+        const modulesForPDF = reportConfig.map((config) => {
+          const gradeData = studentGrades[config.module_id];
+          const passed = checkModulePassed(config, gradeData);
+          return {
+            module_name: config.module_name,
+            required: config.required,
+            average: gradeData?.average,
+            passed: passed,
+          };
+        });
+        return {
+          student,
+          modules: modulesForPDF,
+          overallPassed,
+          comments: '',
+        };
+      });
+
+      await exportMultipleReportCardsToPDF({
+        students: studentsData,
+        className: selectedClass?.name || 'Onbekend',
+        schoolYear,
+      });
+
+      toast.success(`Alle ${studentsInClass.length} rapporten succesvol geëxporteerd!`);
+    } catch (error) {
+      console.error('Failed to export all report cards:', error);
       toast.error('Exporteren van rapporten is mislukt. Probeer het opnieuw.');
     } finally {
       setIsExporting(false);
@@ -454,23 +530,52 @@ const RapportPageCopy = () => {
         )}
 
         <div className="flex items-center gap-4 ml-auto">
-          {/* Student search combobox - shown in reportcard view */}
+          {/* Student search combobox and Export All button - shown in reportcard view */}
           {viewMode === 'reportcard' && studentsInClass.length > 0 && (
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-muted-foreground">Leerling:</div>
-              <ComboboxField
-                items={[{ value: '', label: 'Alle leerlingen' }, ...studentItems]}
-                value={studentSearchId}
-                onChange={setStudentSearchId}
-                placeholder="Zoek leerling"
-                disabled={loading}
-                className="min-w-[200px] max-w-[280px]"
-              />
-            </div>
+            <>
+              <div className="flex items-center gap-2">
+                {viewMode === 'reportcard' && studentsInClass.length > 0 && (
+                  <Button
+                    variant="outline"
+                    className="py-3"
+                    onClick={handleExportAll}
+                    disabled={isExporting || studentsInClass.length === 0}
+                  >
+                    <Download className="h-4 w-4 mr-1" strokeWidth={2} />
+                    Alles exporteren
+                  </Button>
+                )}
+                {/* <div className="text-sm text-muted-foreground">Leerling:</div> */}
+                <div className="flex items-center gap-1">
+                  <ComboboxField
+                    items={[{ value: '', label: 'Alle leerlingen' }, ...studentItems]}
+                    value={studentSearchId}
+                    onChange={setStudentSearchId}
+                    placeholder="Zoek leerling"
+                    disabled={loading}
+                    className="min-w-[200px] max-w-[280px]"
+                  />
+
+                  {studentSearchId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => setStudentSearchId('')}
+                      title="Wis selectie"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+
+                </div>
+              </div>
+
+            </>
           )}
 
           <div className="flex items-center gap-2">
-            <div className="text-sm text-muted-foreground">Klas:</div>
+            {/* <div className="text-sm text-muted-foreground">Klas:</div> */}
             <ComboboxField
               items={classItems}
               value={selectedClassId}
@@ -480,6 +585,7 @@ const RapportPageCopy = () => {
               className="min-w-[200px] max-w-[280px]"
             />
           </div>
+
         </div>
       </div>
 
@@ -593,11 +699,10 @@ const RapportPageCopy = () => {
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
-                          size="sm"
                           onClick={() => handleExportReportCard(student, studentGrades, overallPassed)}
                         >
-                          <Download className="h-4 w-4 mr-1" />
-                          Exporteer PDF
+                          <Download className="h-4 w-4" strokeWidth={2} />
+                          {/* Exporteer PDF */}
                         </Button>
                         <Badge
                           variant={

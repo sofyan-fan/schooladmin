@@ -159,6 +159,12 @@ const SidebarComponent = () => {
       roles: ['admin', 'teacher'],
     },
     {
+      name: 'TR - kopie',
+      path: 'tijd-registratie-copy',
+      Icon: Clock,
+      roles: ['admin', 'teacher'],
+    },
+    {
       name: 'Afwezigheid',
       path: 'afwezigheid',
       Icon: UserCheck,

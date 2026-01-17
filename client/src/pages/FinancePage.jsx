@@ -1,8 +1,10 @@
 import courseApi from '@/apis/courseAPI';
 import financeAPI from '@/apis/financeAPI';
 import studentAPI from '@/apis/studentAPI';
+import teacherPaymentAPI from '@/apis/teacherPaymentAPI';
 import ExpensesByTypeDonut from '@/components/finance/ExpensesByTypeDonut';
 import FinanceStatCard from '@/components/finance/FinanceStatCard';
+import TeacherPaymentTab from '@/components/finance/TeacherPaymentTab';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import { Button } from '@/components/ui/button';
@@ -40,9 +42,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { BriefcaseMedical, Calculator, CircleDollarSign, Edit, Eye, GraduationCap, HeartHandshake, Home, Plus, ReceiptText, Repeat, ShoppingCart, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { BriefcaseMedical, Calculator, Check, CircleDollarSign, Clock, Edit, Eye, GraduationCap, HeartHandshake, Home, Plus, ReceiptText, Repeat, ShoppingCart, Trash2, TrendingDown, TrendingUp, Users, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
@@ -529,6 +540,12 @@ export default function FinancePage() {
           >
             Types beheren
           </TabsTrigger>
+          <TabsTrigger
+            value="teacher_payment"
+            className="inline-flex cursor-pointer rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground hover:text-primary data-[state=active]:border-primary data-[state=active]:text-primary"
+          >
+            Docentenbetaling
+          </TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW */}
@@ -695,6 +712,17 @@ export default function FinancePage() {
               </TableBody>
             </Table>
           </Card>
+        </TabsContent>
+
+        {/* TEACHER PAYMENT TAB */}
+        <TabsContent value="teacher_payment" className="mt-6">
+          <TeacherPaymentTab
+            onPaymentComplete={async () => {
+              // Refresh financial logs when a payment is completed
+              const l = await financeAPI.get_financial_logs();
+              setLogs(l || []);
+            }}
+          />
         </TabsContent>
       </Tabs>
 

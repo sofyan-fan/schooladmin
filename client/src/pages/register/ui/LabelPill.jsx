@@ -4,7 +4,7 @@ function LabelPill({ children, selected, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+      className={`cursor-pointer rounded-full border px-4 py-2 text-base md:text-sm font-medium transition-colors ${
         selected
           ? 'border-primary bg-primary text-primary-foreground'
           : 'border-input hover:bg-accent hover:text-accent-foreground'

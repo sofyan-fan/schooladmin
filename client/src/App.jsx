@@ -25,7 +25,7 @@ import BooksStockPage from './pages/BooksStockPage';
 import EducationPage from './pages/EducationPage';
 import LandingPage from './pages/LandingPage';
 import NotificationsPage from './pages/NotificationsPage';
-import RapportPage from './pages/RapportPage';
+// import RapportPage from './pages/RapportPage';
 import RapportPageCopy from './pages/RapportPageCopy';
 import RostersPage from './pages/RostersPage';
 import SchoolYearDetailPage from './pages/SchoolYearDetailPage';
@@ -42,6 +42,8 @@ import SubjectsPage from './pages/SubjectsPage';
 import TeacherDetailsPage from './pages/TeacherDetailsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
+import DashboardPageCopy from './pages/DashboardPageCopy';  
+import TimeRegisterPageCopy from './pages/TimeRegisterPageCopy';
 // import StudentDetailsPage from './pages/StudentDetailsPage';
 // import { useAuth } from './hooks/useAuth';
 
@@ -75,6 +77,7 @@ const App = () => {
         element={isAuthenticated ? <LayoutWrapper /> : <Navigate to="/login" />}
       >
         {/* Common (all authenticated roles) */}
+        <Route path="/dashboard-copy" element={<DashboardPageCopy />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/meldingen" element={<NotificationsPage />} />
         <Route path="/instellingen" element={<SettingsPage />} />
@@ -151,8 +154,8 @@ const App = () => {
           <Route path="/docenten" element={<TeachersPage />} />
           <Route path="/docenten/:id" element={<TeacherDetailsPage />} />
           <Route path="/onderwijs" element={<EducationPage />} />
-          <Route path="/rapport" element={<RapportPage />} />
-          <Route path="/rapport-nieuw" element={<RapportPageCopy />} />
+          {/* <Route path="/rapport" element={<RapportPage />} /> */}
+          <Route path="/rapport" element={<RapportPageCopy />} />
         </Route>
 
         {/* Admin + Teacher */}
@@ -161,6 +164,7 @@ const App = () => {
           <Route path="/resultaten" element={<ResultsPage />} />
           <Route path="/afwezigheid" element={<AbsencePage />} />
           <Route path="/tijd-registratie" element={<TimeRegisterPage />} />
+          <Route path="/tijd-registratie-copy" element={<TimeRegisterPageCopy />} />
           <Route path="/quran-log" element={<QuranLogPage />} />
         </Route>
 

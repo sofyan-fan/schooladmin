@@ -74,6 +74,7 @@ model teacher {
   class_layout class_layout[]
 
   time_registration time_registration[]
+  teacher_payments  teacher_payment[]
 }
 
 model admin {
@@ -404,10 +405,46 @@ model time_registration {
   approved_by Int? // admin id
   approved_at DateTime?
 
+  // Payment status
+  paid       Boolean   @default(false)
+  paid_at    DateTime?
+  payment    teacher_payment? @relation(fields: [payment_id], references: [id])
+  payment_id Int?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   @@index([teacher_id, week_start, week_end])
+  @@index([payment_id])
+}
+
+model teacher_payment {
+  id Int @id @default(autoincrement())
+
+  teacher    teacher @relation(fields: [teacher_id], references: [id])
+  teacher_id Int
+
+  // Payment details
+  total_hours        Float
+  hourly_rate        Float // compensation rate at time of payment
+  total_amount       Float // total_hours * hourly_rate
+  
+  // Admin confirmation
+  confirmed_by       Int // admin user id
+  
+  // Link to financial log for expense tracking
+  financial_log    financial_log? @relation(fields: [financial_log_id], references: [id])
+  financial_log_id Int?           @unique
+
+  notes String?
+
+  paid_at    DateTime @default(now())
+  created_at DateTime @default(now())
+
+  // Time registrations included in this payment
+  time_registrations time_registration[]
+
+  @@index([teacher_id])
 }
 
 model student_log {
@@ -484,6 +521,9 @@ model financial_log {
   date       DateTime @default(now())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  // Link back to teacher payment if this log is for a teacher payment
+  teacher_payment teacher_payment?
 
   @@index([type_id])
   @@index([school_year_id])

@@ -39,10 +39,17 @@
 
  @custom-variant dark (&:is(.dark *));
 
- @theme inline {
-   --font-sans: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+@theme inline {
+  --font-sans: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-   --radius-sm: calc(var(--radius) - 4px);
+  /* Custom breakpoints for finer responsive control */
+  /* Default Tailwind: sm:640px, md:768px, lg:1024px, xl:1280px, 2xl:1536px */
+  /* Mobile-first: default styles apply to smallest screens, breakpoints add styles for larger */
+  --breakpoint-xs: 480px;   /* Large phones */
+  --breakpoint-s: 560px;    /* Phablets / small tablets */
+  --breakpoint-3xl: 1920px; /* Large desktop monitors */
+
+  --radius-sm: calc(var(--radius) - 4px);
    --radius-md: calc(var(--radius) - 2px);
    --radius-lg: var(--radius);
    --radius-xl: calc(var(--radius) + 4px);
@@ -176,16 +183,28 @@
      /* Single global scrollbar */
      scrollbar-gutter: stable both-edges;
      /* Prevent layout shift */
-   }
- }
-
- @layer base {
-   * {
-     @apply border-border outline-ring/50;
+     /* Safe area insets handled at component level (Topbar, Sidebar, LayoutWrapper) */
    }
 
-   body {
-     @apply bg-background text-foreground;
+   /* Touch-friendly improvements */
+   button,
+   [role="button"],
+   a {
+     -webkit-user-select: none;
+     user-select: none;
+     -webkit-tap-highlight-color: transparent;
+   }
+
+   /* Smooth momentum scrolling for iOS */
+   .overflow-y-auto,
+   .overflow-x-auto,
+   .overflow-auto {
+     -webkit-overflow-scrolling: touch;
+   }
+
+   /* Touch-action optimization for sidebar */
+   [data-slot="sidebar-wrapper"] {
+     touch-action: pan-y;
    }
  }
 

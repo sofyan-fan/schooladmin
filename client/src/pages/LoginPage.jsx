@@ -38,7 +38,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-gray-100 px-4 py-8 dark:bg-gray-950">
+    <div className="flex flex-col min-h-svh items-center justify-center bg-gray-100 px-4 py-8 dark:bg-gray-950">
       {/* <h1 className="text-2xl sm:text-3xl flex items-center gap-2">MaktApp</h1> */}
       <Card className="w-full max-w-md gap-1">
         <CardHeader className="text-center">
@@ -132,7 +132,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
       <Toaster
-        position="top-right"
+        position="top-center"
         icons={{
           success: <CheckCircle className="size-6 text-primary" />,
           error: <XCircle className="size-6 text-destructive" />,
@@ -147,10 +147,10 @@ export default function LoginPage() {
             fontSize: '16px',
             fontWeight: '500',
             padding: '16px 20px',
-            minWidth: '300px',
-            maxWidth: '500px',
+            minWidth: '280px',
+            maxWidth: '90vw',
             width: 'max-content',
-            whiteSpace: 'nowrap',
+            whiteSpace: 'normal',
             flexDirection: 'row',
             gap: '10px',
           },

@@ -20,7 +20,7 @@ function RoleSelectionPage({
 
   return (
     // Main page container with a light background
-    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-svh w-full bg-gray-50 dark:bg-gray-900">
       {/* 1. Header Section */}
       <header className="flex flex-wrap items-center justify-between gap-2 px-4 py-4 sm:px-8">
         {/* <AppLogo /> */}
