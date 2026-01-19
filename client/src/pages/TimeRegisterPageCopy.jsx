@@ -260,7 +260,7 @@ const TimeRegisterPage = () => {
   ];
 
   return (
-    <div className="container mx-auto">
+    <>
       <PageHeader
         title="Tijd Registraties"
         icon={<Clock className="size-9" />}
@@ -522,7 +522,7 @@ const TimeRegisterPage = () => {
           ))
         )}
       </div>
-    </div>
+    </>
   );
 };
 

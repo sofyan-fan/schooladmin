@@ -1,5 +1,5 @@
 const { prisma } = require('../../prisma/connection');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 function getSessionUser(req) {
   return req.session?.user || req.user || null;

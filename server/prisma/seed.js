@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 
 // faker v10 is ESM-only; use dynamic import inside main()
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
