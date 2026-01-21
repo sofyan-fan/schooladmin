@@ -1,7 +1,6 @@
 import courseApi from '@/apis/courseAPI';
 import financeAPI from '@/apis/financeAPI';
 import studentAPI from '@/apis/studentAPI';
-import teacherPaymentAPI from '@/apis/teacherPaymentAPI';
 import ExpensesByTypeDonut from '@/components/finance/ExpensesByTypeDonut';
 import FinanceStatCard from '@/components/finance/FinanceStatCard';
 import TeacherPaymentTab from '@/components/finance/TeacherPaymentTab';
@@ -42,18 +41,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { useAuth } from '@/hooks/useAuth';
-import { BriefcaseMedical, Calculator, Check, CircleDollarSign, Clock, Edit, Eye, GraduationCap, HeartHandshake, Home, Plus, ReceiptText, Repeat, ShoppingCart, Trash2, TrendingDown, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BriefcaseMedical, Calculator, CircleDollarSign, Edit, Eye, GraduationCap, HeartHandshake, Home, Pencil, Plus, Repeat, ShoppingCart, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
@@ -140,6 +130,10 @@ export default function FinancePage() {
   const [courses, setCourses] = useState([]);
   const [studentIdToCourseId, setStudentIdToCourseId] = useState(new Map());
   const [activeTab, setActiveTab] = useState('overview');
+  const [budget, setBudget] = useState(null);
+  const [openBudgetDialog, setOpenBudgetDialog] = useState(false);
+  const [budgetInput, setBudgetInput] = useState('');
+  const [savingBudget, setSavingBudget] = useState(false);
 
   // Date range for filters (inclusive)
   const [rangeStart, setRangeStart] = useState(() => {
@@ -174,14 +168,16 @@ export default function FinancePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [t, l, s, cs] = await Promise.all([
+        const [t, l, s, cs, budgetData] = await Promise.all([
           financeAPI.get_financial_types(),
           financeAPI.get_financial_logs(),
           studentAPI.get_students(),
           courseApi.get_courses(),
+          financeAPI.get_finance_budget().catch(() => null),
         ]);
         setTypes(t || []);
         setLogs(l || []);
+        setBudget(budgetData);
         const mappedStudents = Array.isArray(s)
           ? s.map((st) => ({
             value: String(st.id),
@@ -402,13 +398,17 @@ export default function FinancePage() {
   const groupedByDate = useMemo(() => {
     const map = new Map();
     for (const l of logsInRange) {
-      const key = new Date(l.date).toLocaleDateString('nl-NL');
-      if (!map.has(key)) map.set(key, { date: key, income: 0, expense: 0 });
-      const entry = map.get(key);
+      const dateObj = new Date(l.date);
+      // Use ISO date string as key for proper grouping
+      const isoKey = dateObj.toISOString().split('T')[0];
+      const displayDate = dateObj.toLocaleDateString('nl-NL');
+      if (!map.has(isoKey)) map.set(isoKey, { isoDate: isoKey, date: displayDate, income: 0, expense: 0 });
+      const entry = map.get(isoKey);
       if (l.transaction_type === 'income') entry.income += Number(l.amount);
       else entry.expense += Number(l.amount);
     }
-    return Array.from(map.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Sort by ISO date (oldest first on the left, newest on the right)
+    return Array.from(map.values()).sort((a, b) => a.isoDate.localeCompare(b.isoDate));
   }, [logsInRange]);
 
   // Donut: expense distribution by type
@@ -550,7 +550,28 @@ export default function FinancePage() {
 
         {/* OVERVIEW */}
         <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="relative">
+              <FinanceStatCard
+                icon={Wallet}
+                title="Saldo"
+                value={eurFormatter.format(budget?.amount || 0)}
+                accentClass="bg-blue-100 text-blue-700"
+                valueClass="text-blue-700"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setBudgetInput(String(budget?.amount || 0));
+                  setOpenBudgetDialog(true);
+                }}
+                title="Budget bewerken"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
             <FinanceStatCard
               icon={TrendingUp}
               title="Totaal inkomen"
@@ -572,13 +593,6 @@ export default function FinancePage() {
               accentClass={netBalance < 0 ? 'bg-rose-100 text-rose-700' : 'bg-primary/30 text-primary'}
               valueClass={netBalance < 0 ? 'text-rose-700' : 'text-primary'}
             />
-            {/* <FinanceStatCard
-              icon={ReceiptText}
-              title="Aantal transacties"
-              value={String(logsInRange.length)}
-              accentClass="bg-blue-100 text-blue-700"
-              valueClass="text-blue-700"
-            /> */}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -603,47 +617,6 @@ export default function FinancePage() {
             </div>
           </div>
 
-          <Card className="p-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">Recente transacties</h3>
-              <Button variant="link" onClick={() => setActiveTab('transactions')}>Alles bekijken</Button>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Datum</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Leerling</TableHead>
-                  <TableHead>Lespakket</TableHead>
-                  <TableHead>Bedrag</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentTx.map((l) => (
-                  <TableRow key={l.id}>
-                    <TableCell>{formatDateNl(l.date)}</TableCell>
-                    <TableCell>{l.transaction_type === 'income' ? 'Inkomen' : 'Uitgave'}</TableCell>
-                    <TableCell>{l.student || '-'}</TableCell>
-                    <TableCell>{l.course || '-'}</TableCell>
-                    <TableCell className={l.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                      {new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(l.amount)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(l.id)}>
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {recentTx.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">Geen transacties gevonden.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Card>
         </TabsContent>
 
         {/* TRANSACTIONS TAB */}
@@ -1108,6 +1081,68 @@ export default function FinancePage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Budget Edit Dialog */}
+      <Dialog open={openBudgetDialog} onOpenChange={setOpenBudgetDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Budget aanpassen</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setSavingBudget(true);
+              try {
+                const amount = parseFloat(budgetInput) || 0;
+                const result = await financeAPI.update_finance_budget(amount);
+                setBudget(result.budget);
+                setOpenBudgetDialog(false);
+                toast.success('Budget bijgewerkt');
+              } catch (err) {
+                toast.error('Kon budget niet bijwerken');
+                console.error(err);
+              } finally {
+                setSavingBudget(false);
+              }
+            }}
+          >
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="budget-amount" className="text-sm font-medium">
+                  Saldo (€)
+                </label>
+                <Input
+                  id="budget-amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={budgetInput}
+                  onChange={(e) => setBudgetInput(e.target.value)}
+                  placeholder="0.00"
+                  disabled={savingBudget}
+                  autoFocus
+                />
+                {/* <p className="text-xs text-muted-foreground">
+                  Het totale beschikbare budget/saldo.
+                </p> */}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setOpenBudgetDialog(false)}
+                disabled={savingBudget}
+              >
+                Annuleren
+              </Button>
+              <Button type="submit" disabled={savingBudget}>
+                {savingBudget ? 'Opslaan...' : 'Opslaan'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -119,6 +119,11 @@ const {
   update_teacher_compensation,
 } = require('../controllers/general/teacher_payment');
 
+const {
+  get_finance_budget,
+  update_finance_budget,
+} = require('../controllers/general/finance_budget');
+
 // ==============================
 // Students routes
 // ==============================
@@ -267,5 +272,11 @@ router.get('/teacher-payments', get_payment_history);
 router.get('/teacher-payments/:id', get_payment_by_id);
 router.post('/teacher-payments', process_teacher_payment);
 router.put('/teachers/:id/compensation', update_teacher_compensation);
+
+// ==============================
+// Finance Budget routes
+// ==============================
+router.get('/finance-budget', get_finance_budget);
+router.put('/finance-budget', update_finance_budget);
 
 module.exports = router;

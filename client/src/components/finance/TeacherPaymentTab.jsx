@@ -1,7 +1,13 @@
 import teacherPaymentAPI from '@/apis/teacherPaymentAPI';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -21,15 +27,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { Check, Clock, Eye, Users, Wallet, History, BanknoteIcon, AlertCircle, CreditCard } from 'lucide-react';
+import { AlertCircle, BanknoteIcon, Check, CreditCard, Eye, History, Users } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 

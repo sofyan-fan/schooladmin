@@ -7,9 +7,8 @@ import { nl } from 'date-fns/locale';
 import {
   Bell,
   Calendar,
+  CheckCircle,
   Clock,
-  TrendingDown,
-  TrendingUp,
   UserX,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -177,6 +176,10 @@ const DashboardPage = () => {
 
           const totalStudents = Array.isArray(students) ? students.length : 0;
           const totalTeachers = Array.isArray(teachers) ? teachers.length : 0;
+          // Count students that have at least one tuition payment
+          const paidStudents = Array.isArray(students)
+            ? students.filter((s) => s.payments && s.payments.length > 0).length
+            : 0;
           setStats({
             totalStudents,
             studentsPresent: totalStudents - studentAbsencesToday.length,
@@ -185,6 +188,7 @@ const DashboardPage = () => {
             totalTimeRegs,
             pendingTimeRegs,
             absentTotal: studentAbsencesToday.length + teacherAbsToday.length,
+            paidStudents,
             financeIncomeMonth: incomeMonth,
             financeExpenseMonth: expenseMonth,
             financeNetMonth: netMonth,
@@ -647,37 +651,24 @@ const DashboardPage = () => {
 
         {!isStudent && (
           <>
-            {/* Finance Stat Card */}
+            {/* Paid Students Stat Card */}
             <StatCard
-              title="Saldo"
-              value={new Intl.NumberFormat('nl-NL', {
-                style: 'currency',
-                currency: 'EUR',
-              }).format(
-                typeof stats.financeNetAllTime === 'number'
-                  ? stats.financeNetAllTime
-                  : 0
-              )}
-              link="/financien"
-              icon={
-                (stats.financeNetAllTime || 0) > 0 ? (
-                  <TrendingUp />
-                ) : (
-                  <TrendingDown />
-                )
-              }
+              title="Betaalde leerlingen"
+              value={`${stats.paidStudents || 0} / ${stats.totalStudents || 0}`}
+              link="/leerlingen"
+              icon={<CheckCircle />}
               variant={
-                (stats.financeNetAllTime || 0) > 0
+                stats.paidStudents === stats.totalStudents && stats.totalStudents > 0
                   ? 'success'
-                  : (stats.financeNetAllTime || 0) < 0
-                    ? 'danger'
+                  : stats.paidStudents > 0
+                    ? 'warning'
                     : 'default'
               }
             />
 
             {isAdmin && (
               <StatCard
-                title="Tijdregistraties (in afwachting)"
+                title="Tijdregistraties"
                 value={stats.pendingTimeRegs || 0}
                 link="/tijd-registratie"
                 icon={<Clock />}

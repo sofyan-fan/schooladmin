@@ -37,7 +37,7 @@ export function UpcomingLessons({ lessons = [], loading = false }) {
     );
 
   return (
-    <Card className="rounded-xl border shadow-sm bg-card gap-1 text-regular">
+    <Card className="rounded-xl border shadow-sm bg-card gap-1 text-regular min-h-[28rem]">
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-[17px] md:text-lg">
@@ -63,8 +63,8 @@ export function UpcomingLessons({ lessons = [], loading = false }) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-2">
-        <div className="max-h-72 min-h-72 overflow-y-auto">
+      <CardContent className="pt-2 flex-1">
+        <div className="max-h-80 overflow-y-auto">
           {loading ? (
             <div className="space-y-3 py-3" aria-live="polite">
               {[...Array(5)].map((_, i) => (

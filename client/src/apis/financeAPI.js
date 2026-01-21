@@ -71,6 +71,19 @@ const financeAPI = {
     );
     return response.data;
   },
+
+  // Finance Budget
+  async get_finance_budget() {
+    const response = await RequestHandler.get(`${baseUrl}/finance-budget`);
+    return response.data;
+  },
+
+  async update_finance_budget(amount) {
+    const response = await RequestHandler.put(`${baseUrl}/finance-budget`, {
+      amount,
+    });
+    return response.data;
+  },
 };
 
 export default financeAPI;

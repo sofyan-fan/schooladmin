@@ -165,6 +165,8 @@ function makeFirstEmailUnique(first, usedEmails, domain = 'school.com') {
 async function cleanDatabase() {
   console.log('🧹 Database wordt opgeschoond...');
   // Delete records in an order that respects foreign key constraints.
+  // teacher_payment references financial_log and time_registration
+  await prisma.teacher_payment.deleteMany();
   await prisma.financial_log.deleteMany();
   await prisma.financial_type.deleteMany();
   await prisma.result.deleteMany();
@@ -181,7 +183,7 @@ async function cleanDatabase() {
   await prisma.class_layout.deleteMany();
   await prisma.teacher.deleteMany();
   await prisma.admin.deleteMany();
-   await prisma.notification?.deleteMany?.();
+  await prisma.notification?.deleteMany?.();
   await prisma.user.deleteMany();
   await prisma.classroom.deleteMany();
   await prisma.course_module_relation.deleteMany();
@@ -192,6 +194,7 @@ async function cleanDatabase() {
   await prisma.subject.deleteMany();
   await prisma.events.deleteMany();
   await prisma.book_inventory.deleteMany();
+  await prisma.finance_budget.deleteMany();
   await prisma.school_year.deleteMany();
   console.log('✅ Database opgeschoond.');
 }
@@ -263,6 +266,12 @@ async function main() {
     }),
   ]);
   console.log('✅ Schooljaren aangemaakt.');
+
+  // Create default finance budget
+  await prisma.finance_budget.create({
+    data: { amount: 5000 },
+  });
+  console.log('✅ Standaard budget aangemaakt (€5000).');
 
   // 2. Niveaus (NL) en materialen (AR) per vak (1-3 elk)
   console.log('Niveaus en materialen worden aangemaakt...');
@@ -514,8 +523,16 @@ async function main() {
   console.log('Financiële transacties worden aangemaakt...');
   const paymentMethods = ['iDEAL', 'SEPA incasso', 'Contant', 'Creditcard'];
 
+  // Helper: generate a random date within the past N days
+  const randomDateInPastDays = (days) => {
+    const now = new Date();
+    const randomDays = Math.floor(Math.random() * days);
+    return new Date(now.getTime() - randomDays * 24 * 60 * 60 * 1000);
+  };
+
   // Inkomsten: lesgeld voor willekeurige leerlingen en cursussen (actief schooljaar)
-  const incomeCount = Math.min(20, students.length);
+  // Spread across the past 30 days for realistic graph data
+  const incomeCount = Math.min(25, students.length);
   for (let i = 0; i < incomeCount; i++) {
     const s = faker.helpers.arrayElement(students);
     const sWithClass = await prisma.student.findUnique({
@@ -536,13 +553,15 @@ async function main() {
         method: faker.helpers.arrayElement(paymentMethods),
         notes: 'Automatisch gegenereerde lesgeldbetaling',
         transaction_type: 'income',
+        date: randomDateInPastDays(30),
       },
     });
   }
 
   // Uitgaven: kantoorartikelen/boodschappen/materiaal (actief schooljaar)
+  // Spread across the past 30 days for realistic graph data
   const expenseTypes = ['Kantoorartikelen', 'Boodschappen', 'Materiaal'];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 15; i++) {
     const t = faker.helpers.arrayElement(expenseTypes);
     await prisma.financial_log.create({
       data: {
@@ -560,15 +579,19 @@ async function main() {
             ? 'Boodschappen voor keuken'
             : 'Aanschaf lesmateriaal',
         transaction_type: 'expense',
+        date: randomDateInPastDays(30),
       },
     });
   }
 
   // Extra historische transacties voor het dummyjaar (archief)
+  // These are from the previous year, so use dates from 1-2 years ago
   const pastIncomeCount = Math.min(10, students.length);
   for (let i = 0; i < pastIncomeCount; i++) {
     const s = faker.helpers.arrayElement(students);
     const courseId = faker.helpers.arrayElement(courses).id;
+    const pastDate = new Date(twoYearsAgoStart);
+    pastDate.setDate(pastDate.getDate() + Math.floor(Math.random() * 300));
     await prisma.financial_log.create({
       data: {
         type_id: typeByName.get('Lesgeld').id,
@@ -579,12 +602,15 @@ async function main() {
         method: faker.helpers.arrayElement(paymentMethods),
         notes: 'Historische lesgeldbetaling (archiefjaar)',
         transaction_type: 'income',
+        date: pastDate,
       },
     });
   }
 
   for (let i = 0; i < 6; i++) {
     const t = faker.helpers.arrayElement(expenseTypes);
+    const pastDate = new Date(twoYearsAgoStart);
+    pastDate.setDate(pastDate.getDate() + Math.floor(Math.random() * 300));
     await prisma.financial_log.create({
       data: {
         type_id: typeByName.get(t).id,
@@ -601,6 +627,7 @@ async function main() {
             ? 'Historische boodschappen'
             : 'Historische aanschaf lesmateriaal',
         transaction_type: 'expense',
+        date: pastDate,
       },
     });
   }

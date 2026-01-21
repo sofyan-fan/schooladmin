@@ -406,7 +406,7 @@ model time_registration {
   approved_at DateTime?
 
   // Payment status
-  paid       Boolean   @default(false)
+  paid       Boolean          @default(false)
   paid_at    DateTime?
   payment    teacher_payment? @relation(fields: [payment_id], references: [id])
   payment_id Int?
@@ -425,13 +425,13 @@ model teacher_payment {
   teacher_id Int
 
   // Payment details
-  total_hours        Float
-  hourly_rate        Float // compensation rate at time of payment
-  total_amount       Float // total_hours * hourly_rate
-  
+  total_hours  Float
+  hourly_rate  Float // compensation rate at time of payment
+  total_amount Float // total_hours * hourly_rate
+
   // Admin confirmation
-  confirmed_by       Int // admin user id
-  
+  confirmed_by Int // admin user id
+
   // Link to financial log for expense tracking
   financial_log    financial_log? @relation(fields: [financial_log_id], references: [id])
   financial_log_id Int?           @unique
@@ -453,11 +453,11 @@ model student_log {
   student    student @relation(fields: [student_id], references: [id])
   student_id Int
 
-  date      DateTime
-  start_log String
-  end_log   String
-  completed Boolean  @default(false)
-  comment   String?
+  date           DateTime
+  start_log      String
+  end_log        String
+  completed      Boolean  @default(false)
+  comment        String?
   // Optional Quran log assessment scores (0–10). Nullable for backwards compatibility.
   nourania_score Int?
   tilawa_score   Int?
@@ -546,4 +546,10 @@ model school_year {
 
   @@index([is_active])
   @@index([is_archived])
+}
+
+model finance_budget {
+  id         Int      @id @default(autoincrement())
+  amount     Float    @default(0)
+  updated_at DateTime @updatedAt
 }

@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -27,13 +26,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@/components/ui/toggle-group';
 
 import { useAuth } from '@/hooks/useAuth';
-import { Check, Clock, Edit, X, Banknote, Lock, Eye, User, Calendar, Archive, LayoutGrid, List } from 'lucide-react';
+import { Archive, Banknote, Calendar, Check, Clock, Edit, Eye, LayoutGrid, List, Lock, User, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -75,7 +75,7 @@ const TimeRegisterPage = () => {
 
   const [isTimeRegModalOpen, setIsTimeRegModalOpen] = useState(false);
   const [editingTimeReg, setEditingTimeReg] = useState(null);
-  
+
   // Detail view state
   const [viewDetailReg, setViewDetailReg] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -115,13 +115,13 @@ const TimeRegisterPage = () => {
 
   const handleTimeRegSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate teacher selection
     if (!timeRegForm.teacher_id) {
       toast.error('Selecteer een docent');
       return;
     }
-    
+
     if (!timeRegForm.week_start) {
       toast.error('Selecteer een weekstart datum');
       return;
@@ -144,14 +144,14 @@ const TimeRegisterPage = () => {
         acc[day] = value === '' ? 0 : parseFloat(value || 0);
         return acc;
       }, {});
-      
+
       const teacherId = parseInt(timeRegForm.teacher_id, 10);
       if (isNaN(teacherId)) {
         toast.error('Ongeldige docent geselecteerd');
         setLoading(false);
         return;
       }
-      
+
       const data = {
         teacher_id: teacherId,
         week_start: start.toISOString(),
@@ -181,7 +181,7 @@ const TimeRegisterPage = () => {
 
   const handleToggleApproval = async (registration) => {
     if (user?.role !== 'admin') return;
-    
+
     if (registration.paid) {
       toast.error('Uitbetaalde registraties kunnen niet worden gewijzigd');
       return;
@@ -299,7 +299,7 @@ const TimeRegisterPage = () => {
       toast.error('Uitbetaalde registraties kunnen niet worden bewerkt');
       return;
     }
-    
+
     setTimeRegForm({
       teacher_id: registration.teacher_id.toString(),
       week_start: new Date(registration.week_start).toISOString().split('T')[0],
@@ -436,11 +436,10 @@ const TimeRegisterPage = () => {
             {dayLabels.map(({ key, label }) => (
               <div
                 key={key}
-                className={`flex-1 text-center py-1.5 rounded text-xs ${
-                  registration[key] > 0
+                className={`flex-1 text-center py-1.5 rounded text-xs ${registration[key] > 0
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'bg-muted text-muted-foreground'
-                }`}
+                  }`}
                 title={`${label}: ${registration[key] || 0} uur`}
               >
                 <div className="font-medium">{label}</div>
@@ -460,7 +459,7 @@ const TimeRegisterPage = () => {
               <Eye className="w-4 h-4 mr-1" />
               Details
             </Button>
-            
+
             {registration.paid ? (
               <Button
                 variant="outline"
@@ -479,10 +478,10 @@ const TimeRegisterPage = () => {
                 <Edit className="w-4 h-4" />
               </Button>
             )}
-            
+
             {user?.role === 'admin' && !registration.paid && (
               <Button
-                variant={registration.approved ? 'outline' : 'default'}
+                variant={registration.approved ? 'outline' : 'outline'}
                 size="sm"
                 onClick={() => handleToggleApproval(registration)}
                 title={registration.approved ? 'Goedkeuring intrekken' : 'Goedkeuren'}
@@ -842,10 +841,10 @@ const TimeRegisterPage = () => {
             {/* View mode toggle */}
             <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v)}>
               <ToggleGroupItem value="card" aria-label="Kaartweergave" title="Kaartweergave">
-                <LayoutGrid className="h-4 w-4" />
+                <LayoutGrid className="h-4 w-4 data-[state=on]:text-white hover:cursor-pointer" />
               </ToggleGroupItem>
               <ToggleGroupItem value="table" aria-label="Tabelweergave" title="Tabelweergave">
-                <List className="h-4 w-4" />
+                <List className="h-4 w-4 data-[state=on]:text-white hover:cursor-pointer" />
               </ToggleGroupItem>
             </ToggleGroup>
           </div>

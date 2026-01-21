@@ -215,8 +215,7 @@ export default function AssessmentsPage() {
           assessmentData
         );
         toast.success(
-          `${response.data.type === 'Test' ? 'Toets' : 'Examen'} "${
-            response.data.name
+          `${response.data.type === 'Test' ? 'Toets' : 'Examen'} "${response.data.name
           }" is bijgewerkt`
         );
       } else {
