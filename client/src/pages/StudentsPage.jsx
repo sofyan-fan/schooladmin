@@ -388,6 +388,7 @@ export default function StudentsPage() {
         description="Beheer hier alle leerlingen."
         buttonText="Leerling Toevoegen"
         onAdd={() => setOpenCreateDialog(true)}
+        hideButtonOnMobile
       />
       {/* Desktop: Table View */}
       <div className="hidden md:block">

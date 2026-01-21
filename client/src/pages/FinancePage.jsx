@@ -550,7 +550,7 @@ export default function FinancePage() {
 
         {/* OVERVIEW */}
         <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <FinanceStatCard
               icon={TrendingUp}
               title="Totaal inkomen"
@@ -572,13 +572,13 @@ export default function FinancePage() {
               accentClass={netBalance < 0 ? 'bg-rose-100 text-rose-700' : 'bg-primary/30 text-primary'}
               valueClass={netBalance < 0 ? 'text-rose-700' : 'text-primary'}
             />
-            <FinanceStatCard
+            {/* <FinanceStatCard
               icon={ReceiptText}
               title="Aantal transacties"
               value={String(logsInRange.length)}
               accentClass="bg-blue-100 text-blue-700"
               valueClass="text-blue-700"
-            />
+            /> */}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">

@@ -2,6 +2,7 @@ import assessmentApi from '@/apis/assessmentAPI';
 import classAPI from '@/apis/classAPI';
 import moduleAPI from '@/apis/moduleAPI';
 import resultAPI from '@/apis/resultAPI';
+import AssessmentMobileCardView from '@/components/assessments/AssessmentMobileCardView';
 import { createColumns } from '@/components/assessments/columns';
 import CreateModal from '@/components/assessments/CreateModal';
 import EditModal from '@/components/assessments/EditModal';
@@ -307,6 +308,7 @@ export default function AssessmentsPage() {
         description="Beheer hier alle toetsen en examens."
         buttonText="Nieuwe Toets/Examen"
         onAdd={() => setIsCreateModalOpen(true)}
+        hideButtonOnMobile
       />
       <Tabs
         value={activeTab}
@@ -314,7 +316,7 @@ export default function AssessmentsPage() {
         defaultValue="tests"
         className="space-y-4"
       >
-        <div className="flex justify-between items-center mb-0 ">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-0">
           <TabsList className="gap-2">
             <TabsTrigger
               value="tests"
@@ -329,13 +331,17 @@ export default function AssessmentsPage() {
               Examens
             </TabsTrigger>
           </TabsList>
-          {activeTab === 'tests' ? (
-            <Toolbar table={testsTable} filterColumn="name" />
-          ) : (
-            <Toolbar table={examsTable} filterColumn="name" />
-          )}
+          <div className="hidden md:block">
+            {activeTab === 'tests' ? (
+              <Toolbar table={testsTable} filterColumn="name" />
+            ) : (
+              <Toolbar table={examsTable} filterColumn="name" />
+            )}
+          </div>
         </div>
-        <TabsContent value="tests">
+
+        {/* Desktop: Table View */}
+        <TabsContent value="tests" className="hidden md:block">
           <DataTable
             table={testsTable}
             loading={loading}
@@ -343,12 +349,36 @@ export default function AssessmentsPage() {
             NoDataComponent={<NoData type="toets" />}
           />
         </TabsContent>
-        <TabsContent value="exams">
+        <TabsContent value="exams" className="hidden md:block">
           <DataTable
             table={examsTable}
             loading={loading}
             columns={examColumns}
             NoDataComponent={<NoData type="examen" />}
+          />
+        </TabsContent>
+
+        {/* Mobile: Card View */}
+        <TabsContent value="tests" className="md:hidden">
+          <AssessmentMobileCardView
+            assessments={tests}
+            loading={loading}
+            type="toetsen"
+            onView={(assessment) => handleView(assessment, 'test')}
+            onEdit={(assessment) => handleEdit(assessment, 'test')}
+            onDelete={(assessment) => handleDelete(assessment, 'test')}
+            onManageResults={handleManageResults}
+          />
+        </TabsContent>
+        <TabsContent value="exams" className="md:hidden">
+          <AssessmentMobileCardView
+            assessments={exams}
+            loading={loading}
+            type="examens"
+            onView={(assessment) => handleView(assessment, 'exam')}
+            onEdit={(assessment) => handleEdit(assessment, 'exam')}
+            onDelete={(assessment) => handleDelete(assessment, 'exam')}
+            onManageResults={handleManageResults}
           />
         </TabsContent>
       </Tabs>

@@ -218,6 +218,23 @@ exports.create_time_registration = async (req, res) => {
       sunday = 0,
     } = req.body;
 
+    // Validate teacher_id
+    const parsedTeacherId = parseInt(teacher_id);
+    if (!teacher_id || isNaN(parsedTeacherId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Een geldige docent is vereist' 
+      });
+    }
+
+    // Validate week_start
+    if (!week_start) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Weekstart datum is vereist' 
+      });
+    }
+
     // Validate daily hours
     const validationError = validateDailyHours({
       monday,
@@ -233,20 +250,26 @@ exports.create_time_registration = async (req, res) => {
     }
 
     const total_hours =
-      monday + tuesday + wednesday + thursday + friday + saturday + sunday;
+      parseFloat(monday || 0) + 
+      parseFloat(tuesday || 0) + 
+      parseFloat(wednesday || 0) + 
+      parseFloat(thursday || 0) + 
+      parseFloat(friday || 0) + 
+      parseFloat(saturday || 0) + 
+      parseFloat(sunday || 0);
 
     const registration = await prisma.time_registration.create({
       data: {
-        teacher_id,
+        teacher_id: parsedTeacherId,
         week_start: new Date(week_start),
         week_end: new Date(week_end),
-        monday,
-        tuesday,
-        wednesday,
-        thursday,
-        friday,
-        saturday,
-        sunday,
+        monday: parseFloat(monday || 0),
+        tuesday: parseFloat(tuesday || 0),
+        wednesday: parseFloat(wednesday || 0),
+        thursday: parseFloat(thursday || 0),
+        friday: parseFloat(friday || 0),
+        saturday: parseFloat(saturday || 0),
+        sunday: parseFloat(sunday || 0),
         total_hours,
       },
     });
@@ -256,6 +279,7 @@ exports.create_time_registration = async (req, res) => {
       data: registration,
     });
   } catch (error) {
+    console.error('Error creating time registration:', error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -420,6 +444,29 @@ exports.get_all_time_registrations = async (req, res) => {
       data: registrations,
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Admin: Delete all time registrations (for cleanup/testing)
+exports.delete_all_time_registrations = async (req, res) => {
+  try {
+    // First delete all teacher_payments that reference time_registrations
+    await prisma.teacher_payment.deleteMany({});
+    
+    // Then delete all time registrations
+    const result = await prisma.time_registration.deleteMany({});
+
+    res.status(200).json({
+      success: true,
+      message: `Deleted ${result.count} time registrations`,
+      count: result.count,
+    });
+  } catch (error) {
+    console.error('Error deleting time registrations:', error);
     res.status(500).json({
       success: false,
       message: error.message,

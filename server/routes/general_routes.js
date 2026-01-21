@@ -56,6 +56,7 @@ const {
   unapprove_time_registration,
   get_teacher_time_registrations,
   get_all_time_registrations,
+  delete_all_time_registrations,
 } = require('../controllers/general/time_registration');
 
 const {
@@ -200,6 +201,7 @@ router.get(
   get_teacher_time_registrations
 );
 router.get('/time-registrations', get_all_time_registrations);
+router.delete('/time-registrations', delete_all_time_registrations);
 
 // ==============================
 // Classrooms routes

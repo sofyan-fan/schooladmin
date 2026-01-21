@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { Check, Clock, Eye, Users, Wallet, History, BanknoteIcon, AlertCircle } from 'lucide-react';
+import { Check, Clock, Eye, Users, Wallet, History, BanknoteIcon, AlertCircle, CreditCard } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -167,6 +167,22 @@ export default function TeacherPaymentTab({ onPaymentComplete }) {
     setOpenPaymentConfirmDialog(true);
   };
 
+  const prepareSinglePayment = (teacherData, registration) => {
+    if (!teacherData.teacher.compensation || teacherData.teacher.compensation <= 0) {
+      toast.error('Stel eerst een uurtarief in voor deze docent');
+      return;
+    }
+    const totalAmount = registration.total_hours * teacherData.teacher.compensation;
+    setPaymentToConfirm({
+      teacher: teacherData.teacher,
+      registrations: [registration],
+      registration_ids: [registration.id],
+      totalHours: registration.total_hours,
+      totalAmount,
+    });
+    setOpenPaymentConfirmDialog(true);
+  };
+
   const confirmPayment = async () => {
     if (!paymentToConfirm) return;
     setProcessingPayment(true);
@@ -232,7 +248,7 @@ export default function TeacherPaymentTab({ onPaymentComplete }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Openstaande uren</CardTitle>
@@ -263,12 +279,12 @@ export default function TeacherPaymentTab({ onPaymentComplete }) {
             <p className="text-xs text-muted-foreground">Totaal verwerkt</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList>
-          <TabsTrigger value="unpaid" className="gap-2"><BanknoteIcon className="h-4 w-4" />Openstaand</TabsTrigger>
-          <TabsTrigger value="history" className="gap-2"><History className="h-4 w-4" />Betalingsgeschiedenis</TabsTrigger>
+          <TabsTrigger value="unpaid" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md hover:cursor-pointer"><BanknoteIcon className="h-4 w-4" />Openstaand</TabsTrigger>
+          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md hover:cursor-pointer"><History className="h-4 w-4" />Betalingsgeschiedenis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="unpaid" className="mt-4">
@@ -332,11 +348,13 @@ export default function TeacherPaymentTab({ onPaymentComplete }) {
                               <TableHead>Zo</TableHead>
                               <TableHead>Totaal</TableHead>
                               <TableHead>Goedgekeurd</TableHead>
+                              <TableHead></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {teacherData.registrations.map((reg) => {
                               const isSelected = selectedRegistrations.get(teacherData.teacher.id)?.has(reg.id) || false;
+                              const singleAmount = reg.total_hours * (teacherData.teacher.compensation || 0);
                               return (
                                 <TableRow key={reg.id}>
                                   <TableCell><Checkbox checked={isSelected} onCheckedChange={() => toggleRegistration(teacherData.teacher.id, reg.id)} /></TableCell>
@@ -350,6 +368,18 @@ export default function TeacherPaymentTab({ onPaymentComplete }) {
                                   <TableCell>{reg.sunday || '-'}</TableCell>
                                   <TableCell className="font-medium">{reg.total_hours} uur</TableCell>
                                   <TableCell><Badge className="bg-green-100 text-green-800"><Check className="w-3 h-3 mr-1" />{formatDateNl(reg.approved_at)}</Badge></TableCell>
+                                  <TableCell>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => prepareSinglePayment(teacherData, reg)}
+                                      disabled={!teacherData.teacher.compensation || teacherData.teacher.compensation <= 0}
+                                      title={`Betaal ${eurFormatter.format(singleAmount)}`}
+                                    >
+                                      <CreditCard className="w-4 h-4 mr-1" />
+                                      Betaal
+                                    </Button>
+                                  </TableCell>
                                 </TableRow>
                               );
                             })}
@@ -418,14 +448,14 @@ export default function TeacherPaymentTab({ onPaymentComplete }) {
                 <div className="flex justify-between"><span className="text-muted-foreground">Uurtarief</span><span className="font-medium">{eurFormatter.format(paymentToConfirm.teacher.compensation)}</span></div>
                 <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">Totaal uit te betalen</span><span className="font-bold text-lg text-rose-600">{eurFormatter.format(paymentToConfirm.totalAmount)}</span></div>
               </div>
-              <div className="text-sm text-muted-foreground">
+              {/* <div className="text-sm text-muted-foreground">
                 <p>Na bevestiging gebeurt het volgende:</p>
                 <ul className="list-disc list-inside mt-1 space-y-1">
                   <li>De geselecteerde weken worden gemarkeerd als uitbetaald</li>
                   <li>De betaling wordt toegevoegd aan de uitgaven in het financieel overzicht</li>
                   <li>De registraties kunnen niet meer worden gewijzigd</li>
                 </ul>
-              </div>
+              </div> */}
             </div>
           )}
           <DialogFooter>

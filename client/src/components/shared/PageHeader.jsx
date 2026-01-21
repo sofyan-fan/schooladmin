@@ -10,6 +10,7 @@ const PageHeader = ({
   onAdd,
   children,
   className,
+  hideButtonOnMobile = false,
 }) => (
   <div className={cn('flex justify-between items-center mb-6', className)}>
     <div>
@@ -22,7 +23,10 @@ const PageHeader = ({
     {children ? (
       children
     ) : onAdd ? (
-      <Button onClick={onAdd}>
+      <Button
+        onClick={onAdd}
+        className={hideButtonOnMobile ? 'hidden md:inline-flex' : ''}
+      >
         <Plus className="mr-2 h-4 w-4" />
         {buttonText}
       </Button>

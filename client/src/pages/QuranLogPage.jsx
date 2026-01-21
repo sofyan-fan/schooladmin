@@ -71,7 +71,7 @@ export default function QuranLogPage() {
       console.warn('Failed to save Quran logs locally', e);
     }
   }
-  const [subjects] = useState([{ value: 'quran', label: "Qur'an" }]);
+  const [subjects] = useState([{ value: 'quran', label: "Qur'an" }, { value: 'nourania', label: 'Nourania' }, { value: 'tilawa', label: 'Tilawa' }, { value: 'tajweed', label: 'Tajweed' }, { value: 'hifdh', label: 'Hifdh' }]);
   const [subjectTypes] = useState([
     { value: 'reading', label: 'Lezen' },
     { value: 'memorization', label: 'Memorisatie' },

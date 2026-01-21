@@ -1,5 +1,4 @@
 import PostRegisterDialog from '@/components/shared/PostRegisterDialog';
-import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { formatHijri } from '@/utils/hijri';
 import { loadNotifications } from '@/utils/notificationsStorage';
@@ -27,7 +26,6 @@ import rosterAPI from '@/apis/rosterAPI';
 import { get_student_by_id, get_students } from '@/apis/studentAPI';
 import { get_teachers } from '@/apis/teachersAPI';
 import { absenceAPI, timeRegisterAPI } from '@/apis/timeregisterAPI';
-import { Link } from 'react-router-dom';
 
 const DashboardPage = () => {
   const { user, justRegistered, clearJustRegistered } = useAuth();
@@ -110,7 +108,8 @@ const DashboardPage = () => {
               ? timeRegsRes
               : [];
           const totalTimeRegs = timeRegsData.length;
-          const pendingTimeRegs = timeRegsData.filter((r) => !r.approved).length;
+          // Only count registrations that are "in afwachting" (not approved and not paid)
+          const pendingTimeRegs = timeRegsData.filter((r) => !r.approved && !r.paid).length;
 
           // upcoming lessons today from rosters
           const rostersToday = (rosters || []).filter((r) =>
@@ -561,18 +560,13 @@ const DashboardPage = () => {
 
   return (
     <>
-      <div className="mb-6">
-        <div className="flex items-start justify-between gap-4">
-          {/* <h1 className="text-3xl font-semibold text-regular">
-            Welkom{firstName ? `, ${firstName}` : ''}!
-          </h1> */}
-          <div>
-            <div className="text-2xl text-regular font-medium">
-              {capitalizeDay}
-            </div>
+      <div className="mb-4 xs:mb-5 sm:mb-6">
+        <div className="flex flex-col xs:flex-row items-center xs:items-start justify-between gap-2 xs:gap-4">
+          <div className="text-base xs:text-lg sm:text-xl md:text-2xl text-regular font-medium text-center xs:text-left">
+            {capitalizeDay}
           </div>
-          <div className="text-right">
-            <div className="text-base text-regular italic">{hijriDate}</div>
+          <div className="text-right hidden sm:block">
+            <div className="text-xs sm:text-sm md:text-base text-regular italic">{hijriDate}</div>
           </div>
         </div>
       </div>
@@ -587,22 +581,18 @@ const DashboardPage = () => {
           }
         }}
       />
-      {/* Stat cards - compact 2-column grid on mobile, expanding on larger screens */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 mb-6">
+      {/* Stat cards grid - granular breakpoints for better control */}
+      {/* xs:480px, sm:640px, md:768px, lg:1024px, xl:1280px */}
+      <div className="grid grid-cols-1 gap-2.5 xs:gap-3 s:grid-cols-2 s:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-5 xl:gap-6 mb-6">
         {isAdmin && (
           <StatCard
-            title="Leerlingen (afwezig)"
+            title="Afwezig"
             value={Math.max(
               (stats.totalStudents || 0) - (stats.studentsPresent || 0),
               0
             )}
-            subtitle={
-              stats.totalStudents
-                ? `Totaal: ${stats.totalStudents}`
-                : 'Geen leerlingen'
-            }
             link="/afwezigheid"
-            icon={<UserX className="h-8 w-8" />}
+            icon={<UserX />}
             variant={
               (stats.totalStudents || 0) - (stats.studentsPresent || 0) > 0
                 ? 'warning'
@@ -616,45 +606,26 @@ const DashboardPage = () => {
             title="Afwezig gemeld"
             value={stats.absentTotal || 0}
             link="/afwezigheid"
-            icon={<UserX className="h-8 w-8" />}
+            icon={<UserX />}
             variant="danger"
           />
         )}
 
         {isStudent && (
           <>
-            <Link
-              to={studentProfileResultsLink}
-              aria-label="View details for Laatste resultaat"
-            >
-              <Card className="h-[120px] sm:h-[140px] p-4 sm:p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
-                <div className="flex flex-row items-center gap-5 h-full">
-                  <div className="p-4 rounded-full flex items-center justify-center hidden md:hidden lg:flex bg-primary/10 text-primary">
-                    <TrendingUp className="h-8 w-8" />
-                  </div>
-                  <div className="flex flex-col justify-center h-full gap-1 sm:gap-2 min-w-0">
-                    <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-regular leading-snug break-words">
-                      Laatste resultaat
-                    </p>
-                    <div className="flex gap-2">
-                      <p className="text-lg sm:text-xl font-medium text-regular leading-tight">
-                        {latestGradeValue}
-                      </p>
-                      {latestAssessmentSubtitle && (
-                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
-                          {latestAssessmentSubtitle}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </Link>
+            <StatCard
+              title="Laatste resultaat"
+              value={latestGradeValue}
+              link={studentProfileResultsLink}
+              icon={<TrendingUp />}
+              variant="default"
+            />
+
             <StatCard
               title="Aanwezigheid"
               value={attendanceValue}
               link={studentProfileAttendanceLink}
-              icon={<Clock className="h-8 w-8" />}
+              icon={<Clock />}
               variant={
                 attendancePctRaw >= 90
                   ? 'success'
@@ -663,39 +634,14 @@ const DashboardPage = () => {
                     : 'danger'
               }
             />
-            <Link
-              to={studentProfileBaseLink}
-              aria-label="Bekijk volgende les"
-              className="block"
-            >
-              <Card className="h-[120px] sm:h-[140px] p-4 sm:p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
-                <div className="flex flex-row items-center gap-5 h-full">
-                  <div className="p-4 rounded-full flex items-center justify-center hidden md:hidden lg:flex bg-primary/10 text-primary">
-                    <Calendar className="h-8 w-8" />
-                  </div>
-                  <div className="flex flex-col justify-center h-full gap-1 sm:gap-2 min-w-0">
-                    <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-regular leading-snug break-words">
-                      Volgende les
-                    </p>
-                    <p className="text-base sm:text-lg font-semibold text-regular leading-tight break-words">
-                      {nextLesson?.title || 'Geen les'}
-                    </p>
-                    {(nextLesson?.group || nextLesson?.classroom) && (
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {nextLesson?.group || ''}
-                        {nextLesson?.group && nextLesson?.classroom ? ' · ' : ''}
-                        {nextLesson?.classroom || ''}
-                      </p>
-                    )}
-                    {/* {nextLesson?.startTime && (
-                      <p className="text-sm text-muted-foreground">
-                        {nextLesson.startTime}
-                      </p>
-                    )} */}
-                  </div>
-                </div>
-              </Card>
-            </Link>
+
+            <StatCard
+              title="Volgende les"
+              value={nextLesson?.title || 'Geen les'}
+              link={studentProfileBaseLink}
+              icon={<Calendar />}
+              variant="default"
+            />
           </>
         )}
 
@@ -703,7 +649,7 @@ const DashboardPage = () => {
           <>
             {/* Finance Stat Card */}
             <StatCard
-              title="Saldo (totaal)"
+              title="Saldo"
               value={new Intl.NumberFormat('nl-NL', {
                 style: 'currency',
                 currency: 'EUR',
@@ -715,9 +661,9 @@ const DashboardPage = () => {
               link="/financien"
               icon={
                 (stats.financeNetAllTime || 0) > 0 ? (
-                  <TrendingUp className="h-8 w-8" />
+                  <TrendingUp />
                 ) : (
-                  <TrendingDown className="h-8 w-8" />
+                  <TrendingDown />
                 )
               }
               variant={
@@ -731,15 +677,10 @@ const DashboardPage = () => {
 
             {isAdmin && (
               <StatCard
-                title="Tijdregistraties"
-                value={stats.totalTimeRegs || 0}
+                title="Tijdregistraties (in afwachting)"
+                value={stats.pendingTimeRegs || 0}
                 link="/tijd-registratie"
-                icon={<Clock className="h-8 w-8" />}
-                subtitle={
-                  stats.pendingTimeRegs > 0
-                    ? `In afwachting: ${stats.pendingTimeRegs}`
-                    : ''
-                }
+                icon={<Clock />}
                 variant={stats.pendingTimeRegs > 0 ? 'warning' : 'success'}
               />
             )}
@@ -751,19 +692,19 @@ const DashboardPage = () => {
           title="Meldbox"
           value={notificationsCount}
           link="/meldingen"
-          icon={<Bell className="h-8 w-8" />}
+          icon={<Bell />}
           variant="danger"
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+        <div className="xl:col-span-2 space-y-4 sm:space-y-5 md:space-y-6">
           <YearPlanning
             items={jaarplanning}
             setItems={setJaarplanning}
             readOnly={isStudent}
           />
-          {isAdmin ? (
+          {/* {isAdmin ? (
             <Card className="rounded-lg border shadow-sm bg-white">
               <CardContent className="p-4">
                 <h3 className="text-lg font-semibold mb-2">
@@ -797,9 +738,9 @@ const DashboardPage = () => {
                 )}
               </CardContent>
             </Card>
-          ) : null}
+          ) : null} */}
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5 md:space-y-6">
           <UpcomingLessons lessons={lessons} loading={loading} />
         </div>
       </div>

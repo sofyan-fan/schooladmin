@@ -5,6 +5,7 @@ import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
 import DeleteTeacherDialog from '@/components/teachers/DeleteDialog';
 import TeacherEditModal from '@/components/teachers/EditModal';
+import TeacherMobileCardView from '@/components/teachers/TeacherMobileCardView';
 import TeacherViewModal from '@/components/teachers/ViewModal';
 import { createColumns } from '@/components/teachers/columns';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -246,13 +247,27 @@ export default function TeachersPage() {
         description="Beheer hier alle docenten."
         buttonText="Nieuwe docent"
         onAdd={handleAddNew}
+        hideButtonOnMobile
       />
-      <Toolbar table={table} filterColumn="firstName" />
-      <DataTable
-        table={table}
+
+      {/* Desktop: Table View */}
+      <div className="hidden md:block">
+        <Toolbar table={table} filterColumn="firstName" />
+        <DataTable
+          table={table}
+          loading={loading}
+          columns={columns}
+          NoDataComponent={NoData}
+        />
+      </div>
+
+      {/* Mobile: Card View */}
+      <TeacherMobileCardView
+        teachers={teachers}
         loading={loading}
-        columns={columns}
-        NoDataComponent={NoData}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       <TeacherViewModal
