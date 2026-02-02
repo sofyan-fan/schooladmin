@@ -1,6 +1,3 @@
--- Remove saldo column from school_year if it exists
-ALTER TABLE `school_year` DROP COLUMN IF EXISTS `saldo`;
-
 -- CreateTable
 CREATE TABLE `finance_budget` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
