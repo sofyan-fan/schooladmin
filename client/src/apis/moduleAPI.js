@@ -34,6 +34,14 @@ const moduleAPI = {
     await RequestHandler.del(`${baseUrl}/${moduleId}`);
     return moduleId;
   },
+
+  async update_passing_criteria(moduleId, criteria) {
+    const response = await RequestHandler.put(
+      `${baseUrl}/${moduleId}/passing-criteria`,
+      criteria
+    );
+    return response.data;
+  },
 };
 
 export default moduleAPI;

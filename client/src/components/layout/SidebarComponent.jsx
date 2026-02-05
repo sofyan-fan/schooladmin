@@ -32,6 +32,7 @@ import {
   LayoutDashboard,
   LibraryBig,
   LogOut,
+  NotebookPen,
   PanelLeft,
   Presentation,
   Settings,
@@ -95,6 +96,12 @@ const SidebarComponent = () => {
       name: 'Mijn Leerlingen',
       path: 'mijn-leerlingen',
       Icon: GraduationCap,
+      roles: ['teacher'],
+    },
+    {
+      name: 'Mijn Rooster',
+      path: 'docent-rooster',
+      Icon: CalendarDays,
       roles: ['teacher'],
     },
     {
@@ -181,6 +188,12 @@ const SidebarComponent = () => {
       path: 'quran-log',
       Icon: LibraryBig,
       roles: ['admin', 'teacher'],
+    },
+    {
+      name: 'Lessen Logs',
+      path: 'lessen-logs',
+      Icon: NotebookPen,
+      roles: ['teacher'],
     },
     {
       name: 'Rapport',

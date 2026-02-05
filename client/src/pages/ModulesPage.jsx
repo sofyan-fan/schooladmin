@@ -3,7 +3,8 @@ import subjectAPI from '@/apis/subjectAPI';
 import ViewCourseModuleDialog from '@/components/coursemodules/ViewCourseModuleDialog';
 import CreateModal from '@/components/modules/CreateModal';
 import EditModal from '@/components/modules/EditModal';
-import { ModuleCard } from '@/components/modules/ModuleCard'; // Note the organized path
+import { ModuleCard } from '@/components/modules/ModuleCard';
+import ModuleSettingsModal from '@/components/modules/ModuleSettingsModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,8 @@ const ModulesPage = () => {
   const [moduleToView, setModuleToView] = useState(null);
   const [moduleToEdit, setModuleToEdit] = useState(null);
   const [moduleToDelete, setModuleToDelete] = useState(null);
+  const [moduleForSettings, setModuleForSettings] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // --- Data Enrichment ---
   const enrichModulesWithSubjectNames = (modules, subjects) => {
@@ -155,6 +158,26 @@ const ModulesPage = () => {
   const handleViewClick = (module) => setModuleToView(module);
   const handleEditClick = (module) => setModuleToEdit(module);
   const handleDeleteClick = (module) => setModuleToDelete(module);
+  const handleOpenSettings = (module) => {
+    setModuleForSettings(module);
+    setIsSettingsOpen(true);
+  };
+
+  const handleSettingsSaved = (updatedModule) => {
+    // Update the module in the local state with the new passing criteria
+    setModules((prev) =>
+      prev.map((m) =>
+        m.id === updatedModule.id
+          ? {
+              ...m,
+              passing_min: updatedModule.passing_min,
+              passing_norm: updatedModule.passing_norm,
+              passing_max: updatedModule.passing_max,
+            }
+          : m
+      )
+    );
+  };
 
   // --- Render Logic ---
 
@@ -188,6 +211,7 @@ const ModulesPage = () => {
             onView={() => handleViewClick(module)}
             onEdit={() => handleEditClick(module)}
             onDelete={() => handleDeleteClick(module)}
+            onOpenSettings={() => handleOpenSettings(module)}
           />
         ))}
       </div>
@@ -238,6 +262,17 @@ const ModulesPage = () => {
         open={!!moduleToView}
         onOpenChange={() => setModuleToView(null)}
         module={moduleToView}
+      />
+
+      {/* Settings Modal */}
+      <ModuleSettingsModal
+        open={isSettingsOpen}
+        onOpenChange={(open) => {
+          setIsSettingsOpen(open);
+          if (!open) setModuleForSettings(null);
+        }}
+        module={moduleForSettings}
+        onSaved={handleSettingsSaved}
       />
 
       {/* Delete Confirmation Dialog */}

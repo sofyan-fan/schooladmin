@@ -124,6 +124,16 @@ const {
   update_finance_budget,
 } = require('../controllers/general/finance_budget');
 
+const {
+  create_lesson_log,
+  get_all_lesson_logs,
+  get_lesson_log_by_id,
+  get_lesson_log_by_roster_date,
+  get_logs_for_roster,
+  update_lesson_log,
+  delete_lesson_log,
+} = require('../controllers/general/lesson_log');
+
 // ==============================
 // Students routes
 // ==============================
@@ -278,5 +288,16 @@ router.put('/teachers/:id/compensation', update_teacher_compensation);
 // ==============================
 router.get('/finance-budget', get_finance_budget);
 router.put('/finance-budget', update_finance_budget);
+
+// ==============================
+// Lesson Logs routes
+// ==============================
+router.post('/lesson-logs', create_lesson_log);
+router.get('/lesson-logs', get_all_lesson_logs);
+router.get('/lesson-logs/by-roster-date', get_lesson_log_by_roster_date);
+router.get('/lesson-logs/roster/:roster_id', get_logs_for_roster);
+router.get('/lesson-logs/:id', get_lesson_log_by_id);
+router.put('/lesson-logs/:id', update_lesson_log);
+router.delete('/lesson-logs/:id', delete_lesson_log);
 
 module.exports = router;

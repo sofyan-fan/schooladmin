@@ -220,6 +220,43 @@ exports.get_all_modules = async (req, res) => {
   }
 };
 
+// Update passing criteria for a module
+exports.update_module_passing_criteria = async (req, res) => {
+  const { id } = req.params;
+  const { passing_min, passing_norm, passing_max } = req.body;
+
+  try {
+    const existingModule = await prisma.course_module.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!existingModule) {
+      return res.status(404).json({ error: 'Module not found' });
+    }
+
+    const updatedModule = await prisma.course_module.update({
+      where: { id: Number(id) },
+      data: {
+        passing_min: passing_min !== undefined ? passing_min : existingModule.passing_min,
+        passing_norm: passing_norm !== undefined ? passing_norm : existingModule.passing_norm,
+        passing_max: passing_max !== undefined ? passing_max : existingModule.passing_max,
+      },
+      include: {
+        subjects: {
+          include: {
+            subject: true,
+          },
+        },
+      },
+    });
+
+    res.json(updatedModule);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error updating module passing criteria' });
+  }
+};
+
 exports.create_module = async (req, res) => {
   // course_id is no longer part of a module, it's a standalone entity.
   const { name, subjects } = req.body;

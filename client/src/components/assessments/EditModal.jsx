@@ -2,12 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format, parseISO } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import classAPI from '@/apis/classAPI';
-import moduleAPI from '@/apis/moduleAPI';
+import courseAPI from '@/apis/courseAPI';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -55,8 +55,10 @@ const assessmentSchema = z.object({
 
 export default function EditModal({ open, onOpenChange, onSave, assessment }) {
   const [classes, setClasses] = useState([]);
-  const [subjects, setSubjects] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
+  // Track if class was changed by user (not initial load)
+  const initialClassIdRef = useRef(null);
 
   const form = useForm({
     resolver: zodResolver(assessmentSchema),
@@ -75,10 +77,12 @@ export default function EditModal({ open, onOpenChange, onSave, assessment }) {
   // Update form values when assessment changes
   useEffect(() => {
     if (assessment && open) {
+      const classId = String(assessment.class_id || '');
+      initialClassIdRef.current = classId;
       form.reset({
         type: assessment.type || 'Test',
         name: assessment.name || '',
-        class_id: String(assessment.class_id || ''),
+        class_id: classId,
         subject_id: String(assessment.subject_id || ''),
         date: assessment.date ? parseISO(assessment.date) : new Date(),
         leverage: assessment.leverage || 1,
@@ -91,29 +95,16 @@ export default function EditModal({ open, onOpenChange, onSave, assessment }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classData, modulesData] = await Promise.all([
+        const [classData, coursesData] = await Promise.all([
           classAPI.get_classes(),
-          moduleAPI.get_modules(),
+          courseAPI.get_courses(),
         ]);
         console.log('Class Data', classData);
         setClasses(classData);
-
-        // Flatten course_module_subject records from modules
-        const flattenedSubjects = modulesData.flatMap((module) =>
-          module.subjects.map((subject) => ({
-            id: subject.id, // This is the course_module_subject ID
-            name: `${subject.subject?.name || 'Vak onbekend'} - ${
-              subject.level
-            }`,
-            subject: subject.subject,
-            level: subject.level,
-            material: subject.material,
-          }))
-        );
-        setSubjects(flattenedSubjects);
+        console.log('Courses Data', coursesData);
+        setCourses(coursesData);
       } catch (error) {
-        console.error('Failed to fetch classes or subjects', error);
-        // Optionally, show a toast notification
+        console.error('Failed to fetch classes or courses', error);
       }
     };
     if (open) {
@@ -125,9 +116,45 @@ export default function EditModal({ open, onOpenChange, onSave, assessment }) {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = form;
   const watchedType = watch('type');
+  const selectedClassId = watch('class_id');
+
+  // Get the selected class and its course
+  const selectedClass = useMemo(() => {
+    if (!selectedClassId) return null;
+    return classes.find((c) => String(c.id) === selectedClassId);
+  }, [selectedClassId, classes]);
+
+  // Filter subjects based on the selected class's course
+  const filteredSubjects = useMemo(() => {
+    if (!selectedClass || !selectedClass.course_id) return [];
+
+    // Find the course that matches the class's course_id
+    const course = courses.find((c) => c.id === selectedClass.course_id);
+    if (!course || !course.course_module) return [];
+
+    // Flatten all subjects from the course's modules
+    return course.course_module.flatMap((module) =>
+      (module.subjects || []).map((subject) => ({
+        id: subject.id, // This is the course_module_subject ID
+        name: `${subject.subject?.name || 'Vak onbekend'} - ${subject.level}`,
+        subject: subject.subject,
+        level: subject.level,
+        material: subject.material,
+        moduleName: module.name,
+      }))
+    );
+  }, [selectedClass, courses]);
+
+  // Reset subject when class changes (but not on initial load)
+  useEffect(() => {
+    if (selectedClassId && selectedClassId !== initialClassIdRef.current) {
+      setValue('subject_id', undefined);
+    }
+  }, [selectedClassId, setValue]);
 
   const onSubmit = (data) => {
     // Convert class_id and subject_id to numbers
@@ -227,7 +254,11 @@ export default function EditModal({ open, onOpenChange, onSave, assessment }) {
                 name="class_id"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    clearable
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Kies een klas" />
                     </SelectTrigger>
@@ -253,12 +284,25 @@ export default function EditModal({ open, onOpenChange, onSave, assessment }) {
                 name="subject_id"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={!selectedClassId || filteredSubjects.length === 0}
+                    clearable
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Kies een vak" />
+                      <SelectValue
+                        placeholder={
+                          !selectedClassId
+                            ? 'Selecteer eerst een klas'
+                            : filteredSubjects.length === 0
+                              ? 'Geen vakken beschikbaar'
+                              : 'Kies een vak'
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {subjects.map((s) => (
+                      {filteredSubjects.map((s) => (
                         <SelectItem key={s.id} value={String(s.id)}>
                           {s.name}
                         </SelectItem>

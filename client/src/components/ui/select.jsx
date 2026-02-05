@@ -1,10 +1,35 @@
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, XIcon } from 'lucide-react';
+import { createContext, useContext } from 'react';
 
 import { cn } from '@/lib/utils';
 
-function Select({ ...props }) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+// Context to pass clearable state and handler to trigger
+const SelectContext = createContext({
+  clearable: false,
+  onClear: () => {},
+  hasValue: false,
+});
+
+function Select({ clearable = false, onValueChange, value, ...props }) {
+  const hasValue = value !== undefined && value !== '' && value !== null;
+
+  const handleClear = () => {
+    if (onValueChange) {
+      onValueChange('');
+    }
+  };
+
+  return (
+    <SelectContext.Provider value={{ clearable, onClear: handleClear, hasValue }}>
+      <SelectPrimitive.Root
+        data-slot="select"
+        value={value}
+        onValueChange={onValueChange}
+        {...props}
+      />
+    </SelectContext.Provider>
+  );
 }
 
 function SelectGroup({ ...props }) {
@@ -16,6 +41,9 @@ function SelectValue({ ...props }) {
 }
 
 function SelectTrigger({ className, size = 'default', children, ...props }) {
+  const { clearable, onClear, hasValue } = useContext(SelectContext);
+  const showClear = clearable && hasValue;
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -27,9 +55,32 @@ function SelectTrigger({ className, size = 'default', children, ...props }) {
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
-      </SelectPrimitive.Icon>
+      <div className="flex items-center gap-1">
+        {showClear && (
+          <span
+            role="button"
+            tabIndex={0}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onClear(e);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                e.preventDefault();
+                onClear(e);
+              }
+            }}
+            className="rounded-sm opacity-50 hover:opacity-100 hover:bg-muted p-0.5 -m-0.5 transition-opacity"
+          >
+            <XIcon className="size-3.5" />
+          </span>
+        )}
+        <SelectPrimitive.Icon asChild>
+          <ChevronDownIcon className="size-4 opacity-50" />
+        </SelectPrimitive.Icon>
+      </div>
     </SelectPrimitive.Trigger>
   );
 }

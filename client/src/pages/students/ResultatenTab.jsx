@@ -23,7 +23,32 @@ export default function ResultatenTab({
   filteredSortedResults,
   toggleSort,
   getModuleName,
+  moduleCriteriaBySubjectId = {},
 }) {
+  // Get the appropriate badge color based on module passing criteria
+  const getGradeBadgeClass = (result) => {
+    const grade = result?.grade;
+    if (grade === null || grade === undefined) {
+      return 'text-white bg-gray-400 size-8 rounded-full text-base';
+    }
+
+    // Get passing criteria for this result's module
+    const subjectId = result?.assessment?.subject_id;
+    const criteria = moduleCriteriaBySubjectId[subjectId] || {};
+    
+    // Use module norm if set, otherwise default to 5.5 (Dutch standard)
+    const passingNorm = criteria.passing_norm ?? 5.5;
+    // Use module max if set, otherwise default to 8 for "excellent"
+    const excellentThreshold = criteria.passing_max ?? 8;
+    
+    if (grade >= excellentThreshold) {
+      return 'text-white bg-green-700 size-8 rounded-full text-base';
+    } else if (grade >= passingNorm) {
+      return 'text-white bg-primary size-8 rounded-full text-base';
+    } else {
+      return 'text-white bg-red-500 size-8 rounded-full text-base';
+    }
+  };
   return (
     <Card>
       <CardHeader>
@@ -154,13 +179,7 @@ export default function ResultatenTab({
                 </TableCell>
                 <TableCell>
                   <Badge
-                    className={`${
-                      result.grade >= 8
-                        ? 'text-white bg-green-700 size-8 rounded-full text-base'
-                        : result.grade >= 6
-                        ? 'text-white bg-primary size-8 rounded-full text-base'
-                        : 'text-white bg-red-500 size-8 rounded-full text-base'
-                    }`}
+                    className={getGradeBadgeClass(result)}
                     variant="default"
                   >
                     {result.grade}

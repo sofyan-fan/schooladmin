@@ -2,12 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import classAPI from '@/apis/classAPI';
-import moduleAPI from '@/apis/moduleAPI';
+import courseAPI from '@/apis/courseAPI';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -56,7 +56,7 @@ const assessmentSchema = z.object({
 
 export default function CreateModal({ open, onOpenChange, onSave }) {
   const [classes, setClasses] = useState([]);
-  const [subjects, setSubjects] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
 
   const form = useForm({
@@ -76,28 +76,16 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classData, modulesData] = await Promise.all([
+        const [classData, coursesData] = await Promise.all([
           classAPI.get_classes(),
-          moduleAPI.get_modules(true),
+          courseAPI.get_courses(),
         ]);
         console.log('Class Data', classData);
         setClasses(classData);
-        console.log('Modules Data', modulesData);
-        // Flatten course_module_subject records from modules
-        const flattenedSubjects = modulesData.flatMap((module) =>
-          module.subjects.map((subject) => ({
-            id: subject.id, // This is the course_module_subject ID
-            name: `${subject.subject?.name || 'Vak onbekend'} - ${subject.level
-              }`,
-            subject: subject.subject,
-            level: subject.level,
-            material: subject.material,
-          }))
-        );
-        setSubjects(flattenedSubjects);
+        console.log('Courses Data', coursesData);
+        setCourses(coursesData);
       } catch (error) {
-        console.error('Failed to fetch classes or subjects', error);
-        // Optionally, show a toast notification
+        console.error('Failed to fetch classes or courses', error);
       }
     };
     if (open) {
@@ -109,9 +97,43 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = form;
   const type = watch('type');
+  const selectedClassId = watch('class_id');
+
+  // Get the selected class and its course
+  const selectedClass = useMemo(() => {
+    if (!selectedClassId) return null;
+    return classes.find((c) => String(c.id) === selectedClassId);
+  }, [selectedClassId, classes]);
+
+  // Filter subjects based on the selected class's course
+  const filteredSubjects = useMemo(() => {
+    if (!selectedClass || !selectedClass.course_id) return [];
+
+    // Find the course that matches the class's course_id
+    const course = courses.find((c) => c.id === selectedClass.course_id);
+    if (!course || !course.course_module) return [];
+
+    // Flatten all subjects from the course's modules
+    return course.course_module.flatMap((module) =>
+      (module.subjects || []).map((subject) => ({
+        id: subject.id, // This is the course_module_subject ID
+        name: `${subject.subject?.name || 'Vak onbekend'} - ${subject.level}`,
+        subject: subject.subject,
+        level: subject.level,
+        material: subject.material,
+        moduleName: module.name,
+      }))
+    );
+  }, [selectedClass, courses]);
+
+  // Reset subject when class changes
+  useEffect(() => {
+    setValue('subject_id', undefined);
+  }, [selectedClassId, setValue]);
 
   const onSubmit = (data) => {
     // Convert class_id and subject_id to numbers
@@ -211,7 +233,8 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                 render={({ field }) => (
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
+                    clearable
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Kies een klas" />
@@ -240,13 +263,23 @@ export default function CreateModal({ open, onOpenChange, onSave }) {
                 render={({ field }) => (
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
+                    disabled={!selectedClassId || filteredSubjects.length === 0}
+                    clearable
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Kies een vak" />
+                      <SelectValue
+                        placeholder={
+                          !selectedClassId
+                            ? 'Selecteer eerst een klas'
+                            : filteredSubjects.length === 0
+                              ? 'Geen vakken beschikbaar'
+                              : 'Kies een vak'
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {subjects.map((s) => (
+                      {filteredSubjects.map((s) => (
                         <SelectItem key={s.id} value={String(s.id)}>
                           {s.name}
                         </SelectItem>

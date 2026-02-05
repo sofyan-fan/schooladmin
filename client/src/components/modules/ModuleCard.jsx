@@ -7,9 +7,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Edit, Eye, MoreVertical, Trash2 } from 'lucide-react';
+import { ClipboardPen, Edit, Eye, MoreVertical, Trash2 } from 'lucide-react';
 
-export const ModuleCard = ({ module, onEdit, onDelete, onView }) => {
+export const ModuleCard = ({ module, onEdit, onDelete, onView, onOpenSettings }) => {
   const { name, subjects = [] } = module;
   const primary = subjects[0] || {};
 
@@ -60,6 +60,10 @@ export const ModuleCard = ({ module, onEdit, onDelete, onView }) => {
                 <DropdownMenuItem onClick={onEdit}>
                   <Edit className="mr-2 h-4 w-4" />
                   <span>Bewerken</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenSettings}>
+                  <ClipboardPen className="mr-2 h-4 w-4" />
+                  <span>Slagingsnormering</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={onDelete}

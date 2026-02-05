@@ -42,6 +42,8 @@ import SubjectsPage from './pages/SubjectsPage';
 import TeacherDetailsPage from './pages/TeacherDetailsPage';
 import TeachersPage from './pages/TeachersPage';
 import TimeRegisterPage from './pages/TimeRegisterPage';
+import TeacherRosterPage from './pages/TeacherRosterPage';
+import LessonLogsPage from './pages/LessonLogsPage';
 // import StudentDetailsPage from './pages/StudentDetailsPage';
 // import { useAuth } from './hooks/useAuth';
 
@@ -127,6 +129,14 @@ const App = () => {
             </RequireRole>
           }
         />
+        <Route
+          path="/docent-rooster"
+          element={
+            <RequireRole allowedRoles={['teacher']}>
+              <TeacherRosterPage />
+            </RequireRole>
+          }
+        />
 
         {/* Admin-only */}
         <Route element={<RequireRole allowedRoles={['admin']} />}>
@@ -162,6 +172,7 @@ const App = () => {
           <Route path="/afwezigheid" element={<AbsencePage />} />
           <Route path="/tijd-registratie" element={<TimeRegisterPage />} />
           <Route path="/quran-log" element={<QuranLogPage />} />
+          <Route path="/lessen-logs" element={<LessonLogsPage />} />
         </Route>
 
         {/* <Route path="/welcome" element={<WelcomePage />} /> */}

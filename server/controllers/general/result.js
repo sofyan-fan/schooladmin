@@ -1,19 +1,41 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// CREATE a result
+// CREATE a result (uses upsert to prevent duplicates)
+// If a result already exists for the same student_id and assessment_id, update it instead
 exports.create_result = async (req, res) => {
   try {
     const { student_id, assessment_id, grade, date } = req.body;
 
-    const result = await prisma.result.create({
-      data: {
-        student: { connect: { id: student_id } },
-        assessment: { connect: { id: assessment_id } },
-        grade,
-        date: new Date(date),
+    // Check if a result already exists for this student and assessment
+    const existingResult = await prisma.result.findFirst({
+      where: {
+        student_id: parseInt(student_id),
+        assessment_id: parseInt(assessment_id),
       },
     });
+
+    let result;
+    if (existingResult) {
+      // Update the existing result instead of creating a duplicate
+      result = await prisma.result.update({
+        where: { id: existingResult.id },
+        data: {
+          grade,
+          date: new Date(date),
+        },
+      });
+    } else {
+      // Create a new result
+      result = await prisma.result.create({
+        data: {
+          student: { connect: { id: parseInt(student_id) } },
+          assessment: { connect: { id: parseInt(assessment_id) } },
+          grade,
+          date: new Date(date),
+        },
+      });
+    }
 
     res.status(201).json(result);
   } catch (error) {

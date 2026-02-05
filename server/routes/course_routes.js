@@ -9,7 +9,8 @@ const {
   get_all_modules,
   create_module,
   update_module, 
-  delete_module, 
+  delete_module,
+  update_module_passing_criteria,
 } = require('../controllers/general/course');
 
 // Course routes
@@ -23,5 +24,6 @@ router.get('/modules', get_all_modules);
 router.post('/modules', create_module);
 router.put('/modules/:id', update_module);
 router.delete('/modules/:id', delete_module);
+router.put('/modules/:id/passing-criteria', update_module_passing_criteria);
 
 module.exports = router;

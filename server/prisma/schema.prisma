@@ -240,10 +240,33 @@ model roster {
   classroom    classroom @relation(fields: [classroom_id], references: [id])
   classroom_id Int
 
-  created_at DateTime  @default(now())
-  absence    absence[]
+  created_at  DateTime      @default(now())
+  absence     absence[]
+  lesson_logs lesson_log[]
 
   @@index([school_year_id])
+}
+
+model lesson_log {
+  id Int @id @default(autoincrement())
+
+  roster    roster @relation(fields: [roster_id], references: [id], onDelete: Cascade)
+  roster_id Int
+
+  teacher_id   Int
+  teacher_name String
+
+  date    DateTime // The specific date this log is for (since roster is weekly recurring)
+  type    String   @default("les") // "les" or "quran"
+  content String   @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([roster_id, date]) // Only one log per roster per date
+  @@index([roster_id])
+  @@index([teacher_id])
+  @@index([date])
 }
 
 model tuition_payment {
@@ -289,6 +312,11 @@ model courses {
 model course_module {
   id   Int    @id @default(autoincrement())
   name String
+
+  // Passing criteria for results
+  passing_min  Float?
+  passing_norm Float?
+  passing_max  Float?
 
   subjects course_module_subject[]
   courses  course_module_relation[]

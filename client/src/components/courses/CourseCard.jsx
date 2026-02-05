@@ -17,7 +17,6 @@ import {
 import {
   Edit,
   Eye,
-  ClipboardPen,
   Layers3,
   MoreVertical,
   Trash2,
@@ -28,7 +27,6 @@ export const CourseCard = ({
   onEdit,
   onDelete,
   onView,
-  onOpenSettings,
 }) => {
   if (!course) {
     return null;
@@ -86,15 +84,6 @@ export const CourseCard = ({
             >
               <Trash2 className="mr-2 h-4 w-4" />
               <span>Verwijderen</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenSettings();
-              }}
-            >
-              <ClipboardPen className="mr-2 h-4 w-4" />
-              <span>Slagingsnormering</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -8,7 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import TimePicker from '@/components/ui/time-picker';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import {
   Form,
@@ -18,11 +20,15 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { AuthContext } from '@/contexts/auth';
+import lessonLogAPI, { LOG_TYPES } from '@/apis/lessonLogAPI';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp, NotebookPen } from 'lucide-react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
@@ -58,6 +64,33 @@ const LessonModal = ({
   const capitalizeFirst = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Lesson log state
+  const { user } = useContext(AuthContext);
+  const [logExpanded, setLogExpanded] = useState(false);
+  const [logContent, setLogContent] = useState('');
+  const [logType, setLogType] = useState(LOG_TYPES.LES);
+  const [existingLogs, setExistingLogs] = useState([]);
+  const logContentRef = useRef(null);
+  const [logContentHeight, setLogContentHeight] = useState(0);
+
+  // Check if current user is the teacher of this lesson
+  const isTeacherOfLesson = (() => {
+    if (!user || !selectedEvent) return false;
+    const userRole = (user.role || '').toLowerCase();
+    // Allow teachers and admins to add logs
+    if (userRole !== 'teacher' && userRole !== 'admin') return false;
+    // For teachers, check if they are assigned to this lesson
+    // Admins can log for any lesson
+    if (userRole === 'admin') return true;
+    // Match by user.id or user.teacherId against the lesson's teacherId
+    const lessonTeacherId = selectedEvent.resource?.teacherId;
+    return (
+      lessonTeacherId &&
+      (Number(user.id) === Number(lessonTeacherId) ||
+        Number(user.teacherId) === Number(lessonTeacherId))
+    );
+  })();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -95,6 +128,90 @@ const LessonModal = ({
       });
     }
   }, [open, selectedEvent, selectedSlot, form]);
+
+  // Load existing logs when modal opens with an event
+  useEffect(() => {
+    if (!open) {
+      // Reset log state when modal closes
+      setLogContent('');
+      setLogType(LOG_TYPES.LES);
+      setLogExpanded(false);
+      setExistingLogs([]);
+      setLogContentHeight(0);
+      return;
+    }
+    if (selectedEvent) {
+      const rosterId = selectedEvent.id;
+      const dateKey = format(selectedEvent.start, 'yyyy-MM-dd');
+
+      // Load logs from API
+      const loadLogs = async () => {
+        try {
+          // Load log for current date
+          const currentLog = await lessonLogAPI.getLogByRosterDate(rosterId, dateKey);
+          setLogContent(currentLog?.content || '');
+          setLogType(currentLog?.type || LOG_TYPES.LES);
+
+          // Load all logs for this lesson (history)
+          const allLogs = await lessonLogAPI.getLogsForRoster(rosterId);
+          setExistingLogs(allLogs);
+        } catch (error) {
+          console.error('Failed to load lesson logs:', error);
+        }
+      };
+      loadLogs();
+    }
+  }, [open, selectedEvent]);
+
+  // Measure content height for animation
+  useEffect(() => {
+    if (logContentRef.current) {
+      setLogContentHeight(logContentRef.current.scrollHeight);
+    }
+  }, [logExpanded, logContent]);
+
+  // Handle saving a log entry
+  const handleSaveLog = async () => {
+    if (!selectedEvent || !logContent.trim()) return;
+
+    const rosterId = selectedEvent.id;
+    const dateKey = format(selectedEvent.start, 'yyyy-MM-dd');
+    const teacherName = selectedEvent.resource?.teacherName ||
+      (user?.first_name && user?.last_name
+        ? `${user.first_name} ${user.last_name}`
+        : user?.email || 'Onbekend');
+
+    try {
+      await lessonLogAPI.saveLog({
+        roster_id: rosterId,
+        teacher_id: user?.id || user?.teacherId,
+        teacher_name: teacherName,
+        date: dateKey,
+        type: logType,
+        content: logContent.trim(),
+      });
+
+      // Refresh logs list
+      const allLogs = await lessonLogAPI.getLogsForRoster(rosterId);
+      setExistingLogs(allLogs);
+
+      const typeLabel = logType === LOG_TYPES.QURAN ? "Qur'an" : 'Les';
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span>{typeLabel}notitie opgeslagen</span>
+          <Link
+            to="/lessen-logs"
+            className="text-xs text-primary hover:underline"
+          >
+            Bekijk alle notities →
+          </Link>
+        </div>
+      );
+    } catch (error) {
+      console.error('Failed to save lesson log:', error);
+      toast.error('Notitie kon niet worden opgeslagen');
+    }
+  };
 
   const handleSubmit = async (values) => {
     try {
@@ -319,6 +436,98 @@ const LessonModal = ({
                 />
               </div>
             </div>
+
+            {/* Lesnotitie - Only show for existing events and teachers/admins */}
+            {selectedEvent && isTeacherOfLesson && (
+              <div className="space-y-2 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={() => setLogExpanded(!logExpanded)}
+                  className="flex items-center gap-2 text-base font-medium text-foreground hover:text-primary transition-colors w-full"
+                >
+                  <NotebookPen className="h-4 w-4" />
+                  <span>Lesnotitie</span>
+                  {logExpanded ? (
+                    <ChevronUp className="h-4 w-4 ml-auto transition-transform duration-500" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 ml-auto transition-transform duration-500" />
+                  )}
+                  {existingLogs.length > 0 && !logExpanded && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      ({existingLogs.length} notitie{existingLogs.length !== 1 ? 's' : ''})
+                    </span>
+                  )}
+                </button>
+
+                <div
+                  className="overflow-hidden transition-all duration-500 ease-in-out"
+                  style={{
+                    maxHeight: logExpanded ? `${logContentHeight + 50}px` : '0px',
+                    opacity: logExpanded ? 1 : 0,
+                  }}
+                >
+                  <div ref={logContentRef} className="space-y-3 pl-6 pt-1">
+                    {/* Log type toggle */}
+                    <div className="space-y-2">
+                      <label className="text-sm text-muted-foreground">Type notitie</label>
+                      <ToggleGroup
+                        type="single"
+                        value={logType}
+                        onValueChange={(value) => value && setLogType(value)}
+                        className="justify-start"
+                      >
+                        <ToggleGroupItem
+                          value={LOG_TYPES.LES}
+                          aria-label="Les notitie"
+                          className="px-4"
+                        >
+                          Les
+                        </ToggleGroupItem>
+                        <ToggleGroupItem
+                          value={LOG_TYPES.QURAN}
+                          aria-label="Qur'an notitie"
+                          className="px-4"
+                        >
+                          Qur'an
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                    </div>
+
+                    {/* Current date log input */}
+                    <div className="space-y-2">
+                      <label className="text-sm text-muted-foreground">
+                        Notitie voor {format(selectedEvent.start, 'd MMMM yyyy', { locale: nl })}
+                      </label>
+                      <Textarea
+                        value={logContent}
+                        onChange={(e) => setLogContent(e.target.value)}
+                        placeholder={logType === LOG_TYPES.QURAN 
+                          ? "Schrijf hier je Qur'an notitie..." 
+                          : "Schrijf hier je notitie voor deze les..."}
+                        className="min-h-[80px] resize-none"
+                      />
+                      <div className="flex items-center justify-between">
+                        <Link
+                          to="/lessen-logs"
+                          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          Bekijk alle notities →
+                        </Link>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleSaveLog}
+                          disabled={!logContent.trim()}
+                        >
+                          Notitie opslaan
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <DialogFooter className="mt-6 w-full justify-between">
               <div className="flex-1">

@@ -296,6 +296,7 @@ export default function StudentDetailsPage2() {
   const [absences, setAbsences] = useState([]);
   const [rosters, setRosters] = useState([]);
   const [moduleNameBySubjectId, setModuleNameBySubjectId] = useState({});
+  const [moduleCriteriaBySubjectId, setModuleCriteriaBySubjectId] = useState({});
   const [search, setSearch] = useState('');
   const [moduleFilters, setModuleFilters] = useState([]);
   const [sort, setSort] = useState({ key: 'date', dir: 'desc' });
@@ -399,14 +400,22 @@ export default function StudentDetailsPage2() {
           Array.isArray(studentFinanceLogs) ? studentFinanceLogs : []
         );
 
-        // Build a lookup from course_module_subject.id -> course_module.name
+        // Build lookups from course_module_subject.id -> module name and passing criteria
         const bySubjectId = Object.create(null);
+        const criteriaBySubjectId = Object.create(null);
         (allModules || []).forEach((mod) => {
           (mod.subjects || []).forEach((sub) => {
             bySubjectId[sub.id] = mod.name || '—';
+            // Store passing criteria for this subject
+            criteriaBySubjectId[sub.id] = {
+              passing_min: mod.passing_min,
+              passing_norm: mod.passing_norm,
+              passing_max: mod.passing_max,
+            };
           });
         });
         setModuleNameBySubjectId(bySubjectId);
+        setModuleCriteriaBySubjectId(criteriaBySubjectId);
       } catch (e) {
         console.error(e);
         setStudent(null);
@@ -662,6 +671,34 @@ export default function StudentDetailsPage2() {
       r?.assessment?.subject?.course_module?.name ||
       '—',
     [moduleNameBySubjectId]
+  );
+
+  // Get the appropriate badge color based on module passing criteria
+  const getGradeBadgeClass = useCallback(
+    (result) => {
+      const grade = result?.grade;
+      if (grade === null || grade === undefined) {
+        return 'text-white bg-gray-400 size-8 rounded-full text-base';
+      }
+
+      // Get passing criteria for this result's module
+      const subjectId = result?.assessment?.subject_id;
+      const criteria = moduleCriteriaBySubjectId[subjectId] || {};
+      
+      // Use module norm if set, otherwise default to 5.5 (Dutch standard)
+      const passingNorm = criteria.passing_norm ?? 5.5;
+      // Use module max if set, otherwise default to 8 for "excellent"
+      const excellentThreshold = criteria.passing_max ?? 8;
+      
+      if (grade >= excellentThreshold) {
+        return 'text-white bg-green-700 size-8 rounded-full text-base';
+      } else if (grade >= passingNorm) {
+        return 'text-white bg-primary size-8 rounded-full text-base';
+      } else {
+        return 'text-white bg-red-500 size-8 rounded-full text-base';
+      }
+    },
+    [moduleCriteriaBySubjectId]
   );
 
   const moduleOptions = useMemo(() => {
@@ -1260,12 +1297,7 @@ export default function StudentDetailsPage2() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            className={`${result.grade >= 8
-                              ? 'text-white bg-green-700 size-8 rounded-full text-base'
-                              : result.grade >= 6
-                                ? 'text-white bg-primary size-8 rounded-full text-base'
-                                : 'text-white bg-red-500 size-8 rounded-full text-base'
-                              }`}
+                            className={getGradeBadgeClass(result)}
                             variant="default"
                           >
                             {result.grade}
