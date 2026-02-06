@@ -441,6 +441,13 @@ export default function StudentDetailsPage2() {
       (a, b) => new Date(b.date) - new Date(a.date)
     );
     const lastResult = sorted[0] ?? null;
+    
+    // Get passing criteria for the last result's module
+    const lastResultSubjectId = lastResult?.assessment?.subject_id;
+    const lastResultCriteria = lastResultSubjectId
+      ? moduleCriteriaBySubjectId[lastResultSubjectId] || {}
+      : {};
+
     const avg =
       results.length > 0
         ? (
@@ -490,6 +497,7 @@ export default function StudentDetailsPage2() {
         registered: format(student.created_at, 'PPP', { locale: nl }),
       },
       lastResult,
+      lastResultCriteria,
       avg,
       resultsCount: results.length,
       lesson_package: student.lesson_package,
@@ -501,7 +509,7 @@ export default function StudentDetailsPage2() {
         donutData,
       },
     };
-  }, [student, results, klass, attendanceData]);
+  }, [student, results, klass, attendanceData, moduleCriteriaBySubjectId]);
 
   // Load course payment data for Betalingen tab from localStorage
   useEffect(() => {

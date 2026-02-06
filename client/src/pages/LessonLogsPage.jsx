@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { BookOpen, CalendarDays, NotebookPen, Pencil, Search, Trash2 } from 'lucide-react';
+import { BookOpen, CalendarDays, Eye, NotebookPen, Pencil, Search, Trash2, User } from 'lucide-react';
 
 import lessonLogAPI, { LOG_TYPES } from '@/apis/lessonLogAPI';
 import PageHeader from '@/components/shared/PageHeader';
@@ -36,8 +36,13 @@ const LessonLogsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [classFilter, setClassFilter] = useState('all');
+  const [teacherFilter, setTeacherFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('newest');
+
+  // View dialog
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [logToView, setLogToView] = useState(null);
 
   // Delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -140,6 +145,11 @@ const LessonLogsPage = () => {
       result = result.filter((log) => log.className === classFilter);
     }
 
+    // Teacher filter (admin only)
+    if (teacherFilter !== 'all') {
+      result = result.filter((log) => log.lessonTeacherName === teacherFilter);
+    }
+
     // Type filter
     if (typeFilter !== 'all') {
       result = result.filter((log) => (log.type || LOG_TYPES.LES) === typeFilter);
@@ -153,7 +163,7 @@ const LessonLogsPage = () => {
     });
 
     return result;
-  }, [roleFilteredLogs, searchTerm, subjectFilter, classFilter, typeFilter, sortOrder]);
+  }, [roleFilteredLogs, searchTerm, subjectFilter, classFilter, teacherFilter, typeFilter, sortOrder]);
 
   // Get unique subjects and classes for filter dropdowns
   const uniqueSubjects = useMemo(() => {
@@ -165,6 +175,16 @@ const LessonLogsPage = () => {
     const classSet = new Set(roleFilteredLogs.map((log) => log.className));
     return Array.from(classSet).filter(Boolean).sort();
   }, [roleFilteredLogs]);
+
+  const uniqueTeachers = useMemo(() => {
+    const teacherSet = new Set(roleFilteredLogs.map((log) => log.lessonTeacherName));
+    return Array.from(teacherSet).filter(Boolean).sort();
+  }, [roleFilteredLogs]);
+
+  const handleViewClick = (log) => {
+    setLogToView(log);
+    setViewDialogOpen(true);
+  };
 
   const handleDeleteClick = (log) => {
     setLogToDelete(log);
@@ -242,7 +262,7 @@ const LessonLogsPage = () => {
         <PageHeader
           title="Lessen Logs Overzicht"
           icon={<NotebookPen className="size-9" />}
-          description="Bekijk en beheer je lesnotities."
+          description={isAdmin ? 'Bekijk alle lesnotities van docenten.' : 'Bekijk en beheer je lesnotities.'}
         />
         <div className="flex flex-1 items-center justify-center">
           <div className="text-muted-foreground">Laden...</div>
@@ -256,7 +276,7 @@ const LessonLogsPage = () => {
       <PageHeader
         title="Lessen Logs Overzicht"
         icon={<NotebookPen className="size-9" />}
-        description="Bekijk en beheer je lesnotities."
+        description={isAdmin ? 'Bekijk alle lesnotities van docenten.' : 'Bekijk en beheer je lesnotities.'}
       />
 
       {/* Filters */}
@@ -299,6 +319,22 @@ const LessonLogsPage = () => {
           </SelectContent>
         </Select>
 
+        {isAdmin && (
+          <Select value={teacherFilter} onValueChange={setTeacherFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter op docent" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle docenten</SelectItem>
+              {uniqueTeachers.map((teacher) => (
+                <SelectItem key={teacher} value={teacher}>
+                  {teacher}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Type" />
@@ -329,7 +365,9 @@ const LessonLogsPage = () => {
             <h3 className="mt-4 text-lg font-medium">Geen lesnotities gevonden</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               {logs.length === 0
-                ? 'Je hebt nog geen notities toegevoegd aan je lessen. Ga naar je rooster en klik op een les om een notitie toe te voegen.'
+                ? isAdmin
+                  ? 'Er zijn nog geen lesnotities door docenten toegevoegd.'
+                  : 'Je hebt nog geen notities toegevoegd aan je lessen. Ga naar je rooster en klik op een les om een notitie toe te voegen.'
                 : 'Pas je zoek- of filterinstellingen aan om notities te vinden.'}
             </p>
           </div>
@@ -337,7 +375,8 @@ const LessonLogsPage = () => {
           filteredLogs.map((log) => (
             <div
               key={log.id}
-              className="rounded-lg bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-lg bg-white p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleViewClick(log)}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -381,8 +420,8 @@ const LessonLogsPage = () => {
                     )}
                   </div>
 
-                  {/* Log content */}
-                  <p className="mt-3 text-sm text-foreground whitespace-pre-wrap">
+                  {/* Log content (truncated in list) */}
+                  <p className="mt-3 text-sm text-foreground whitespace-pre-wrap line-clamp-2">
                     {log.content}
                   </p>
 
@@ -400,25 +439,38 @@ const LessonLogsPage = () => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex shrink-0 gap-1">
+                <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="text-muted-foreground hover:text-primary"
-                    onClick={() => handleEditClick(log)}
-                    title="Bewerken"
+                    onClick={() => handleViewClick(log)}
+                    title="Bekijken"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteClick(log)}
-                    title="Verwijderen"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {!isAdmin && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary"
+                        onClick={() => handleEditClick(log)}
+                        title="Bewerken"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteClick(log)}
+                        title="Verwijderen"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -430,11 +482,119 @@ const LessonLogsPage = () => {
       {filteredLogs.length > 0 && (
         <div className="mt-auto pt-2 text-sm text-muted-foreground text-center">
           {filteredLogs.length} notitie{filteredLogs.length !== 1 ? 's' : ''} gevonden
-          {(searchTerm || subjectFilter !== 'all' || classFilter !== 'all' || typeFilter !== 'all') && (
+          {(searchTerm || subjectFilter !== 'all' || classFilter !== 'all' || teacherFilter !== 'all' || typeFilter !== 'all') && (
             <span> (van {roleFilteredLogs.length} totaal)</span>
           )}
         </div>
       )}
+
+      {/* View dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Lesnotitie</DialogTitle>
+          </DialogHeader>
+          {logToView && (
+            <div className="space-y-4">
+              {/* Type badge + subject + class */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge
+                  variant="secondary"
+                  className={
+                    (logToView.type || LOG_TYPES.LES) === LOG_TYPES.QURAN
+                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100'
+                      : 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+                  }
+                >
+                  {(logToView.type || LOG_TYPES.LES) === LOG_TYPES.QURAN ? (
+                    <>
+                      <BookOpen className="h-3 w-3 mr-1" />
+                      Qur'an
+                    </>
+                  ) : (
+                    'Les'
+                  )}
+                </Badge>
+                <span className="font-semibold text-foreground">
+                  {logToView.subjectName}
+                </span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">{logToView.className}</span>
+              </div>
+
+              {/* Details grid */}
+              <div className="rounded-md bg-muted/50 p-4 space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <CalendarDays className="h-4 w-4 shrink-0" />
+                  <span>{capitalizeFirst(formatLogDate(logToView.date))}</span>
+                  {logToView.roster?.start_time && logToView.roster?.end_time && (
+                    <>
+                      <span>•</span>
+                      <span>
+                        {logToView.roster.start_time.slice(0, 5)} - {logToView.roster.end_time.slice(0, 5)}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {logToView.lessonTeacherName && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="h-4 w-4 shrink-0" />
+                    <span>Docent: {logToView.lessonTeacherName}</span>
+                  </div>
+                )}
+                {logToView.roster?.classroom && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <NotebookPen className="h-4 w-4 shrink-0" />
+                    <span>Lokaal: {logToView.roster.classroom.name}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">Notitie</label>
+                <div className="rounded-md border p-4 text-sm text-foreground whitespace-pre-wrap min-h-[80px] max-h-[300px] overflow-y-auto">
+                  {logToView.content}
+                </div>
+              </div>
+
+              {/* Timestamps */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+                {logToView.teacherName && (
+                  <span>Geschreven door: {logToView.teacherName}</span>
+                )}
+                {logToView.createdAt && (
+                  <span>
+                    Aangemaakt: {format(new Date(logToView.createdAt), 'd MMM yyyy HH:mm', { locale: nl })}
+                  </span>
+                )}
+                {logToView.updatedAt && logToView.updatedAt !== logToView.createdAt && (
+                  <span>
+                    Bewerkt: {format(new Date(logToView.updatedAt), 'd MMM yyyy HH:mm', { locale: nl })}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            {!isAdmin && logToView && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setViewDialogOpen(false);
+                  handleEditClick(logToView);
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Bewerken
+              </Button>
+            )}
+            <Button onClick={() => setViewDialogOpen(false)}>
+              Sluiten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

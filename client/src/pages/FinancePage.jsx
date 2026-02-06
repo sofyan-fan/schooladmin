@@ -596,7 +596,7 @@ export default function FinancePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
+            {/* <div>
               <Card className="p-4">
                 <h4 className="text-lg font-medium mb-2">Inkomen en uitgaven</h4>
                 <ChartContainer className="h-[200px] md:h-[220px] aspect-auto items-center" config={lineChartConfig}>
@@ -611,7 +611,7 @@ export default function FinancePage() {
                   </LineChart>
                 </ChartContainer>
               </Card>
-            </div>
+            </div> */}
             <div>
               <ExpensesByTypeDonut title="Uitgaven per type" expenseByType={expenseByType} donutColors={donutColors} />
             </div>

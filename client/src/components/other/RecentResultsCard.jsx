@@ -20,8 +20,10 @@ export function RecentResultsCard({
       ? stats.lastResult.grade
       : Number(stats?.lastResult?.grade);
 
-  const thresholdPass = 5.5;
-  const thresholdGood = 6.5;
+  // Use module passing criteria if available, otherwise fall back to defaults
+  const criteria = stats?.lastResultCriteria || {};
+  const thresholdPass = criteria.passing_norm ?? 5.5;
+  const thresholdGood = criteria.passing_max ?? 6.5;
 
   const getPerfLevel = (val) => {
     if (!Number.isFinite(val)) return 'neutral';

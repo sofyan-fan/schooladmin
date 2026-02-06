@@ -631,7 +631,22 @@ async function main() {
       },
     });
   }
-  console.log('✅ Financiële transacties aangemaakt.');
+  // Update Saldo: start €5000 + all seeded income – all seeded expenses
+  const allSeededLogs = await prisma.financial_log.findMany();
+  let seedIncome = 0;
+  let seedExpense = 0;
+  for (const log of allSeededLogs) {
+    if (log.transaction_type === 'income') seedIncome += log.amount;
+    else if (log.transaction_type === 'expense') seedExpense += log.amount;
+  }
+  const finalSaldo = Math.round((5000 + seedIncome - seedExpense) * 100) / 100;
+  await prisma.finance_budget.updateMany({
+    data: { amount: finalSaldo },
+  });
+  console.log(
+    `✅ Financiële transacties aangemaakt. Saldo bijgewerkt: €${finalSaldo.toFixed(2)} ` +
+    `(start €5000 + €${seedIncome.toFixed(2)} inkomen - €${seedExpense.toFixed(2)} uitgaven)`
+  );
 
   // 8. Lokalen
   console.log('Lokalen worden aangemaakt...');

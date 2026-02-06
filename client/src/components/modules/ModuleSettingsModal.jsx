@@ -113,35 +113,16 @@ export default function ModuleSettingsModal({
                 step="0.1"
                 min="0"
                 max="10"
-   
+
                 value={criteria.passing_min}
                 onChange={(e) =>
                   handleChangeValue('passing_min', e.target.value)
                 }
                 disabled={isLoading}
               />
-        
+
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="passing_norm">Voldoende</Label>
-              <Input
-                id="passing_norm"
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                min="0"
-                max="10"
-         
-                value={criteria.passing_norm}
-                onChange={(e) =>
-                  handleChangeValue('passing_norm', e.target.value)
-                }
-                disabled={isLoading}
-                className="border-primary"
-              />
-       
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="passing_max">Maximum</Label>
@@ -152,7 +133,7 @@ export default function ModuleSettingsModal({
                 step="0.1"
                 min="0"
                 max="10"
-         
+
                 value={criteria.passing_max}
                 onChange={(e) =>
                   handleChangeValue('passing_max', e.target.value)
@@ -161,9 +142,29 @@ export default function ModuleSettingsModal({
               />
 
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="passing_norm">Voldoende</Label>
+              <Input
+                id="passing_norm"
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                min="0"
+                max="10"
+
+                value={criteria.passing_norm}
+                onChange={(e) =>
+                  handleChangeValue('passing_norm', e.target.value)
+                }
+                disabled={isLoading}
+                className="border-primary"
+              />
+
+            </div>
+
           </div>
 
-        
+
         </div>
 
         <DialogFooter>

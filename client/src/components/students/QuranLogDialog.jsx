@@ -9,6 +9,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X } from 'lucide-react';
 
@@ -18,6 +25,49 @@ import { useEffect, useMemo, useState } from 'react';
 import studentAPI from '@/apis/studentAPI';
 import { useQuranRelations } from '@/hooks/useQuranRelations';
 import { parsePoint, serializePoint } from '@/utils/quran';
+
+// JSON array met 17 lessen voor Nourania
+const NOURANIA_LESSONS = Array.from({ length: 17 }, (_, i) => ({
+  value: `les-${i + 1}`,
+  label: `Les ${i + 1}`,
+}));
+
+const NOURANIA_STORAGE_KEY = 'nouraniaLogs';
+
+function formatDDMMYYYY(d) {
+  if (!d) return '';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+function parseDDMMYYYYToDate(raw) {
+  if (!raw) return undefined;
+  const s = String(raw).trim();
+
+  // Accept DD-MM-YYYY
+  const m1 = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (m1) {
+    const dd = Number(m1[1]);
+    const mm = Number(m1[2]);
+    const yyyy = Number(m1[3]);
+    const d = new Date(yyyy, mm - 1, dd);
+    return isNaN(d.getTime()) ? undefined : d;
+  }
+
+  // Backwards compatibility: YYYY-MM-DD (old stored format)
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m2) {
+    const yyyy = Number(m2[1]);
+    const mm = Number(m2[2]);
+    const dd = Number(m2[3]);
+    const d = new Date(yyyy, mm - 1, dd);
+    return isNaN(d.getTime()) ? undefined : d;
+  }
+
+  return undefined;
+}
 
 // zorg ervoor dat de state waarden strings zijn voor ComboboxField
 function asPointStrings(p) {
@@ -34,6 +84,7 @@ export default function QuranLogDialog({
   newLog,
   setNewLog,
   onSave,
+  onNouraniaSave,
 }) {
   const {
     loading,
@@ -46,6 +97,7 @@ export default function QuranLogDialog({
   const [begin, setBegin] = useState(asPointStrings(parsePoint(newLog.from)));
   const [end, setEnd] = useState(asPointStrings(parsePoint(newLog.to)));
   const [studentItems, setStudentItems] = useState([]);
+  const [activeTab, setActiveTab] = useState('log');
   const [errors, setErrors] = useState({
     studentId: '',
     beginSurah: '',
@@ -53,10 +105,21 @@ export default function QuranLogDialog({
     endSurah: '',
     endAyah: '',
     date: '',
-    nourania: '',
-    tilawa: '',
-    tajweed: '',
-    hifdh: '',
+  });
+
+  // Nourania tab form state (stored locally)
+  const [nouraniaLog, setNouraniaLog] = useState({
+    studentId: '',
+    begin: '',
+    einde: '',
+    date: '',
+    description: '',
+  });
+  const [nouraniaErrors, setNouraniaErrors] = useState({
+    studentId: '',
+    begin: '',
+    einde: '',
+    date: '',
   });
 
   useEffect(() => {
@@ -90,21 +153,33 @@ export default function QuranLogDialog({
         endSurah: '',
         endAyah: '',
         date: '',
-        nourania: '',
-        tilawa: '',
-        tajweed: '',
-        hifdh: '',
       });
+      setNouraniaErrors({ studentId: '', begin: '', einde: '', date: '' });
+      setActiveTab('log');
+
+      const todayISO = (() => {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      })();
+      const todayDDMMYYYY = formatDDMMYYYY(new Date());
 
       // Prefill date with today if empty. The DatePicker UI defaults to today visually,
       // but without this the underlying state can still be empty and fail validation.
       setNewLog((s) => {
         if (s?.date) return s;
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return { ...s, date: `${y}-${m}-${day}` };
+        return { ...s, date: todayISO };
+      });
+
+      // Reset Nourania form and prefill date
+      setNouraniaLog({
+        studentId: '',
+        begin: '',
+        einde: '',
+        date: todayDDMMYYYY,
+        description: '',
       });
     }
   }, [open]);
@@ -189,15 +264,49 @@ export default function QuranLogDialog({
 
   const canSave = useMemo(() => !loading, [loading]);
 
-  function validateScore(raw, label) {
-    if (raw === undefined || raw === null || raw === '') return '';
-    const n = Number(raw);
-    if (!Number.isInteger(n)) return `${label}: voer een heel getal in (0–10).`;
-    if (n < 0 || n > 10) return `${label}: score moet tussen 0 en 10 liggen.`;
-    return '';
+  function handleNouraniaSave() {
+    const nextErrors = { studentId: '', begin: '', einde: '', date: '' };
+    let hasError = false;
+
+    if (!nouraniaLog.studentId) {
+      nextErrors.studentId = 'Selecteer een leerling.';
+      hasError = true;
+    }
+    if (!nouraniaLog.begin) {
+      nextErrors.begin = 'Selecteer een begin-les.';
+      hasError = true;
+    }
+    if (!nouraniaLog.einde) {
+      nextErrors.einde = 'Selecteer een einde-les.';
+      hasError = true;
+    }
+    if (!nouraniaLog.date) {
+      nextErrors.date = 'Selecteer een datum.';
+      hasError = true;
+    }
+
+    setNouraniaErrors(nextErrors);
+    if (hasError) return;
+
+    // Build entry and delegate to parent
+    const entry = {
+      ...nouraniaLog,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    onNouraniaSave?.(entry);
+
+    // Reset form and close
+    setNouraniaLog({ studentId: '', begin: '', einde: '', date: '', description: '' });
+    onOpenChange(false);
   }
 
   function handleSave() {
+    if (activeTab === 'nourania') {
+      handleNouraniaSave();
+      return;
+    }
+
     const nextErrors = {
       studentId: '',
       beginSurah: '',
@@ -205,10 +314,6 @@ export default function QuranLogDialog({
       endSurah: '',
       endAyah: '',
       date: '',
-      nourania: '',
-      tilawa: '',
-      tajweed: '',
-      hifdh: '',
     };
     let hasError = false;
 
@@ -237,16 +342,6 @@ export default function QuranLogDialog({
       hasError = true;
     }
 
-    // Scores are optional, but if provided must be an integer 0–10
-    nextErrors.nourania = validateScore(newLog.nourania, 'Nourania');
-    if (nextErrors.nourania) hasError = true;
-    nextErrors.tilawa = validateScore(newLog.tilawa, 'Tilāwa');
-    if (nextErrors.tilawa) hasError = true;
-    nextErrors.tajweed = validateScore(newLog.tajweed, 'Tajwīd');
-    if (nextErrors.tajweed) hasError = true;
-    nextErrors.hifdh = validateScore(newLog.hifdh, 'Hifdh');
-    if (nextErrors.hifdh) hasError = true;
-
     setErrors(nextErrors);
     if (hasError) return;
 
@@ -263,13 +358,13 @@ export default function QuranLogDialog({
           <DialogTitle>Nieuwe Qur'an Log</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="log" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4 border-b">
             <TabsTrigger value="log" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
               Qur'an Log
             </TabsTrigger>
-            <TabsTrigger value="beoordeling" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              Beoordeling
+            <TabsTrigger value="nourania" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              Nourania
             </TabsTrigger>
           </TabsList>
 
@@ -472,101 +567,122 @@ export default function QuranLogDialog({
             </div>
           </TabsContent>
 
-          {/* Tab 2: Beoordeling */}
-          <TabsContent value="beoordeling" className="min-h-[420px]">
+          {/* Tab 2: Nourania */}
+          <TabsContent value="nourania" className="min-h-[420px]">
             <div className="grid gap-4">
-              <h2 className="text-lg font-semibold">Beoordeling (0–10)</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
+              {/* Student */}
+              <div className="grid gap-2">
+                <ComboboxField
+                  label="Leerling"
+                  items={studentItems}
+                  value={nouraniaLog.studentId}
+                  onChange={(v) => {
+                    setNouraniaLog((s) => ({ ...s, studentId: v }));
+                    setNouraniaErrors((prev) => ({ ...prev, studentId: '' }));
+                  }}
+                  placeholder="Kies leerling"
+                  error={nouraniaErrors.studentId}
+                />
+              </div>
+
+              {/* Begin & Einde on the same row */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-2">
-                  <Label htmlFor="score-nourania">Nourania</Label>
-                  <Input
-                    id="score-nourania"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={10}
-                    step={1}
-                    value={newLog.nourania ?? ''}
-                    onChange={(e) => {
-                      setNewLog((s) => ({ ...s, nourania: e.target.value }));
-                      setErrors((prev) => ({ ...prev, nourania: '' }));
+                  <Label>Begin</Label>
+                  <Select
+                    clearable
+                    value={nouraniaLog.begin}
+                    onValueChange={(v) => {
+                      setNouraniaLog((s) => ({
+                        ...s,
+                        begin: v,
+                        ...(v ? {} : { einde: '' }),
+                      }));
+                      setNouraniaErrors((prev) => ({
+                        ...prev,
+                        begin: '',
+                        ...(v ? {} : { einde: '' }),
+                      }));
                     }}
-                    placeholder="0–10"
-                  />
-                  {errors.nourania ? (
-                    <p className="text-sm text-destructive -mt-1">
-                      {errors.nourania}
-                    </p>
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Kies les" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NOURANIA_LESSONS.map((l) => (
+                        <SelectItem key={l.value} value={l.value}>
+                          {l.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {nouraniaErrors.begin ? (
+                    <p className="text-sm text-destructive -mt-1">{nouraniaErrors.begin}</p>
                   ) : null}
                 </div>
-
                 <div className="grid gap-2">
-                  <Label htmlFor="score-tilawa">Tilāwa</Label>
-                  <Input
-                    id="score-tilawa"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={10}
-                    step={1}
-                    value={newLog.tilawa ?? ''}
-                    onChange={(e) => {
-                      setNewLog((s) => ({ ...s, tilawa: e.target.value }));
-                      setErrors((prev) => ({ ...prev, tilawa: '' }));
+                  <Label>Einde</Label>
+                  <Select
+                    clearable
+                    value={nouraniaLog.einde}
+                    onValueChange={(v) => {
+                      setNouraniaLog((s) => ({ ...s, einde: v }));
+                      setNouraniaErrors((prev) => ({ ...prev, einde: '' }));
                     }}
-                    placeholder="0–10"
-                  />
-                  {errors.tilawa ? (
-                    <p className="text-sm text-destructive -mt-1">
-                      {errors.tilawa}
-                    </p>
+                    disabled={!nouraniaLog.begin}
+                  >
+                    <SelectTrigger className="w-full" disabled={!nouraniaLog.begin}>
+                      <SelectValue placeholder={nouraniaLog.begin ? 'Kies les' : 'Kies eerst begin'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NOURANIA_LESSONS.map((l) => (
+                        <SelectItem key={l.value} value={l.value}>
+                          {l.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {nouraniaErrors.einde ? (
+                    <p className="text-sm text-destructive -mt-1">{nouraniaErrors.einde}</p>
                   ) : null}
                 </div>
+              </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="score-tajweed">Tajwīd</Label>
-                  <Input
-                    id="score-tajweed"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={10}
-                    step={1}
-                    value={newLog.tajweed ?? ''}
-                    onChange={(e) => {
-                      setNewLog((s) => ({ ...s, tajweed: e.target.value }));
-                      setErrors((prev) => ({ ...prev, tajweed: '' }));
+              {/* Date & Description */}
+              <hr />
+              <div className="grid sm:grid-cols-3 gap-3 items-end">
+                <div className="grid gap-2 col-span-1">
+                  <Label>Datum</Label>
+                  <DatePicker
+                    buttonClassName="bg-white py-5"
+                    value={parseDDMMYYYYToDate(nouraniaLog.date)}
+                    toYear={new Date().getFullYear()}
+                    maxDate={new Date()}
+                    required
+                    onChange={(date) => {
+                      setNouraniaLog((s) => ({
+                        ...s,
+                        date: date ? formatDDMMYYYY(date) : '',
+                      }));
+                      setNouraniaErrors((prev) => ({ ...prev, date: '' }));
                     }}
-                    placeholder="0–10"
                   />
-                  {errors.tajweed ? (
-                    <p className="text-sm text-destructive -mt-1">
-                      {errors.tajweed}
-                    </p>
+                  {nouraniaErrors.date ? (
+                    <p className="text-sm text-destructive mt-1">{nouraniaErrors.date}</p>
                   ) : null}
                 </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="score-hifdh">Hifdh</Label>
+                {/* Description */}
+                <div className="grid gap-2 w-full col-span-2">
+                  <Label htmlFor="nourania-description">Omschrijving</Label>
                   <Input
-                    id="score-hifdh"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={10}
-                    step={1}
-                    value={newLog.hifdh ?? ''}
-                    onChange={(e) => {
-                      setNewLog((s) => ({ ...s, hifdh: e.target.value }));
-                      setErrors((prev) => ({ ...prev, hifdh: '' }));
-                    }}
-                    placeholder="0–10"
+                    id="nourania-description"
+                    className="w-full"
+                    value={nouraniaLog.description}
+                    onChange={(e) =>
+                      setNouraniaLog((s) => ({ ...s, description: e.target.value }))
+                    }
+                    placeholder="Optioneel"
                   />
-                  {errors.hifdh ? (
-                    <p className="text-sm text-destructive -mt-1">
-                      {errors.hifdh}
-                    </p>
-                  ) : null}
                 </div>
               </div>
             </div>

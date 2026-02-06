@@ -193,7 +193,7 @@ const SidebarComponent = () => {
       name: 'Lessen Logs',
       path: 'lessen-logs',
       Icon: NotebookPen,
-      roles: ['teacher'],
+      roles: ['admin', 'teacher'],
     },
     {
       name: 'Rapport',
