@@ -193,6 +193,7 @@ async function cleanDatabase() {
   await prisma.subject_material.deleteMany();
   await prisma.subject.deleteMany();
   await prisma.events.deleteMany();
+  await prisma.book_transaction.deleteMany();
   await prisma.book_inventory.deleteMany();
   await prisma.finance_budget.deleteMany();
   await prisma.school_year.deleteMany();
@@ -519,133 +520,75 @@ async function main() {
   );
   console.log(`✅ ${students.length} leerlingen aangemaakt.`);
 
-  // 7. Financiële transacties (inkomsten & uitgaven)
+  // 7. Financiële transacties (deterministic – saldo starts at €5000, ends at €4000)
   console.log('Financiële transacties worden aangemaakt...');
-  const paymentMethods = ['iDEAL', 'SEPA incasso', 'Contant', 'Creditcard'];
 
-  // Helper: generate a random date within the past N days
-  const randomDateInPastDays = (days) => {
-    const now = new Date();
-    const randomDays = Math.floor(Math.random() * days);
-    return new Date(now.getTime() - randomDays * 24 * 60 * 60 * 1000);
+  // Helper: date N days ago from now
+  const daysAgo = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    d.setHours(10, 0, 0, 0);
+    return d;
   };
 
-  // Inkomsten: lesgeld voor willekeurige leerlingen en cursussen (actief schooljaar)
-  // Spread across the past 30 days for realistic graph data
-  const incomeCount = Math.min(25, students.length);
-  for (let i = 0; i < incomeCount; i++) {
-    const s = faker.helpers.arrayElement(students);
-    const sWithClass = await prisma.student.findUnique({
-      where: { id: s.id },
-      include: { class_layout: true },
-    });
-    const courseId =
-      sWithClass?.class_layout?.course_id ||
-      faker.helpers.arrayElement(courses).id;
+  // Pick a few students for the transactions
+  const txStudents = students.slice(0, 5);
+
+  // Deterministic transactions: 5 income (total €1075) and 8 expense (total €2075)
+  // Net = +1075 - 2075 = -1000 → saldo = 5000 - 1000 = 4000
+  const SEED_TRANSACTIONS = [
+    // Income
+    { type: 'Lesgeld', amount: 250, txType: 'income', method: 'iDEAL', studentIdx: 0, daysAgo: 28, notes: 'Lesgeld januari' },
+    { type: 'Lesgeld', amount: 175, txType: 'income', method: 'SEPA incasso', studentIdx: 1, daysAgo: 24, notes: 'Lesgeld januari' },
+    { type: 'Donaties', amount: 300, txType: 'income', method: 'Contant', studentIdx: null, daysAgo: 20, notes: 'Donatie gemeenschap' },
+    { type: 'Lesgeld', amount: 200, txType: 'income', method: 'iDEAL', studentIdx: 2, daysAgo: 12, notes: 'Lesgeld februari' },
+    { type: 'Lesgeld', amount: 150, txType: 'income', method: 'Creditcard', studentIdx: 3, daysAgo: 5, notes: 'Lesgeld februari' },
+    // Expense
+    { type: 'Kantoorartikelen', amount: 150, txType: 'expense', method: 'Bankoverschrijving', studentIdx: null, daysAgo: 27, notes: 'Printers en papier' },
+    { type: 'Boodschappen', amount: 200, txType: 'expense', method: 'Contant', studentIdx: null, daysAgo: 22, notes: 'Boodschappen voor keuken' },
+    { type: 'Materiaal', amount: 350, txType: 'expense', method: 'Bankoverschrijving', studentIdx: null, daysAgo: 18, notes: 'Nieuwe lesboeken bestelling' },
+    { type: 'Boodschappen', amount: 175, txType: 'expense', method: 'Contant', studentIdx: null, daysAgo: 15, notes: 'Boodschappen en drinken' },
+    { type: 'Kantoorartikelen', amount: 450, txType: 'expense', method: 'Bankoverschrijving', studentIdx: null, daysAgo: 10, notes: 'Nieuw whiteboard en stiften' },
+    { type: 'Materiaal', amount: 275, txType: 'expense', method: 'Bankoverschrijving', studentIdx: null, daysAgo: 7, notes: 'Werkboeken bestelling' },
+    { type: 'Boodschappen', amount: 325, txType: 'expense', method: 'Contant', studentIdx: null, daysAgo: 3, notes: 'Keukenspullen en snacks' },
+    { type: 'Kantoorartikelen', amount: 150, txType: 'expense', method: 'Bankoverschrijving', studentIdx: null, daysAgo: 1, notes: 'Inktcartridges' },
+  ];
+
+  for (const tx of SEED_TRANSACTIONS) {
+    const student = tx.studentIdx !== null ? txStudents[tx.studentIdx] : null;
+    let courseId = null;
+    if (student) {
+      const sWithClass = await prisma.student.findUnique({
+        where: { id: student.id },
+        include: { class_layout: true },
+      });
+      courseId = sWithClass?.class_layout?.course_id || faker.helpers.arrayElement(courses).id;
+    } else if (tx.type === 'Materiaal') {
+      courseId = faker.helpers.arrayElement(courses).id;
+    }
 
     await prisma.financial_log.create({
       data: {
-        type_id: typeByName.get('Lesgeld').id,
-        student_id: s.id,
+        type_id: typeByName.get(tx.type).id,
+        student_id: student ? student.id : null,
         course_id: courseId,
         school_year_id: activeYear.id,
-        amount: faker.number.float({ min: 50, max: 200, multipleOf: 0.5 }),
-        method: faker.helpers.arrayElement(paymentMethods),
-        notes: 'Automatisch gegenereerde lesgeldbetaling',
-        transaction_type: 'income',
-        date: randomDateInPastDays(30),
+        amount: tx.amount,
+        method: tx.method,
+        notes: tx.notes,
+        transaction_type: tx.txType,
+        date: daysAgo(tx.daysAgo),
       },
     });
   }
 
-  // Uitgaven: kantoorartikelen/boodschappen/materiaal (actief schooljaar)
-  // Spread across the past 30 days for realistic graph data
-  const expenseTypes = ['Kantoorartikelen', 'Boodschappen', 'Materiaal'];
-  for (let i = 0; i < 15; i++) {
-    const t = faker.helpers.arrayElement(expenseTypes);
-    await prisma.financial_log.create({
-      data: {
-        type_id: typeByName.get(t).id,
-        student_id: null,
-        course_id:
-          t === 'Materiaal' ? faker.helpers.arrayElement(courses).id : null,
-        school_year_id: activeYear.id,
-        amount: faker.number.float({ min: 20, max: 400, multipleOf: 0.5 }),
-        method: faker.helpers.arrayElement(['Contant', 'Bankoverschrijving']),
-        notes:
-          t === 'Kantoorartikelen'
-            ? 'Kantoorartikelen aankoop'
-            : t === 'Boodschappen'
-            ? 'Boodschappen voor keuken'
-            : 'Aanschaf lesmateriaal',
-        transaction_type: 'expense',
-        date: randomDateInPastDays(30),
-      },
-    });
-  }
-
-  // Extra historische transacties voor het dummyjaar (archief)
-  // These are from the previous year, so use dates from 1-2 years ago
-  const pastIncomeCount = Math.min(10, students.length);
-  for (let i = 0; i < pastIncomeCount; i++) {
-    const s = faker.helpers.arrayElement(students);
-    const courseId = faker.helpers.arrayElement(courses).id;
-    const pastDate = new Date(twoYearsAgoStart);
-    pastDate.setDate(pastDate.getDate() + Math.floor(Math.random() * 300));
-    await prisma.financial_log.create({
-      data: {
-        type_id: typeByName.get('Lesgeld').id,
-        student_id: s.id,
-        course_id: courseId,
-        school_year_id: dummyYear.id,
-        amount: faker.number.float({ min: 40, max: 150, multipleOf: 0.5 }),
-        method: faker.helpers.arrayElement(paymentMethods),
-        notes: 'Historische lesgeldbetaling (archiefjaar)',
-        transaction_type: 'income',
-        date: pastDate,
-      },
-    });
-  }
-
-  for (let i = 0; i < 6; i++) {
-    const t = faker.helpers.arrayElement(expenseTypes);
-    const pastDate = new Date(twoYearsAgoStart);
-    pastDate.setDate(pastDate.getDate() + Math.floor(Math.random() * 300));
-    await prisma.financial_log.create({
-      data: {
-        type_id: typeByName.get(t).id,
-        student_id: null,
-        course_id:
-          t === 'Materiaal' ? faker.helpers.arrayElement(courses).id : null,
-        school_year_id: dummyYear.id,
-        amount: faker.number.float({ min: 15, max: 250, multipleOf: 0.5 }),
-        method: faker.helpers.arrayElement(['Contant', 'Bankoverschrijving']),
-        notes:
-          t === 'Kantoorartikelen'
-            ? 'Historische kantoorartikelen'
-            : t === 'Boodschappen'
-            ? 'Historische boodschappen'
-            : 'Historische aanschaf lesmateriaal',
-        transaction_type: 'expense',
-        date: pastDate,
-      },
-    });
-  }
-  // Update Saldo: start €5000 + all seeded income – all seeded expenses
-  const allSeededLogs = await prisma.financial_log.findMany();
-  let seedIncome = 0;
-  let seedExpense = 0;
-  for (const log of allSeededLogs) {
-    if (log.transaction_type === 'income') seedIncome += log.amount;
-    else if (log.transaction_type === 'expense') seedExpense += log.amount;
-  }
-  const finalSaldo = Math.round((5000 + seedIncome - seedExpense) * 100) / 100;
+  // Update saldo: 5000 + income(1075) - expense(2075) = 4000
   await prisma.finance_budget.updateMany({
-    data: { amount: finalSaldo },
+    data: { amount: 4000 },
   });
   console.log(
-    `✅ Financiële transacties aangemaakt. Saldo bijgewerkt: €${finalSaldo.toFixed(2)} ` +
-    `(start €5000 + €${seedIncome.toFixed(2)} inkomen - €${seedExpense.toFixed(2)} uitgaven)`
+    `✅ ${SEED_TRANSACTIONS.length} financiële transacties aangemaakt. ` +
+    `Saldo: €4000.00 (start €5000 + €1075 inkomen - €2075 uitgaven)`
   );
 
   // 8. Lokalen
@@ -830,6 +773,26 @@ async function main() {
     })
   );
   console.log(`✅ ${events.length} evenementen aangemaakt.`);
+
+  // 14. Boekenvoorraad
+  console.log('Boekenvoorraad wordt aangemaakt...');
+  const BOOKS = [
+    { name: 'Quran Lesboek', purchase_price: 8.00, sell_price: 12.00, stock: 25 },
+    { name: 'Tajweed Werkboek', purchase_price: 6.50, sell_price: 10.00, stock: 20 },
+    { name: 'Arabisch Alfabet', purchase_price: 5.00, sell_price: 8.00, stock: 30 },
+    { name: 'Seerah van de Profeet', purchase_price: 10.00, sell_price: 15.00, stock: 15 },
+    { name: 'Fiqh voor Beginners', purchase_price: 7.00, sell_price: 11.00, stock: 18 },
+    { name: 'Hadith Verzameling', purchase_price: 9.00, sell_price: 14.00, stock: 12 },
+    { name: 'Aqeedah Basisboek', purchase_price: 6.00, sell_price: 9.50, stock: 22 },
+    { name: 'Dua Boekje', purchase_price: 3.50, sell_price: 5.50, stock: 40 },
+  ];
+
+  const createdBooks = [];
+  for (const bookData of BOOKS) {
+    const book = await prisma.book_inventory.create({ data: bookData });
+    createdBooks.push(book);
+  }
+  console.log(`✅ ${createdBooks.length} boeken aangemaakt in voorraad.`);
 
   console.log(`🎉 Vullen voltooid.`);
 }

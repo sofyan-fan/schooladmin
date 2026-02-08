@@ -247,7 +247,7 @@ const AbsencePage = () => {
   };
 
   return (
-    <div className="container mx-auto ">
+    <>
       <PageHeader
         title="Afwezigheid Beheer"
         icon={<CalendarDays className="size-9" />}
@@ -370,7 +370,7 @@ const AbsencePage = () => {
         selectedClassId={selectedClassId}
         setSelectedClassId={setSelectedClassId}
       />
-    </div>
+    </>
   );
 };
 

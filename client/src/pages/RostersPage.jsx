@@ -7,7 +7,7 @@ import startOfWeek from 'date-fns/startOfWeek';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { toast } from 'sonner';
@@ -135,7 +135,6 @@ export default function RostersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const eventsCacheRef = useRef([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
@@ -291,17 +290,8 @@ export default function RostersPage() {
     return true;
   });
 
-  useEffect(() => {
-    if (filteredEvents && filteredEvents.length) {
-      eventsCacheRef.current = filteredEvents;
-    }
-  }, [filteredEvents, modalOpen]);
-
-  // choose which list to render
-  const eventsForCalendar =
-    modalOpen && eventsCacheRef.current && eventsCacheRef.current.length
-      ? eventsCacheRef.current
-      : filteredEvents;
+  // Memoize so the calendar receives a stable reference between renders
+  const eventsForCalendar = useMemo(() => filteredEvents, [filteredEvents]);
 
   // Build transformed events anchored to a specific date (for export)
   const buildEventsForAnchorDate = useCallback(
@@ -844,8 +834,6 @@ export default function RostersPage() {
       toast.error('Bijwerken van duur is mislukt');
     }
   };
-  const calendarKey = modalOpen ? 'locked' : 'live';
-
   // Custom event style
   const eventStyleGetter = (event) => {
     const style = {
@@ -890,7 +878,6 @@ export default function RostersPage() {
           </div>
         ) : (
           <DnDCalendar
-            key={calendarKey}
             localizer={localizer}
             events={eventsForCalendar}
             defaultView="week"
@@ -935,7 +922,6 @@ export default function RostersPage() {
           if (!open) {
             setSelectedEvent(null);
             setSelectedSlot(null);
-            eventsCacheRef.current = filteredEvents; // sync to latest
           }
         }}
         selectedEvent={selectedEvent}

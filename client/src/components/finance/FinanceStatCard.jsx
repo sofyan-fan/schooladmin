@@ -11,7 +11,7 @@ export default function FinanceStatCard({
 }) {
     return (
         <Card className="flex flex-row items-center p-4 rounded-lg border shadow-sm bg-[#FEFEFD] gap-4">
-            <div className={cn('mr-4 rounded-full p-3', accentClass)}>
+            <div className={cn('mr-4 rfounded-full p-3', accentClass)}>
                 {Icon ? <Icon className={iconSizeClass} /> : null}
             </div>
             <div className="flex flex-col gap-1">

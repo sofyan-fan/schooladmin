@@ -54,6 +54,7 @@ export const AuthProvider = ({ children }) => {
         setToken(sessToken);
 
         // If student, resolve and attach their studentId immediately
+        // If teacher, resolve and attach their teacherId immediately
         let finalUser = userData;
         const role = (userData?.role || '').toLowerCase();
         if (role === 'student') {
@@ -65,6 +66,21 @@ export const AuthProvider = ({ children }) => {
             }
           } catch {
             // Silently ignore; StudentSelfPage will attempt resolving again
+          }
+        } else if (role === 'teacher') {
+          try {
+            const meResp = await RequestHandler.get('/auth/me/teacher');
+            const teacher = meResp?.data;
+            if (teacher?.id) {
+              finalUser = {
+                ...userData,
+                teacherId: teacher.id,
+                first_name: teacher.first_name,
+                last_name: teacher.last_name,
+              };
+            }
+          } catch {
+            // Silently ignore; TeacherRosterPage will show empty state
           }
         }
 
@@ -267,6 +283,41 @@ export const AuthProvider = ({ children }) => {
       }
     }
     ensureStudentId();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user]);
+
+  // Fallback: if a stored teacher user lacks teacherId, try resolving it once
+  useEffect(() => {
+    let cancelled = false;
+    async function ensureTeacherId() {
+      const role = (user?.role || '').toLowerCase();
+      if (!isAuthenticated || !user || role !== 'teacher' || user?.teacherId) {
+        return;
+      }
+      try {
+        const meResp = await RequestHandler.get('/auth/me/teacher');
+        const teacher = meResp?.data;
+        if (!cancelled && teacher?.id) {
+          const merged = {
+            ...user,
+            teacherId: teacher.id,
+            first_name: teacher.first_name,
+            last_name: teacher.last_name,
+          };
+          setUser(merged);
+          try {
+            localStorage.setItem('user', JSON.stringify(merged));
+          } catch {
+            // ignore storage write errors
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    ensureTeacherId();
     return () => {
       cancelled = true;
     };

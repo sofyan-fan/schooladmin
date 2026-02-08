@@ -50,8 +50,9 @@ model student {
 
   student_log student_log[]
 
-  financial_log financial_log[]
-  student_notes student_note[]
+  financial_log     financial_log[]
+  student_notes     student_note[]
+  book_transactions book_transaction[]
 }
 
 model teacher {
@@ -289,10 +290,37 @@ model tuition_payment {
 }
 
 model book_inventory {
-  id    Int    @id @default(autoincrement())
-  name  String
-  stock Int
-  price Int
+  id             Int      @id @default(autoincrement())
+  name           String
+  purchase_price Float    @default(0)
+  sell_price     Float    @default(0)
+  stock          Int      @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  transactions book_transaction[]
+}
+
+model book_transaction {
+  id          Int            @id @default(autoincrement())
+  book        book_inventory @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  book_id     Int
+  type        String // 'restock' or 'sale'
+  quantity    Int
+  unit_price  Float
+  total_price Float
+
+  student    student? @relation(fields: [student_id], references: [id])
+  student_id Int?
+
+  financial_log    financial_log? @relation(fields: [financial_log_id], references: [id])
+  financial_log_id Int?           @unique
+
+  notes      String?
+  created_at DateTime @default(now())
+
+  @@index([book_id])
+  @@index([student_id])
 }
 
 model courses {
@@ -552,6 +580,9 @@ model financial_log {
 
   // Link back to teacher payment if this log is for a teacher payment
   teacher_payment teacher_payment?
+
+  // Link back to book transaction if this log is for a book purchase/sale
+  book_transaction book_transaction?
 
   @@index([type_id])
   @@index([school_year_id])

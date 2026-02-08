@@ -90,12 +90,14 @@ exports.create_financial_log = async (req, res) => {
       resolvedSchoolYearId = activeYear.id;
     }
 
+    const parsedAmount = parseFloat(amount);
+
     const log = await prisma.financial_log.create({
       data: {
         type_id: parseInt(type_id),
         student_id: student_id ? parseInt(student_id) : null,
         course_id: course_id ? parseInt(course_id) : null,
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         method,
         notes,
         transaction_type,
@@ -107,6 +109,16 @@ exports.create_financial_log = async (req, res) => {
         course: { select: { name: true } },
       },
     });
+
+    // Update saldo: income adds, expense subtracts
+    const budgetDelta = transaction_type === 'income' ? parsedAmount : -parsedAmount;
+    const budget = await prisma.finance_budget.findFirst();
+    if (budget) {
+      await prisma.finance_budget.update({
+        where: { id: budget.id },
+        data: { amount: { increment: budgetDelta } },
+      });
+    }
 
     res.status(201).json({ message: 'Financial log created', log });
   } catch (error) {
@@ -188,6 +200,14 @@ exports.update_financial_log = async (req, res) => {
         .json({ error: "transaction_type must be 'income' or 'expense'" });
     }
 
+    // Read original log to calculate saldo diff
+    const original = await prisma.financial_log.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!original) {
+      return res.status(404).json({ error: 'Financial log not found' });
+    }
+
     const updated = await prisma.financial_log.update({
       where: { id: parseInt(id) },
       data: {
@@ -211,6 +231,23 @@ exports.update_financial_log = async (req, res) => {
       },
     });
 
+    // Adjust saldo: reverse old impact, apply new impact
+    const oldImpact = original.transaction_type === 'income' ? original.amount : -original.amount;
+    const newType = transaction_type || original.transaction_type;
+    const newAmount = amount ? parseFloat(amount) : original.amount;
+    const newImpact = newType === 'income' ? newAmount : -newAmount;
+    const delta = newImpact - oldImpact;
+
+    if (delta !== 0) {
+      const budget = await prisma.finance_budget.findFirst();
+      if (budget) {
+        await prisma.finance_budget.update({
+          where: { id: budget.id },
+          data: { amount: { increment: delta } },
+        });
+      }
+    }
+
     res.status(200).json({ message: 'Financial log updated', updated });
   } catch (error) {
     console.error('Error updating financial log:', error);
@@ -222,7 +259,27 @@ exports.update_financial_log = async (req, res) => {
 exports.delete_financial_log = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Read the log first to reverse the saldo impact
+    const log = await prisma.financial_log.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!log) {
+      return res.status(404).json({ error: 'Financial log not found' });
+    }
+
     await prisma.financial_log.delete({ where: { id: parseInt(id) } });
+
+    // Reverse saldo: undo what the original transaction did
+    const reverseDelta = log.transaction_type === 'income' ? -log.amount : log.amount;
+    const budget = await prisma.finance_budget.findFirst();
+    if (budget) {
+      await prisma.finance_budget.update({
+        where: { id: budget.id },
+        data: { amount: { increment: reverseDelta } },
+      });
+    }
+
     res.status(200).json({ message: 'Financial log deleted' });
   } catch (error) {
     console.error('Error deleting financial log:', error);

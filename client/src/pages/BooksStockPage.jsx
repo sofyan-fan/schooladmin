@@ -1,17 +1,35 @@
-import moduleAPI from '@/apis/moduleAPI';
-import studentAPI from '@/apis/studentAPI';
-import BookCard from '@/components/books/BookCard';
-import { createColumns } from '@/components/books/columns';
-import DeleteBookDialog from '@/components/books/DeleteDialog';
-import BookEditModal from '@/components/books/EditModal';
-import BookViewModal from '@/components/books/ViewModal';
-import ViewToggle from '@/components/books/ViewToggle';
+import bookInventoryAPI from '@/apis/bookInventoryAPI';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/Table';
 import Toolbar from '@/components/shared/Toolbar';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { TableCell, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -19,637 +37,879 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { LibraryBig } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  Edit,
+  Eye,
+  LibraryBig,
+  Minus,
+  PackagePlus,
+  Plus,
+  Trash2,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-const STORAGE_KEY = 'boekenvoorraadRecords';
+/** Isolated cell component — only this cell re-renders on ping, not the whole table */
+function StockAmountCell({ stock }) {
+  const [pinging, setPinging] = useState(false);
+  const prevStock = useRef(stock);
+  const timer = useRef(null);
 
-function safeJsonParseArray(raw) {
-  try {
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function readLocalRecords() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const arr = safeJsonParseArray(raw);
-    return arr;
-  } catch (e) {
-    console.warn('Failed to read local book ledger records', e);
-    return [];
-  }
-}
-
-function saveLocalRecords(next) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch (e) {
-    console.warn('Failed to save local book ledger records', e);
-  }
-}
-
-function newId() {
-  try {
-    return crypto.randomUUID();
-  } catch {
-    return `local_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-  }
-}
-
-function toNonNegativeInt(raw, fallback = 0) {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return fallback;
-  const i = Math.floor(n);
-  return i < 0 ? 0 : i;
-}
-
-function normalizeAllocations(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((a) => {
-      const studentId =
-        a?.studentId !== undefined && a?.studentId !== null
-          ? String(a.studentId).trim()
-          : '';
-      const qty = toNonNegativeInt(a?.qty, 0);
-      return { studentId, qty };
-    })
-    .filter((a) => a.studentId && a.qty > 0);
-}
-
-function isAggregatedRecord(r) {
-  return (
-    r &&
-    (r.totalCount !== undefined ||
-      r.total_amount !== undefined ||
-      Array.isArray(r.allocations))
-  );
-}
-
-function migrateLocalRecords(rawRecords) {
-  const now = new Date().toISOString();
-  const input = Array.isArray(rawRecords) ? rawRecords : [];
-
-  const aggregated = [];
-  const legacy = [];
-
-  for (const r of input) {
-    if (isAggregatedRecord(r)) aggregated.push(r);
-    else legacy.push(r);
-  }
-
-  const normalizedAggregated = aggregated
-    .map((r) => {
-      const id = r?.id ? String(r.id) : newId();
-      const title = String(r?.title || '').trim();
-      const moduleId =
-        r?.moduleId !== undefined && r?.moduleId !== null
-          ? String(r.moduleId)
-          : r?.courseModuleId !== undefined && r?.courseModuleId !== null
-            ? String(r.courseModuleId)
-            : '';
-      const totalCount = toNonNegativeInt(
-        r?.totalCount !== undefined ? r.totalCount : r?.total_amount,
-        0
-      );
-      const allocations = normalizeAllocations(r?.allocations);
-      const notes = String(r?.notes || '').trim();
-      const addedAt = r?.addedAt || r?.createdAt || now;
-      const updatedAt = r?.updatedAt || now;
-
-      return {
-        id,
-        title,
-        moduleId,
-        totalCount,
-        allocations,
-        notes,
-        addedAt,
-        updatedAt,
-      };
-    })
-    .filter((r) => r.title && r.moduleId);
-
-  if (!legacy.length) {
-    return { records: normalizedAggregated, didMigrate: aggregated.length !== normalizedAggregated.length };
-  }
-
-  // Legacy format migration: one row per physical copy (optionally with studentId).
-  // We group by (moduleId, title) and convert to aggregated totals + per-student quantities.
-  const groups = new Map();
-  for (const r of legacy) {
-    const title = String(r?.title || '').trim();
-    const moduleId =
-      r?.moduleId !== undefined && r?.moduleId !== null ? String(r.moduleId) : '';
-    if (!title || !moduleId) continue;
-    const key = `${moduleId}\u0000${title}`;
-    const arr = groups.get(key) || [];
-    arr.push(r);
-    groups.set(key, arr);
-  }
-
-  const migratedLegacy = Array.from(groups.values()).map((group) => {
-    const sample = group[0] || {};
-    const title = String(sample?.title || '').trim();
-    const moduleId =
-      sample?.moduleId !== undefined && sample?.moduleId !== null
-        ? String(sample.moduleId)
-        : '';
-
-    const allocMap = new Map();
-    for (const item of group) {
-      const sid =
-        item?.studentId !== undefined && item?.studentId !== null
-          ? String(item.studentId).trim()
-          : '';
-      if (!sid) continue;
-      allocMap.set(sid, (allocMap.get(sid) || 0) + 1);
+  useEffect(() => {
+    if (prevStock.current !== stock) {
+      prevStock.current = stock;
+      setPinging(true);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setPinging(false), 600);
     }
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [stock]);
 
-    const allocations = Array.from(allocMap.entries()).map(([studentId, qty]) => ({
-      studentId,
-      qty,
-    }));
-
-    const addedAt =
-      group
-        .map((g) => g?.addedAt)
-        .filter(Boolean)
-        .sort()[0] || now;
-    const updatedAt =
-      group
-        .map((g) => g?.updatedAt)
-        .filter(Boolean)
-        .sort()
-        .slice(-1)[0] || now;
-
-    return {
-      id: sample?.id ? String(sample.id) : newId(),
-      title,
-      moduleId,
-      totalCount: group.length,
-      allocations,
-      notes: '',
-      addedAt,
-      updatedAt,
-    };
-  });
-
-  return {
-    records: [...normalizedAggregated, ...migratedLegacy],
-    didMigrate: true,
-  };
-}
-
-function seedInitialRecords({ modules, students }) {
-  const now = new Date().toISOString();
-  const m = (modules || []).slice(0, 4);
-  const s = (students || []).slice(0, 4);
-  if (!m.length) return [];
-
-  const records = [];
-
-  m.forEach((mod, idx) => {
-    const s1 = s[idx % (s.length || 1)];
-    const s2 = s[(idx + 1) % (s.length || 1)];
-
-    const allocationsLesboek = [];
-    if (s1?.id != null) allocationsLesboek.push({ studentId: String(s1.id), qty: 1 });
-    if (s2?.id != null && String(s2.id) !== String(s1?.id))
-      allocationsLesboek.push({ studentId: String(s2.id), qty: 1 });
-
-    records.push({
-      id: newId(),
-      title: 'Lesboek',
-      moduleId: String(mod.id),
-      totalCount: 20,
-      allocations: allocationsLesboek,
-      notes: '',
-      addedAt: now,
-      updatedAt: now,
-    });
-
-    const allocationsWerkboek = [];
-    if (s1?.id != null) allocationsWerkboek.push({ studentId: String(s1.id), qty: 1 });
-
-    records.push({
-      id: newId(),
-      title: 'Werkboek',
-      moduleId: String(mod.id),
-      totalCount: 18,
-      allocations: allocationsWerkboek,
-      notes: '',
-      addedAt: now,
-      updatedAt: now,
-    });
-  });
-
-  return records;
+  return (
+    <div className="relative flex items-center justify-center size-8">
+      {pinging && (
+        <span
+          className={`absolute inset-0 rounded-full animate-ping opacity-30 ${
+            stock === 0
+              ? 'bg-destructive'
+              : stock <= 5
+                ? 'bg-amber-400'
+                : 'bg-emerald-400'
+          }`}
+        />
+      )}
+      <span
+        className={`relative z-10 text-base font-bold tabular-nums ${
+          stock === 0
+            ? 'text-destructive'
+            : stock <= 5
+              ? 'text-amber-600'
+              : 'text-emerald-700'
+        }`}
+      >
+        {stock}
+      </span>
+    </div>
+  );
 }
 
 export default function BooksStockPage() {
-  const [records, setRecords] = useState([]);
-  const [modules, setModules] = useState([]);
-  const [students, setStudents] = useState([]);
+  const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [view, setView] = useState('table'); // 'table' | 'cards'
+  // Dialog states
+  const [openBookDialog, setOpenBookDialog] = useState(false);
+  const [editingBookId, setEditingBookId] = useState(null);
+  const [openRestockDialog, setOpenRestockDialog] = useState(false);
+  const [restockTarget, setRestockTarget] = useState(null);
+  const [restockStep, setRestockStep] = useState('input'); // 'input' | 'confirm'
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [viewTarget, setViewTarget] = useState(null);
+  const [viewTransactions, setViewTransactions] = useState([]);
 
-  const [selected, setSelected] = useState(null);
-  const [openView, setOpenView] = useState(false);
-  const [openEdit, setOpenEdit] = useState(false);
-  const [openDelete, setOpenDelete] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
-
-  // table state
+  // Table state
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
+  // Forms
+  const bookForm = useForm({
+    defaultValues: { name: '', purchase_price: '', sell_price: '', stock: '' },
+    mode: 'onSubmit',
+  });
+
+  const restockForm = useForm({
+    defaultValues: { quantity: '', unit_price: '', notes: '' },
+    mode: 'onSubmit',
+  });
+
+  const eurFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }),
+    []
+  );
+
+  const formatDateNl = (value) => {
+    try {
+      return new Date(value).toLocaleDateString('nl-NL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    } catch {
+      return String(value ?? '');
+    }
+  };
+
+  // Load initial data
   useEffect(() => {
-    let mounted = true;
-
-    // Load local first so offline usage works immediately
-    const rawLocal = readLocalRecords();
-    const { records: migrated, didMigrate } = migrateLocalRecords(rawLocal);
-    if (didMigrate) saveLocalRecords(migrated);
-    if (mounted && migrated.length) setRecords(migrated);
-
-    (async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
-        const [modulesData, studentsData] = await Promise.all([
-          moduleAPI.get_modules(),
-          studentAPI.get_students(),
-        ]);
-
-        const mappedModules = (modulesData || []).map((m) => ({
-          id: m.id,
-          name: m.name || m.title || `Module ${m.id}`,
-        }));
-        const mappedStudents = (studentsData || []).map((s) => ({
-          id: s.id,
-          firstName: s.first_name || '',
-          lastName: s.last_name || '',
-        }));
-
-        if (!mounted) return;
-        setModules(mappedModules);
-        setStudents(mappedStudents);
-
-        // If nothing stored locally, seed with a few example books that reference real modules/students
-        const latestRaw = readLocalRecords();
-        const { records: latest, didMigrate: didMigrateAgain } =
-          migrateLocalRecords(latestRaw);
-        if (didMigrateAgain) saveLocalRecords(latest);
-
-        if (!latest.length && mappedModules.length) {
-          const seeded = seedInitialRecords({
-            modules: mappedModules,
-            students: mappedStudents,
-          });
-          setRecords(seeded);
-          saveLocalRecords(seeded);
-          if (seeded.length) toast.info('Voorbeeldboeken zijn toegevoegd (lokaal).');
-        }
+        const booksData = await bookInventoryAPI.get_all_books();
+        setBooks(booksData || []);
       } catch (e) {
-        console.error('Failed to load modules/students for boekenvoorraad', e);
-        toast.error('Kon modules/leerlingen niet laden voor Boekenvoorraad.');
+        console.error('Failed to load data', e);
+        toast.error('Kon gegevens niet laden.');
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
-    })();
-
-    return () => {
-      mounted = false;
     };
+    loadData();
   }, []);
 
-  const studentsById = useMemo(
-    () => new Map((students || []).map((s) => [String(s.id), s])),
-    [students]
-  );
-  const modulesById = useMemo(
-    () => new Map((modules || []).map((m) => [String(m.id), m])),
-    [modules]
-  );
-
-  const rows = useMemo(() => {
-    return (records || []).map((r) => {
-      const module = modulesById.get(String(r.moduleId));
-      const moduleName =
-        module?.name || (r.moduleId ? `Module ${String(r.moduleId)}` : '—');
-
-      const totalCount = toNonNegativeInt(r?.totalCount, 0);
-      const allocations = normalizeAllocations(r?.allocations);
-      const ownedCount = allocations.reduce((sum, a) => sum + (a.qty || 0), 0);
-      const inStoreCount = Math.max(totalCount - ownedCount, 0);
-
-      const allocationsDetailed = allocations
-        .map((a) => {
-          const st = studentsById.get(String(a.studentId));
-          const studentName = st
-            ? `${st.firstName || ''} ${st.lastName || ''}`.trim() ||
-              `Student ${a.studentId}`
-            : `Student ${a.studentId}`;
-          return { ...a, studentName };
-        })
-        .sort((a, b) => a.studentName.localeCompare(b.studentName, 'nl'));
-
-      return {
-        ...r,
-        moduleName,
-        totalCount,
-        allocations,
-        allocationsDetailed,
-        ownedCount,
-        inStoreCount,
-      };
-    });
-  }, [records, modulesById, studentsById]);
-
+  // Stats
   const stats = useMemo(() => {
-    const titles = rows.length;
-    const total = rows.reduce((sum, r) => sum + (r?.totalCount || 0), 0);
-    const owned = rows.reduce((sum, r) => sum + (r?.ownedCount || 0), 0);
-    const inStore = rows.reduce((sum, r) => sum + (r?.inStoreCount || 0), 0);
-    return { titles, total, owned, inStore };
-  }, [rows]);
+    const totalTitles = books.length;
+    const totalStock = books.reduce((sum, b) => sum + (b.stock || 0), 0);
+    const totalPurchaseValue = books.reduce(
+      (sum, b) => sum + (b.stock || 0) * (b.purchase_price || 0),
+      0
+    );
+    const totalSellValue = books.reduce(
+      (sum, b) => sum + (b.stock || 0) * (b.sell_price || 0),
+      0
+    );
+    return { totalTitles, totalStock, totalPurchaseValue, totalSellValue };
+  }, [books]);
 
-  const handleAddNew = useCallback(() => {
-    setSelected({});
-    setOpenEdit(true);
-  }, []);
+  /* ============ HANDLERS ============ */
 
-  const handleViewChange = useCallback((next) => {
-    if (next) setView(next);
-  }, []);
+  const handleCreateBook = useCallback(() => {
+    setEditingBookId(null);
+    bookForm.reset({ name: '', purchase_price: '', sell_price: '', stock: '' });
+    setOpenBookDialog(true);
+  }, [bookForm]);
 
-  const handleView = useCallback((record) => {
-    setSelected(record);
-    setOpenView(true);
-  }, []);
-
-  const handleEdit = useCallback((record) => {
-    setSelected(record);
-    setOpenEdit(true);
-  }, []);
-
-  const handleDelete = useCallback((id) => {
-    if (!id) return;
-    setPendingDeleteId(id);
-    setOpenDelete(true);
-  }, []);
-
-  const handleSave = useCallback(
-    (updated) => {
-      const now = new Date().toISOString();
-      const isEdit = Boolean(updated?.id);
-
-      const totalCount = toNonNegativeInt(updated?.totalCount, 0);
-      const allocations = normalizeAllocations(updated?.allocations);
-      const ownedCount = allocations.reduce((sum, a) => sum + (a.qty || 0), 0);
-      if (ownedCount > totalCount) {
-        toast.error('In bezit kan niet groter zijn dan het totaal.');
-        return;
-      }
-
-      if (isEdit) {
-        setRecords((prev) => {
-          const next = (prev || []).map((r) =>
-            r.id === updated.id
-              ? {
-                  ...r,
-                  title: String(updated?.title || '').trim(),
-                  moduleId: String(updated?.moduleId || '').trim(),
-                  totalCount,
-                  allocations,
-                  notes: String(updated?.notes || '').trim(),
-                  updatedAt: now,
-                }
-              : r
-          );
-          saveLocalRecords(next);
-          return next;
-        });
-        toast.success('Boek is succesvol bijgewerkt.');
-      } else {
-        const created = {
-          id: newId(),
-          title: String(updated?.title || '').trim(),
-          moduleId: String(updated?.moduleId || '').trim(),
-          totalCount,
-          allocations,
-          notes: String(updated?.notes || '').trim(),
-          addedAt: now,
-          updatedAt: now,
-        };
-        setRecords((prev) => {
-          const next = [created, ...(prev || [])];
-          saveLocalRecords(next);
-          return next;
-        });
-        toast.success('Boek is succesvol toegevoegd.');
-      }
-      setOpenEdit(false);
+  const handleEditBook = useCallback(
+    (book) => {
+      setEditingBookId(book.id);
+      bookForm.reset({
+        name: book.name,
+        purchase_price: String(book.purchase_price || ''),
+        sell_price: String(book.sell_price || ''),
+        stock: String(book.stock || ''),
+      });
+      setOpenBookDialog(true);
     },
-    [setRecords]
+    [bookForm]
   );
 
-  const handleConfirmDelete = useCallback(() => {
-    if (!pendingDeleteId) return;
-    const toDelete = records.find((r) => r.id === pendingDeleteId);
-    const title = toDelete?.title || 'Boek';
-
-    setRecords((prev) => {
-      const next = (prev || []).filter((r) => r.id !== pendingDeleteId);
-      saveLocalRecords(next);
-      return next;
-    });
-
-    if (selected?.id === pendingDeleteId) {
-      setOpenEdit(false);
-      setOpenView(false);
-      setSelected(null);
+  const handleSubmitBook = async (values) => {
+    const payload = {
+      name: values.name,
+      purchase_price: Number(values.purchase_price),
+      sell_price: Number(values.sell_price),
+      stock: Number(values.stock),
+    };
+    try {
+      if (editingBookId != null) {
+        const result = await bookInventoryAPI.update_book(
+          editingBookId,
+          payload
+        );
+        setBooks((prev) =>
+          prev.map((b) => (b.id === editingBookId ? result.book : b))
+        );
+        toast.success(`"${result.book.name}" bijgewerkt`);
+      } else {
+        const result = await bookInventoryAPI.create_book(payload);
+        setBooks((prev) => [...prev, result.book]);
+        toast.success(`"${result.book.name}" toegevoegd`);
+      }
+      setOpenBookDialog(false);
+      setEditingBookId(null);
+    } catch (e) {
+      console.error('Save book failed', e);
+      toast.error('Opslaan boek mislukt');
     }
-    setOpenDelete(false);
-    setPendingDeleteId(null);
-    toast.success(`"${title}" is verwijderd.`);
-  }, [pendingDeleteId, records, selected?.id]);
+  };
+
+  // Restock
+  const handleOpenRestock = useCallback(
+    (book) => {
+      setRestockTarget(book);
+      setRestockStep('input');
+      restockForm.reset({
+        quantity: '',
+        unit_price: String(book.purchase_price || ''),
+        notes: '',
+      });
+      setOpenRestockDialog(true);
+    },
+    [restockForm]
+  );
+
+  const handleRestockNext = () => {
+    const values = restockForm.getValues();
+    if (!values.quantity || Number(values.quantity) <= 0) {
+      toast.error('Voer een geldig aantal in');
+      return;
+    }
+    setRestockStep('confirm');
+  };
+
+  const handleConfirmRestock = async () => {
+    const values = restockForm.getValues();
+    try {
+      const result = await bookInventoryAPI.restock_book(restockTarget.id, {
+        quantity: Number(values.quantity),
+        unit_price: Number(values.unit_price) || restockTarget.purchase_price,
+        notes: values.notes,
+      });
+      setBooks((prev) =>
+        prev.map((b) => (b.id === restockTarget.id ? result.book : b))
+      );
+      setOpenRestockDialog(false);
+      setRestockTarget(null);
+      toast.success(
+        `${values.quantity}x "${restockTarget.name}" bijgevuld. Uitgave geregistreerd.`
+      );
+    } catch (e) {
+      console.error('Restock failed', e);
+      toast.error(
+        e.response?.data?.error || 'Bijvullen mislukt'
+      );
+    }
+  };
+
+  // Stock adjustment (+/-)
+  const handleAdjustStock = useCallback(
+    async (book, delta) => {
+      const newStock = book.stock + delta;
+      if (newStock < 0) return;
+      try {
+        const result = await bookInventoryAPI.update_book(book.id, {
+          stock: newStock,
+        });
+        setBooks((prev) =>
+          prev.map((b) => (b.id === book.id ? result.book : b))
+        );
+      } catch (e) {
+        console.error('Stock adjustment failed', e);
+        toast.error('Voorraad aanpassen mislukt');
+      }
+    },
+    []
+  );
+
+  // Delete
+  const handleOpenDelete = useCallback((book) => {
+    setDeleteTarget(book);
+    setOpenDeleteDialog(true);
+  }, []);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await bookInventoryAPI.delete_book(deleteTarget.id);
+      setBooks((prev) => prev.filter((b) => b.id !== deleteTarget.id));
+      setOpenDeleteDialog(false);
+      setDeleteTarget(null);
+      toast.success(`"${deleteTarget.name}" verwijderd`);
+    } catch (e) {
+      console.error('Delete book failed', e);
+      toast.error('Verwijderen mislukt');
+    }
+  };
+
+  // View details
+  const handleViewBook = useCallback(async (book) => {
+    setViewTarget(book);
+    setOpenViewDialog(true);
+    try {
+      const detail = await bookInventoryAPI.get_book_by_id(book.id);
+      setViewTarget(detail);
+      setViewTransactions(detail.transactions || []);
+    } catch (e) {
+      console.error('Failed to load book details', e);
+    }
+  }, []);
+
+  /* ============ TABLE COLUMNS ============ */
 
   const columns = useMemo(
-    () =>
-      createColumns({
-        onView: handleView,
-        onEdit: handleEdit,
-        onDelete: handleDelete,
-      }),
-    [handleView, handleEdit, handleDelete]
+    () => [
+      {
+        header: 'Aantal',
+        id: 'amount',
+        size: 60,
+        cell: ({ row }) => <StockAmountCell stock={row.original.stock} />,
+      },
+      {
+        header: 'Naam',
+        accessorKey: 'name',
+        cell: (info) => (
+          <span className="font-medium">{info.getValue()}</span>
+        ),
+      },
+      {
+        header: 'Inkoopprijs',
+        accessorKey: 'purchase_price',
+        cell: (info) => eurFormatter.format(info.getValue()),
+      },
+      {
+        header: 'Verkoopprijs',
+        accessorKey: 'sell_price',
+        cell: (info) => eurFormatter.format(info.getValue()),
+      },
+      {
+        header: 'Voorraad',
+        accessorKey: 'stock',
+        cell: ({ row }) => {
+          const val = row.original.stock;
+          return (
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-7 shrink-0 rounded-full"
+                disabled={val <= 0}
+                onClick={() => handleAdjustStock(row.original, -1)}
+                title="Voorraad -1"
+              >
+                <Minus className="size-3.5" />
+              </Button>
+              <span
+                className={`min-w-[2rem] text-center font-semibold tabular-nums ${
+                  val === 0
+                    ? 'text-destructive'
+                    : val <= 5
+                      ? 'text-amber-600'
+                      : 'text-emerald-700'
+                }`}
+              >
+                {val}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-7 shrink-0 rounded-full"
+                onClick={() => handleAdjustStock(row.original, 1)}
+                title="Voorraad +1"
+              >
+                <Plus className="size-3.5 text-primary" />
+              </Button>
+            </div>
+          );
+        },
+      },
+      {
+        header: '',
+        id: 'actions',
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleViewBook(row.original)}
+              title="Bekijken"
+            >
+              <Eye className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleEditBook(row.original)}
+              title="Bewerken"
+            >
+              <Edit className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleOpenRestock(row.original)}
+              title="Bijvullen"
+            >
+              <PackagePlus className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleOpenDelete(row.original)}
+              title="Verwijderen"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [
+      eurFormatter,
+      handleViewBook,
+      handleEditBook,
+      handleOpenRestock,
+      handleOpenDelete,
+      handleAdjustStock,
+    ]
   );
 
   const table = useReactTable({
-    data: rows,
+    data: books,
     columns,
-    state: {
-      sorting,
-      columnVisibility,
-      pagination,
-      columnFilters,
-    },
-    onPaginationChange: setPagination,
+    state: { sorting, columnFilters, pagination },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const NoDataRow = (
-    <TableRow>
-      <TableCell colSpan={columns.length} className="h-48 text-center">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <LibraryBig className="size-12 text-gray-400" />
-          <h3 className="text-xl font-semibold">Geen boeken gevonden</h3>
-          <p className="text-muted-foreground">
-            Begin door een nieuw boek toe te voegen.
-          </p>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
+  /* ============ COMPUTED VALUES FOR RESTOCK/SELL CONFIRMATIONS ============ */
+
+  const restockValues = restockForm.watch();
+  const restockTotal =
+    (Number(restockValues.quantity) || 0) *
+    (Number(restockValues.unit_price) || restockTarget?.purchase_price || 0);
+
+  /* ============ RENDER ============ */
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader
         title="Boekenvoorraad"
         icon={<LibraryBig className="size-9" />}
-        description="Beheer hier de boekenvoorraad en registreer welke leerling welk boek heeft."
+        description="Beheer de boekenvoorraad."
         buttonText="Nieuw boek"
-        onAdd={handleAddNew}
+        onAdd={handleCreateBook}
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      {/* Stats */}
+      {/* <div className="flex flex-wrap gap-2">
         <Badge variant="secondary" className="px-2.5 py-0.5">
-          Titels: {stats.titles}
-        </Badge>
-        <Badge
-          variant="secondary"
-          className="px-2.5 py-0.5 bg-amber-50 text-amber-800"
-        >
-          In bezit: {stats.owned}
+          Titels: {stats.totalTitles}
         </Badge>
         <Badge
           variant="secondary"
           className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700"
         >
-          In store: {stats.inStore}
+          Totale voorraad: {stats.totalStock}
         </Badge>
-        <Badge variant="secondary" className="px-2.5 py-0.5">
-          Totaal: {stats.total}
+        <Badge
+          variant="secondary"
+          className="px-2.5 py-0.5 bg-blue-50 text-blue-700"
+        >
+          Inkoopwaarde: {eurFormatter.format(stats.totalPurchaseValue)}
         </Badge>
+        <Badge
+          variant="secondary"
+          className="px-2.5 py-0.5 bg-amber-50 text-amber-700"
+        >
+          Verkoopwaarde: {eurFormatter.format(stats.totalSellValue)}
+        </Badge>
+      </div> */}
+
+      <Toolbar table={table} filterColumn="name" hideColumns />
+      <div className="max-w-full overflow-x-auto">
+        <div className="min-w-[720px]">
+          <DataTable table={table} columns={columns} loading={loading} />
+        </div>
       </div>
 
-      <Toolbar
-        table={table}
-        filterColumn="title"
-        rightActions={<ViewToggle view={view} onViewChange={handleViewChange} />}
-      />
-
-      {view === 'table' ? (
-        <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[720px]">
-            <DataTable
-              table={table}
-              loading={loading}
-              columns={columns}
-              NoDataComponent={NoDataRow}
-            />
-          </div>
-        </div>
-      ) : loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-xl border bg-card p-6 shadow-sm space-y-3"
+      {/* ============ CREATE / EDIT BOOK DIALOG ============ */}
+      <Dialog open={openBookDialog} onOpenChange={setOpenBookDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingBookId != null ? 'Boek bewerken' : 'Nieuw Boek'}
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...bookForm}>
+            <form
+              onSubmit={bookForm.handleSubmit(handleSubmitBook)}
+              className="space-y-4"
             >
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                <Skeleton className="h-14 w-full" />
-                <Skeleton className="h-14 w-full" />
-                <Skeleton className="h-14 w-full" />
+              <FormField
+                control={bookForm.control}
+                name="name"
+                rules={{ required: 'Naam is verplicht' }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Naam</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <FormField
+                  control={bookForm.control}
+                  name="purchase_price"
+                  rules={{ required: 'Inkoopprijs is verplicht' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Inkoopprijs (€)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={bookForm.control}
+                  name="sell_price"
+                  rules={{ required: 'Verkoopprijs is verplicht' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Verkoopprijs (€)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
+              <FormField
+                control={bookForm.control}
+                name="stock"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Beginvoorraad</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit">Opslaan</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ RESTOCK DIALOG (with confirmation) ============ */}
+      <Dialog
+        open={openRestockDialog}
+        onOpenChange={(v) => {
+          setOpenRestockDialog(v);
+          if (!v) {
+            setRestockTarget(null);
+            setRestockStep('input');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {restockStep === 'confirm'
+                ? 'Bijvulling bevestigen'
+                : 'Boek bijvullen'}
+            </DialogTitle>
+            {restockTarget && restockStep === 'input' && (
+              <DialogDescription className="text-lg text-regular">
+                Vul de voorraad aan voor &quot;{restockTarget.name}&quot;.&nbsp;
+                <span className="font-medium">Huidige voorraad: {restockTarget.stock}</span>
+              </DialogDescription>
+            )}
+          </DialogHeader>
+
+          {restockStep === 'input' ? (
+            <Form {...restockForm}>
+              <div className="space-y-4">
+                <FormField
+                  control={restockForm.control}
+                  name="quantity"
+                  rules={{ required: 'Aantal is verplicht' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Aantal bij te vullen</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="0"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={restockForm.control}
+                  name="unit_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stukprijs (€)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder={String(
+                            restockTarget?.purchase_price || '0.00'
+                          )}
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                {/* <FormField
+                  control={restockForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Opmerking (optioneel)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Bijv. Bestelling #123" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                /> */}
+                {/* Live total preview */}
+                {Number(restockValues.quantity) > 0 && (
+                  <div className="rounded-md border p-3 bg-muted/50">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {restockValues.quantity}x @{' '}
+                        {eurFormatter.format(
+                          Number(restockValues.unit_price) ||
+                            restockTarget?.purchase_price ||
+                            0
+                        )}
+                      </span>
+                      <span className="font-medium">
+                        Totaal: {eurFormatter.format(restockTotal)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setOpenRestockDialog(false)}
+                  >
+                    Annuleren
+                  </Button>
+                  <Button type="button" onClick={handleRestockNext}>
+                    Volgende
+                  </Button>
+                </DialogFooter>
+              </div>
+            </Form>
+          ) : (
+            // CONFIRMATION STEP
+            <div className="space-y-4">
+              <div className="rounded-lg border p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Boek</span>
+                  <span className="font-medium">{restockTarget?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Huidige voorraad</span>
+                  <span>{restockTarget?.stock}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Bij te vullen</span>
+                  <span>{restockValues.quantity} stuks</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Stukprijs</span>
+                  <span>
+                    {eurFormatter.format(
+                      Number(restockValues.unit_price) ||
+                        restockTarget?.purchase_price ||
+                        0
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Nieuwe voorraad</span>
+                  <span className="font-medium">
+                    {(restockTarget?.stock || 0) +
+                      (Number(restockValues.quantity) || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-2 mt-2">
+                  <span className="font-medium">Totale kosten (uitgave)</span>
+                  <span className="font-bold text-lg text-rose-600">
+                    {eurFormatter.format(restockTotal)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-md bg-amber-50 text-amber-800">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span className="text-sm">
+                  Dit bedrag wordt als uitgave geregistreerd in de financiën.
+                </span>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setRestockStep('input')}
+                >
+                  Terug
+                </Button>
+                <Button type="button" onClick={handleConfirmRestock}>
+                  Bevestigen
+                </Button>
+              </DialogFooter>
             </div>
-          ))}
-        </div>
-      ) : table.getRowModel().rows?.length ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {table.getRowModel().rows.map((row) => (
-            <BookCard
-              key={row.id}
-              book={row.original}
-              onView={() => handleView(row.original)}
-              onEdit={() => handleEdit(row.original)}
-              onDelete={() => handleDelete(row.original.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-8">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <LibraryBig className="size-12 text-gray-400" />
-            <h3 className="text-xl font-semibold">Geen boeken gevonden</h3>
-            <p className="text-muted-foreground">
-              Begin door een nieuw boek toe te voegen.
-            </p>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
-      <BookViewModal
-        open={openView}
-        onOpenChange={setOpenView}
-        book={selected}
-        onEdit={
-          selected
-            ? () => {
-                setOpenView(false);
-                setOpenEdit(true);
-              }
-            : undefined
-        }
-      />
+      {/* ============ DELETE CONFIRMATION DIALOG ============ */}
+      <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Boek verwijderen</DialogTitle>
+            <DialogDescription>
+              Weet je zeker dat je &quot;{deleteTarget?.name}&quot; wilt
+              verwijderen? Dit kan niet ongedaan worden gemaakt.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpenDeleteDialog(false)}
+            >
+              Annuleren
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Verwijderen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <BookEditModal
-        open={openEdit}
-        onOpenChange={setOpenEdit}
-        book={selected || {}}
-        modules={modules}
-        students={students}
-        onSave={handleSave}
-        onDelete={handleDelete}
-      />
+      {/* ============ VIEW DETAILS DIALOG ============ */}
+      <Dialog open={openViewDialog} onOpenChange={setOpenViewDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Boekdetails</DialogTitle>
+          </DialogHeader>
+          {viewTarget && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-muted-foreground">Naam</div>
+                  <div className="font-medium">{viewTarget.name}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Voorraad</div>
+                  <div className="font-medium">
+                    <Badge
+                      variant={viewTarget.stock > 0 ? 'secondary' : 'destructive'}
+                      className={
+                        viewTarget.stock > 0
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : ''
+                      }
+                    >
+                      {viewTarget.stock}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">
+                    Inkoopprijs
+                  </div>
+                  <div className="font-medium">
+                    {eurFormatter.format(viewTarget.purchase_price)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">
+                    Verkoopprijs
+                  </div>
+                  <div className="font-medium">
+                    {eurFormatter.format(viewTarget.sell_price)}
+                  </div>
+                </div>
+              </div>
 
-      <DeleteBookDialog
-        isOpen={openDelete}
-        onClose={() => setOpenDelete(false)}
-        onConfirm={handleConfirmDelete}
-        bookTitle={(() => {
-          const r = records.find((x) => x.id === pendingDeleteId);
-          return r?.title || '';
-        })()}
-      />
-    </>
+              {/* Transaction History */}
+              {viewTransactions.length > 0 && (
+                <div>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Recente transacties
+                  </div>
+                  <Card className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Datum</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Aantal</TableHead>
+                          <TableHead>Totaal</TableHead>
+                          <TableHead>Leerling</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {viewTransactions.map((tx) => (
+                          <TableRow key={tx.id}>
+                            <TableCell>
+                              {formatDateNl(tx.created_at)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="secondary"
+                                className={
+                                  tx.type === 'restock'
+                                    ? 'bg-blue-50 text-blue-700'
+                                    : 'bg-green-50 text-green-700'
+                                }
+                              >
+                                {tx.type === 'restock'
+                                  ? 'Bijgevuld'
+                                  : 'Verkocht'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{tx.quantity}</TableCell>
+                            <TableCell>
+                              {eurFormatter.format(tx.total_price)}
+                            </TableCell>
+                            <TableCell>
+                              {tx.student
+                                ? `${tx.student.first_name} ${tx.student.last_name}`
+                                : '—'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Card>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
-
-

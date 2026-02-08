@@ -214,10 +214,7 @@ exports.get_lesson_log_by_roster_date = async (req, res) => {
       },
     });
 
-    if (!log) {
-      return res.status(404).json({ error: 'Lesson log not found.' });
-    }
-
+    // Return null when no log exists yet (this is a normal case, not an error)
     res.status(200).json(log);
   } catch (error) {
     console.error('Error fetching lesson log by roster/date:', error);

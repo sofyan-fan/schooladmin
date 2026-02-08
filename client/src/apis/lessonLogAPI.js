@@ -40,17 +40,10 @@ const lessonLogAPI = {
    * @returns {Promise<Object|null>} - The lesson log or null if not found
    */
   getLogByRosterDate: async (rosterId, date) => {
-    try {
-      const response = await RequestHandler.get(
-        `/general/lesson-logs/by-roster-date?roster_id=${rosterId}&date=${date}`
-      );
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 404) {
-        return null;
-      }
-      throw error;
-    }
+    const response = await RequestHandler.get(
+      `/general/lesson-logs/by-roster-date?roster_id=${rosterId}&date=${date}`
+    );
+    return response.data; // Returns null when no log exists for this roster/date
   },
 
   /**

@@ -290,59 +290,17 @@ export default function OverviewTab({
       ? Number(studentStats.meta.coursePrice)
       : null;
 
-  const studentKey =
-    student?.id ??
-    student?.email ??
-    studentStats?.fullName ??
-    'onbekende_student';
-  const paymentStorageKey = `payments:${studentKey}:${courseName}`;
-
   const getDefaultCoursePrice = () => {
     if (Number.isFinite(backendCoursePrice) && backendCoursePrice > 0) {
       return backendCoursePrice;
     }
-    try {
-      const map = JSON.parse(localStorage.getItem('coursePrices') || '{}');
-      const raw = map?.[courseName];
-      const num = typeof raw === 'number' ? raw : Number(raw);
-      if (Number.isFinite(num) && num > 0) return num;
-      // Fallback op bekende seed-cursussen
-      const fallback = DEFAULT_COURSE_PRICES[courseName];
-      return Number.isFinite(fallback) ? fallback : 0;
-    } catch {
-      const fallback = DEFAULT_COURSE_PRICES[courseName];
-      return Number.isFinite(fallback) ? fallback : 0;
-    }
+    const fallback = DEFAULT_COURSE_PRICES[courseName];
+    return Number.isFinite(fallback) ? fallback : 0;
   };
 
-  const readStoredPayment = () => {
-    try {
-      const raw = localStorage.getItem(paymentStorageKey);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return {
-        totalPrice: Number(parsed?.totalPrice) || 0,
-        paid: Math.max(0, Number(parsed?.paid) || 0),
-        transactions: Array.isArray(parsed?.transactions)
-          ? parsed.transactions
-          : [],
-      };
-    } catch {
-      return null;
-    }
-  };
-
-  const [paymentState, setPaymentState] = useState(() => {
-    const stored = readStoredPayment();
-    if (stored) {
-      const cappedPaid = Math.min(stored.paid, stored.totalPrice || 0);
-      return {
-        totalPrice: stored.totalPrice,
-        paid: cappedPaid,
-        transactions: stored.transactions || [],
-      };
-    }
-    return { totalPrice: getDefaultCoursePrice(), paid: 0, transactions: [] };
+  const [paymentState, setPaymentState] = useState({
+    totalPrice: getDefaultCoursePrice(),
+    paid: 0,
   });
 
   const remainingToPay = Math.max(
@@ -363,55 +321,62 @@ export default function OverviewTab({
   const [tuitionTypeId, setTuitionTypeId] = useState(null);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
-  // Load financial types once so we know under welk type we boeken (bijv. "Lesgeld")
+  // Load financial types + student's "Lesgeld" payments from the backend
   useEffect(() => {
     let active = true;
+    const studentId = student?.id;
+    if (!studentId) return;
+
     (async () => {
       try {
-        const types = await financeAPI.get_financial_types();
-        if (!active || !Array.isArray(types)) return;
-        const preferredNames = ['Lesgeld', 'Lesgeldbetaling', 'Course fee'];
-        let found =
-          types.find((t) => preferredNames.includes(t.name)) ||
-          types.find((t) =>
-            String(t.name || '').toLowerCase().includes('lesgeld')
-          );
-        if (!found && types[0]) {
-          found = types[0];
+        const [types, logs] = await Promise.all([
+          financeAPI.get_financial_types(),
+          financeAPI.get_financial_logs({ student_id: studentId }),
+        ]);
+
+        if (!active) return;
+
+        // Find the "Lesgeld" financial type
+        let lesgeldType = null;
+        if (Array.isArray(types)) {
+          const preferredNames = ['Lesgeld', 'Lesgeldbetaling', 'Course fee'];
+          lesgeldType =
+            types.find((t) => preferredNames.includes(t.name)) ||
+            types.find((t) =>
+              String(t.name || '').toLowerCase().includes('lesgeld')
+            );
+          if (!lesgeldType && types[0]) {
+            lesgeldType = types[0];
+          }
+          if (lesgeldType) {
+            setTuitionTypeId(lesgeldType.id);
+          }
         }
-        if (found) {
-          setTuitionTypeId(found.id);
-        }
+
+        // Sum all "Lesgeld" income transactions for this student
+        const lesgeldName = lesgeldType?.name || 'Lesgeld';
+        const paid = (logs || [])
+          .filter(
+            (l) =>
+              l.transaction_type === 'income' &&
+              l.type === lesgeldName
+          )
+          .reduce((sum, l) => sum + (Number(l.amount) || 0), 0);
+
+        const totalPrice = getDefaultCoursePrice();
+        setPaymentState({
+          totalPrice,
+          paid: Math.min(paid, totalPrice),
+        });
       } catch (e) {
-        console.error('Failed to load financial types for Betalingen-kaart', e);
+        console.error('Failed to load payment data', e);
       }
     })();
+
     return () => {
       active = false;
     };
-  }, []);
-
-  // Re-sync when the key (student/course) changes
-  useEffect(() => {
-    const stored = readStoredPayment();
-    if (stored) {
-      setPaymentState((prev) => ({
-        totalPrice: stored.totalPrice,
-        paid: Math.min(stored.paid, stored.totalPrice || 0),
-        transactions: stored.transactions || prev.transactions || [],
-      }));
-    } else {
-      setPaymentState({ totalPrice: getDefaultCoursePrice(), paid: 0 });
-    }
-    setPaymentAmountInput('');
-  }, [paymentStorageKey]);
-
-  // Persist on change
-  useEffect(() => {
-    try {
-      localStorage.setItem(paymentStorageKey, JSON.stringify(paymentState));
-    } catch { }
-  }, [paymentState, paymentStorageKey]);
+  }, [student?.id, backendCoursePrice, courseName]);
 
   const handleConfirmPayment = async () => {
     const apply = Math.min(parsedAmount, remainingToPay);
@@ -420,7 +385,6 @@ export default function OverviewTab({
       return;
     }
 
-    // Bereid API-payload voor voordat state verandert
     const studentIdNumeric =
       student?.id != null ? Number(student.id) : null;
     const courseIdNumeric =
@@ -432,66 +396,46 @@ export default function OverviewTab({
           ? 'Cash'
           : paymentMethod;
 
-    const financePayload =
-      tuitionTypeId && studentIdNumeric
-        ? {
-          type_id: Number(tuitionTypeId),
-          student_id: studentIdNumeric,
-          course_id: courseIdNumeric ?? undefined,
-          amount: apply,
-          method: apiMethod,
-          notes: `Betaling via studentenkaart voor ${courseName}`,
-          transaction_type: 'income',
-        }
-        : null;
-
-    setPaymentState((prev) => {
-      const total = prev.totalPrice || 0;
-      const nextPaid = Math.min((prev.paid || 0) + apply, total);
-      const tx = {
-        id: Date.now(),
-        date: new Date().toISOString(),
-        amount: apply,
-        method: paymentMethod,
-        source: 'Lesgeldkaart',
-      };
-      const existing = Array.isArray(prev.transactions)
-        ? prev.transactions
-        : [];
-      return {
-        ...prev,
-        paid: nextPaid,
-        transactions: [tx, ...existing],
-      };
-    });
-    setPaymentAmountInput('');
-    setIsConfirmOpen(false);
-
-    if (!financePayload) {
-      if (!studentIdNumeric) {
-        console.warn(
-          'Betalingen-kaart: geen student_id beschikbaar, sla finance-log over.'
-        );
-      } else if (!tuitionTypeId) {
-        console.warn(
-          'Betalingen-kaart: geen financieel type gevonden, sla finance-log over.'
-        );
-      }
+    if (!tuitionTypeId || !studentIdNumeric) {
+      toast.error('Kan betaling niet verwerken: ontbrekende gegevens.');
+      setIsConfirmOpen(false);
       return;
     }
 
     try {
       setIsSubmittingPayment(true);
-      await financeAPI.create_financial_log(financePayload);
-      toast.success('Betaling is compleet!');
+      await financeAPI.create_financial_log({
+        type_id: Number(tuitionTypeId),
+        student_id: studentIdNumeric,
+        course_id: courseIdNumeric ?? undefined,
+        amount: apply,
+        method: apiMethod,
+        notes: `Lesgeld betaling voor ${courseName}`,
+        transaction_type: 'income',
+      });
+
+      // Refresh paid total from the backend
+      const logs = await financeAPI.get_financial_logs({
+        student_id: studentIdNumeric,
+      });
+      const lesgeldPaid = (logs || [])
+        .filter(
+          (l) => l.transaction_type === 'income' && l.type === 'Lesgeld'
+        )
+        .reduce((sum, l) => sum + (Number(l.amount) || 0), 0);
+
+      const totalPrice = paymentState.totalPrice || 0;
+      setPaymentState({
+        totalPrice,
+        paid: Math.min(lesgeldPaid, totalPrice),
+      });
+
+      setPaymentAmountInput('');
+      setIsConfirmOpen(false);
+      toast.success('Betaling geregistreerd!');
     } catch (e) {
-      console.error(
-        'Kon betaling niet opslaan in financiële transacties:',
-        e
-      );
-      toast.error(
-        'Betaling is lokaal opgeslagen, maar niet in Financiën. Probeer later opnieuw.'
-      );
+      console.error('Kon betaling niet verwerken:', e);
+      toast.error('Betaling verwerken mislukt. Probeer opnieuw.');
     } finally {
       setIsSubmittingPayment(false);
     }

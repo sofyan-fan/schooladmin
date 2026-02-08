@@ -198,6 +198,15 @@ exports.process_teacher_payment = async (req, res) => {
         },
       });
 
+      // Decrease saldo (expense)
+      const budget = await tx.finance_budget.findFirst();
+      if (budget) {
+        await tx.finance_budget.update({
+          where: { id: budget.id },
+          data: { amount: { decrement: totalAmount } },
+        });
+      }
+
       return {
         payment,
         financialLog,

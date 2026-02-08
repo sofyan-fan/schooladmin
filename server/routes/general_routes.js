@@ -134,6 +134,17 @@ const {
   delete_lesson_log,
 } = require('../controllers/general/lesson_log');
 
+const {
+  get_all_books,
+  get_book_by_id,
+  create_book,
+  update_book,
+  delete_book,
+  restock_book,
+  sell_book,
+  get_book_transactions,
+} = require('../controllers/general/book_inventory');
+
 // ==============================
 // Students routes
 // ==============================
@@ -299,5 +310,17 @@ router.get('/lesson-logs/roster/:roster_id', get_logs_for_roster);
 router.get('/lesson-logs/:id', get_lesson_log_by_id);
 router.put('/lesson-logs/:id', update_lesson_log);
 router.delete('/lesson-logs/:id', delete_lesson_log);
+
+// ==============================
+// Book Inventory routes
+// ==============================
+router.get('/books', get_all_books);
+router.get('/books/:id', get_book_by_id);
+router.post('/books', create_book);
+router.put('/books/:id', update_book);
+router.delete('/books/:id', delete_book);
+router.post('/books/:id/restock', restock_book);
+router.post('/books/:id/sell', sell_book);
+router.get('/book-transactions', get_book_transactions);
 
 module.exports = router;

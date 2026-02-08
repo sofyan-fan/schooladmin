@@ -19,7 +19,7 @@ import {
   BarChart,
   Bell,
   BookCheck,
-  // BookOpen,
+  BookOpen,
   CalendarDays,
   ChevronDown,
   CircleDollarSign,
@@ -199,6 +199,12 @@ const SidebarComponent = () => {
       name: 'Rapport',
       path: 'rapport',
       Icon: ClipboardList,
+      roles: ['admin'],
+    },
+    {
+      name: 'Boekenvoorraad',
+      path: 'boekenvoorraad',
+      Icon: BookOpen,
       roles: ['admin'],
     },
     {
