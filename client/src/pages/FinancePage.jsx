@@ -26,7 +26,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -43,6 +42,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { BriefcaseMedical, Calculator, CircleDollarSign, Edit, Eye, GraduationCap, HeartHandshake, Home, Pencil, Plus, Repeat, ShoppingCart, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -571,6 +571,29 @@ export default function FinancePage() {
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
   }, [logsInRange]);
 
+  // Donut: income distribution by type (top 5, rest grouped as "Overig")
+  const incomeByType = useMemo(() => {
+    const map = new Map();
+    for (const l of logsInRange) {
+      if (l.transaction_type !== 'income') continue;
+      const key = l.type || 'Onbekend';
+      map.set(key, (map.get(key) || 0) + Number(l.amount));
+    }
+    const sorted = Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+    if (sorted.length <= 5) return sorted;
+    const top = sorted.slice(0, 5);
+    const restValue = sorted.slice(5).reduce((sum, it) => sum + it.value, 0);
+    if (restValue > 0) top.push({ name: 'Overig', value: restValue });
+    return top;
+  }, [logsInRange]);
+
+  const incomeDonutColors = useMemo(
+    () => ['#6366F1', '#22C55E', '#F43F5E', '#F59E0B', '#06B6D4', '#8B5CF6', '#84CC16', '#3B82F6'],
+    []
+  );
+
   const donutTotal = useMemo(() => {
     return expenseByType.reduce((sum, it) => sum + (Number(it.value) || 0), 0);
   }, [expenseByType]);
@@ -761,6 +784,9 @@ export default function FinancePage() {
                 </ChartContainer>
               </Card>
             </div> */}
+            <div>
+              <ExpensesByTypeDonut title="Inkomen per type" expenseByType={incomeByType} donutColors={incomeDonutColors} />
+            </div>
             <div>
               <ExpensesByTypeDonut title="Uitgaven per type" expenseByType={expenseByType} donutColors={donutColors} />
             </div>
@@ -1083,7 +1109,7 @@ export default function FinancePage() {
                   <FormField control={logForm.control} name="transaction_type" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Transactie</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select value={field.value} onValueChange={field.onChange} >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="income">Inkomen</SelectItem>
@@ -1175,205 +1201,205 @@ export default function FinancePage() {
                 className="overflow-hidden transition-[height] duration-300 ease-in-out"
                 style={{ height: dialogTabHeight === 'auto' ? 'auto' : `${dialogTabHeight}px` }}
               >
-              {/* ─── Tab 1: Regular transaction ─── */}
-              <TabsContent value="regular" className="mt-4">
-                <Form {...logForm}>
-                  <form id="finance-log-form" onSubmit={logForm.handleSubmit(handleSubmitLog)} className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <FormField control={logForm.control} name="transaction_type" render={({ field }) => (
+                {/* ─── Tab 1: Regular transaction ─── */}
+                <TabsContent value="regular" className="mt-4">
+                  <Form {...logForm}>
+                    <form id="finance-log-form" onSubmit={logForm.handleSubmit(handleSubmitLog)} className="space-y-4">
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <FormField control={logForm.control} name="transaction_type" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Transactie</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="income">Inkomen</SelectItem>
+                                <SelectItem value="expense">Uitgave</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )} />
+                        <FormField control={logForm.control} name="amount" rules={{ required: 'Bedrag is verplicht' }} render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bedrag (€)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">€</span>
+                                <Input type="number" step="0.01" min="0" placeholder="0.00" className="bg-white pl-8 font-medium" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <FormField control={logForm.control} name="type_id" rules={{ required: 'Type is verplicht' }} render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Type</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger><SelectValue placeholder="Kies type..." /></SelectTrigger>
+                              <SelectContent>
+                                {types.map((t) => (<SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={logForm.control} name="method" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Methode</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger><SelectValue placeholder="Kies methode" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="iDEAL">iDEAL</SelectItem>
+                                <SelectItem value="Cash">Cash</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <FormField control={logForm.control} name="student_id" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Leerling (optioneel)</FormLabel>
+                            <FormControl>
+                              <ComboboxField items={students} value={field.value} onChange={(v) => { field.onChange(v); const detected = studentIdToCourseId.get(String(v)); if (detected) logForm.setValue('course_id', detected); }} placeholder="Kies leerling" />
+                            </FormControl>
+                          </FormItem>
+                        )} />
+                        <FormField control={logForm.control} name="course_id" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Lespakket (optioneel)</FormLabel>
+                            <FormControl>
+                              <ComboboxField items={courses} value={field.value} onChange={(v) => field.onChange(v)} placeholder="Kies lespakket" />
+                            </FormControl>
+                          </FormItem>
+                        )} />
+                      </div>
+                      <FormField control={logForm.control} name="notes" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Transactie</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="income">Inkomen</SelectItem>
-                              <SelectItem value="expense">Uitgave</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Opmerking</FormLabel>
+                          <FormControl><Textarea className="bg-white resize-y min-h-[80px]" placeholder="Optioneel" {...field} /></FormControl>
                         </FormItem>
                       )} />
-                      <FormField control={logForm.control} name="amount" rules={{ required: 'Bedrag is verplicht' }} render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bedrag (€)</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">€</span>
-                              <Input type="number" step="0.01" min="0" placeholder="0.00" className="bg-white pl-8 font-medium" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <FormField control={logForm.control} name="type_id" rules={{ required: 'Type is verplicht' }} render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger><SelectValue placeholder="Kies type..." /></SelectTrigger>
-                            <SelectContent>
-                              {types.map((t) => (<SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <FormField control={logForm.control} name="method" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Methode</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger><SelectValue placeholder="Kies methode" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="iDEAL">iDEAL</SelectItem>
-                              <SelectItem value="Cash">Cash</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <FormField control={logForm.control} name="student_id" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Leerling (optioneel)</FormLabel>
-                          <FormControl>
-                            <ComboboxField items={students} value={field.value} onChange={(v) => { field.onChange(v); const detected = studentIdToCourseId.get(String(v)); if (detected) logForm.setValue('course_id', detected); }} placeholder="Kies leerling" />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField control={logForm.control} name="course_id" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Lespakket (optioneel)</FormLabel>
-                          <FormControl>
-                            <ComboboxField items={courses} value={field.value} onChange={(v) => field.onChange(v)} placeholder="Kies lespakket" />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                    </div>
-                    <FormField control={logForm.control} name="notes" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Opmerking</FormLabel>
-                        <FormControl><Textarea className="bg-white resize-y min-h-[80px]" placeholder="Optioneel" {...field} /></FormControl>
-                      </FormItem>
-                    )} />
-                  </form>
-                </Form>
-              </TabsContent>
+                    </form>
+                  </Form>
+                </TabsContent>
 
-              {/* ─── Tab 2: Book stock transaction ─── */}
-              <TabsContent value="book" className="mt-4">
-                <div className="space-y-4">
-                  {/* Book selection */}
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Boek</label>
-                    <Select value={selectedBookId} onValueChange={(v) => { setSelectedBookId(v); setBookQuantity('1'); }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Kies een boek..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {books.map((b) => (
-                          <SelectItem key={b.id} value={String(b.id)}>
-                            <span className="flex items-center justify-between gap-3 w-full">
-                              <span>{b.name}</span>
-                              <span className="text-xs text-white ml-auto">voorraad: {b.stock}</span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Type + Quantity */}
-                  <div className="grid sm:grid-cols-2 gap-4">
+                {/* ─── Tab 2: Book stock transaction ─── */}
+                <TabsContent value="book" className="mt-4">
+                  <div className="space-y-4">
+                    {/* Book selection */}
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">Type transactie</label>
-                      <Select value={bookTxType} onValueChange={setBookTxType}>
+                      <label className="text-sm font-medium mb-1.5 block">Boek</label>
+                      <Select value={selectedBookId} onValueChange={(v) => { setSelectedBookId(v); setBookQuantity('1'); }}>
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Kies een boek..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="sale">Verkoop (inkomen)</SelectItem>
-                          <SelectItem value="restock">Bijbestelling (uitgave)</SelectItem>
+                          {books.map((b) => (
+                            <SelectItem key={b.id} value={String(b.id)}>
+                              <span className="flex items-center justify-between gap-3 w-full">
+                                <span>{b.name}</span>
+                                <span className="text-xs text-white ml-auto">voorraad: {b.stock}</span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Type + Quantity */}
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-1.5 block">Type transactie</label>
+                        <Select value={bookTxType} onValueChange={setBookTxType}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sale">Verkoop (inkomen)</SelectItem>
+                            <SelectItem value="restock">Bijbestelling (uitgave)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium mb-1.5 block">Aantal</label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max={bookTxType === 'sale' && selectedBook ? selectedBook.stock : undefined}
+                          value={bookQuantity}
+                          onChange={(e) => setBookQuantity(e.target.value)}
+                          className="bg-white"
+                          placeholder="1"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Student (only for sale) */}
+                    {bookTxType === 'sale' && (
+                      <div>
+                        <label className="text-sm font-medium mb-1.5 block">Leerling</label>
+                        <ComboboxField
+                          items={students}
+                          value={bookStudentId}
+                          onChange={setBookStudentId}
+                          placeholder="Kies leerling"
+                        />
+                      </div>
+                    )}
+
+                    {/* Notes */}
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">Aantal</label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max={bookTxType === 'sale' && selectedBook ? selectedBook.stock : undefined}
-                        value={bookQuantity}
-                        onChange={(e) => setBookQuantity(e.target.value)}
-                        className="bg-white"
-                        placeholder="1"
+                      <label className="text-sm font-medium mb-1.5 block">Opmerking</label>
+                      <Textarea
+                        className="bg-white resize-y min-h-[60px]"
+                        placeholder="Optioneel"
+                        value={bookNotes}
+                        onChange={(e) => setBookNotes(e.target.value)}
                       />
                     </div>
-                  </div>
 
-                  {/* Student (only for sale) */}
-                  {bookTxType === 'sale' && (
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Leerling</label>
-                      <ComboboxField
-                        items={students}
-                        value={bookStudentId}
-                        onChange={setBookStudentId}
-                        placeholder="Kies leerling"
-                      />
-                    </div>
-                  )}
-
-                  {/* Notes */}
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Opmerking</label>
-                    <Textarea
-                      className="bg-white resize-y min-h-[60px]"
-                      placeholder="Optioneel"
-                      value={bookNotes}
-                      onChange={(e) => setBookNotes(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Summary card */}
-                  {selectedBook && Number(bookQuantity) > 0 && (
-                    <div className="rounded-lg border bg-muted/40 p-3 space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Boek</span>
-                        <span className="font-medium">{selectedBook.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Prijs per stuk</span>
-                        <span>€ {(bookTxType === 'sale' ? selectedBook.sell_price : selectedBook.purchase_price).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Aantal</span>
-                        <span>{bookQuantity}</span>
-                      </div>
-                      <hr className="my-1" />
-                      <div className="flex justify-between font-semibold">
-                        <span>Totaal ({bookTxType === 'sale' ? 'inkomen' : 'uitgave'})</span>
-                        <span className={bookTxType === 'sale' ? 'text-emerald-600' : 'text-red-600'}>
-                          € {bookTotalPrice.toFixed(2)}
-                        </span>
-                      </div>
-                      {bookTxType === 'sale' && (
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Voorraad na verkoop</span>
-                          <span>{selectedBook.stock - Number(bookQuantity)}</span>
+                    {/* Summary card */}
+                    {selectedBook && Number(bookQuantity) > 0 && (
+                      <div className="rounded-lg border bg-muted/40 p-3 space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Boek</span>
+                          <span className="font-medium">{selectedBook.name}</span>
                         </div>
-                      )}
-                      {bookTxType === 'restock' && (
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Voorraad na bijbestelling</span>
-                          <span>{selectedBook.stock + Number(bookQuantity)}</span>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Prijs per stuk</span>
+                          <span>€ {(bookTxType === 'sale' ? selectedBook.sell_price : selectedBook.purchase_price).toFixed(2)}</span>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Aantal</span>
+                          <span>{bookQuantity}</span>
+                        </div>
+                        <hr className="my-1" />
+                        <div className="flex justify-between font-semibold">
+                          <span>Totaal ({bookTxType === 'sale' ? 'inkomen' : 'uitgave'})</span>
+                          <span className={bookTxType === 'sale' ? 'text-emerald-600' : 'text-red-600'}>
+                            € {bookTotalPrice.toFixed(2)}
+                          </span>
+                        </div>
+                        {bookTxType === 'sale' && (
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Voorraad na verkoop</span>
+                            <span>{selectedBook.stock - Number(bookQuantity)}</span>
+                          </div>
+                        )}
+                        {bookTxType === 'restock' && (
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Voorraad na bijbestelling</span>
+                            <span>{selectedBook.stock + Number(bookQuantity)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                </div>
-              </TabsContent>
+                  </div>
+                </TabsContent>
               </div>
 
               {/* Shared footer — always visible outside the animated wrapper */}
