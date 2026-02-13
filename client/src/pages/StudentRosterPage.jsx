@@ -157,6 +157,7 @@ const StudentRosterPage = () => {
   const [student, setStudent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [absences, setAbsences] = useState([]);
+  const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
 
   // Sick-report dialog state
   const [sickDialogOpen, setSickDialogOpen] = useState(false);
@@ -483,7 +484,12 @@ const StudentRosterPage = () => {
         max={new Date(0, 0, 0, 18, 0, 0)}
         date={currentDate}
         onNavigate={setCurrentDate}
-        onSelectEvent={setSelectedEvent}
+        onSelectEvent={(event) => {
+          if (lessonDialogOpen) return;
+          setSelectedEvent(event);
+          // Let react-big-calendar finish its internal click/selection cycle first
+          requestAnimationFrame(() => setLessonDialogOpen(true));
+        }}
         selectable={false}
         resizable={false}
         eventPropGetter={eventStyleGetter}
@@ -525,8 +531,9 @@ const StudentRosterPage = () => {
         {calendarContent()}
       </div>
       <LessonReadOnlyDialog
-        open={Boolean(selectedEvent)}
+        open={lessonDialogOpen}
         onOpenChange={(open) => {
+          setLessonDialogOpen(open);
           if (!open) setSelectedEvent(null);
         }}
         event={selectedEvent}

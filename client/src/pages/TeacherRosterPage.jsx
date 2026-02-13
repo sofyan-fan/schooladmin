@@ -239,8 +239,10 @@ const TeacherRosterPage = () => {
   };
 
   const handleSelectEvent = (event) => {
+    if (modalOpen) return;
     setSelectedEvent(event);
-    setModalOpen(true);
+    // Let react-big-calendar finish its internal click/selection cycle first
+    requestAnimationFrame(() => setModalOpen(true));
   };
 
   const handleSave = async () => {

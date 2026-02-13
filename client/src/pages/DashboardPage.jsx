@@ -9,6 +9,7 @@ import {
   Calendar,
   CheckCircle,
   Clock,
+  TrendingUp,
   UserX,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';

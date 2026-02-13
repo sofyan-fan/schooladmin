@@ -365,9 +365,16 @@
    opacity: 0.9;
  }
 
- .rbc-selected {
-   background-color: oklch(from var(--color-primary) l calc(l - 0.1) c h) !important;
- }
+/* Keep event background color intact when selected.
+   Some browsers/themes can make the previous computed color effectively "invisible"
+   (e.g. white text on very light selected background), which then persists until selection clears. */
+.rbc-event.rbc-selected {
+  /* don't override background-color; just add emphasis */
+  filter: brightness(0.92);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.18);
+  position: relative;
+  z-index: 2;
+}
 
  .rbc-addons-dnd-over {
    background-color: oklch(from var(--color-accent) l 0.95 c h);

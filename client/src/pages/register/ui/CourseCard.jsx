@@ -11,7 +11,7 @@ function CourseCard({ course, selected, onClick }) {
       }`}
     >
       <div>
-        <h4 className="font-semibold">{course.title}</h4>
+        <h4 className="font-semibold">{course.name}</h4>
         <p className="text-sm text-muted-foreground mt-1">
           {course.description}
         </p>
