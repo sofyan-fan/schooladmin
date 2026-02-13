@@ -768,6 +768,7 @@ export default function RostersPage() {
 
   // Handle slot selection (for creating new events)
   const handleSelectSlot = ({ start, end }) => {
+    if (modalOpen) return;
     setSelectedSlot({ start, end });
     setSelectedEvent(null);
     setModalOpen(true);
@@ -775,6 +776,7 @@ export default function RostersPage() {
 
   // Handle event selection (for editing)
   const handleSelectEvent = (event) => {
+    if (modalOpen) return;
     setSelectedEvent(event);
     setSelectedSlot(null);
     // Let rbc finish its internal click/selection cycle first
@@ -789,6 +791,7 @@ export default function RostersPage() {
 
   // Handle event drop (drag and drop)
   const handleEventDrop = async ({ event, start, end }) => {
+    if (modalOpen) return;
     try {
       const dayOfWeek = start.getDay() === 0 ? 7 : start.getDay();
       const updatedEvent = {
@@ -813,6 +816,7 @@ export default function RostersPage() {
 
   // Handle event resize
   const handleEventResize = async ({ event, start, end }) => {
+    if (modalOpen) return;
     try {
       const dayOfWeek = start.getDay() === 0 ? 7 : start.getDay();
       const updatedEvent = {
@@ -876,6 +880,40 @@ export default function RostersPage() {
           <div className="flex justify-center items-center h-full">
             <div className="text-muted-foreground">Roosters laden...</div>
           </div>
+        ) : modalOpen ? (
+          <Calendar
+            localizer={localizer}
+            events={eventsForCalendar}
+            defaultView="week"
+            views={['week', 'day']}
+            step={30}
+            showMultiDayTimes
+            min={new Date(0, 0, 0, 8, 0, 0)}
+            max={new Date(0, 0, 0, 18, 0, 0)}
+            date={currentDate}
+            onNavigate={setCurrentDate}
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            selectable
+            resizable={false}
+            eventPropGetter={eventStyleGetter}
+            style={{ height: '100%' }}
+            culture="nl-NL"
+            components={{
+              toolbar: CustomToolbar,
+              event: ({ event }) => (
+                <div className="p-1 text-xs">
+                  <div className="font-semibold">{event.title}</div>
+                  {event.resource.teacherName && (
+                    <div>{event.resource.teacherName}</div>
+                  )}
+                  {event.resource.classroomName && (
+                    <div>{event.resource.classroomName}</div>
+                  )}
+                </div>
+              ),
+            }}
+          />
         ) : (
           <DnDCalendar
             localizer={localizer}
@@ -890,10 +928,10 @@ export default function RostersPage() {
             onNavigate={setCurrentDate}
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent}
-            onEventDrop={!modalOpen ? handleEventDrop : undefined}
-            onEventResize={!modalOpen ? handleEventResize : undefined}
-            selectable={!modalOpen}
-            resizable={!modalOpen}
+            onEventDrop={handleEventDrop}
+            onEventResize={handleEventResize}
+            selectable
+            resizable
             eventPropGetter={eventStyleGetter}
             style={{ height: '100%' }}
             culture="nl-NL"

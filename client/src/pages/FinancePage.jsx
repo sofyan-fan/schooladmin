@@ -177,8 +177,7 @@ export default function FinancePage() {
     mode: 'onSubmit',
   });
 
-  // Measure active tab panel height for smooth animation
-  // Uses useEffect + rAF so the DOM has fully painted (min-height, etc.)
+
   useEffect(() => {
     const measure = () => {
       const container = dialogTabContentRef.current;
