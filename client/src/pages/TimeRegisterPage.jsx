@@ -696,14 +696,14 @@ const TimeRegisterPage = () => {
                   <Input
                     id={key}
                     type="number"
-                    step="0.5"
+                    step="1"
                     min={key === 'monday' ? '1' : '0'}
                     max="24"
                     value={timeRegForm[key]}
                     onChange={(e) =>
                       setTimeRegForm((prev) => ({
                         ...prev,
-                        [key]: e.target.value === '' ? '' : parseFloat(e.target.value),
+                        [key]: e.target.value === '' ? '' : parseInt(e.target.value, 10),
                       }))
                     }
                     className="h-10 w-24 text-right"

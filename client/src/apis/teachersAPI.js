@@ -6,8 +6,8 @@ export const get_teachers = async () => {
 };
 
 export const get_teacher_by_id = async (id) => {
-  // Some backends may not implement GET /general/teacher/:id.
-  // Resolve from the teachers list to avoid 404 noise in logs.
+  // some backends may not implement GET /general/teacher/:id.
+  // resolve from the teachers list to avoid 404 noise in logs.
   const all = await get_teachers();
   const found = (all || []).find((t) => Number(t.id) === Number(id));
   return found || null;

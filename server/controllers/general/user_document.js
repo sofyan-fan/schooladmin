@@ -97,12 +97,73 @@ exports.update_teacher = async (req, res) => {
 // DELETE teacher
 exports.delete_teacher = async (req, res) => {
   try {
-    await prisma.teacher.delete({
-      where: { id: Number(req.params.id) },
+    const teacherId = Number(req.params.id);
+
+    // Use a transaction to ensure all deletions succeed or none do
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete lesson_logs that reference rosters taught by this teacher
+      const teacherRosters = await tx.roster.findMany({
+        where: { teacher_id: teacherId },
+        select: { id: true },
+      });
+      const rosterIds = teacherRosters.map((r) => r.id);
+
+      if (rosterIds.length > 0) {
+        await tx.lesson_log.deleteMany({
+          where: { roster_id: { in: rosterIds } },
+        });
+
+        // 2. Delete absences linked to these rosters
+        await tx.absence.deleteMany({
+          where: { roster_id: { in: rosterIds } },
+        });
+
+        // 3. Delete the rosters themselves
+        await tx.roster.deleteMany({
+          where: { teacher_id: teacherId },
+        });
+      }
+
+      // 4. Delete teacher's own absences (where teacher_id is set directly)
+      await tx.absence.deleteMany({
+        where: { teacher_id: teacherId },
+      });
+
+      // 5. Remove mentor reference from class_layout (set to null instead of deleting the class)
+      await tx.class_layout.updateMany({
+        where: { mentor_id: teacherId },
+        data: { mentor_id: null },
+      });
+
+      // 6. Handle time_registrations and teacher_payments
+      // First, unlink time_registrations from payments
+      await tx.time_registration.updateMany({
+        where: { teacher_id: teacherId },
+        data: { payment_id: null },
+      });
+
+      // Delete teacher_payments (financial_log link is optional, so we just delete the payments)
+      await tx.teacher_payment.deleteMany({
+        where: { teacher_id: teacherId },
+      });
+
+      // Delete time_registrations
+      await tx.time_registration.deleteMany({
+        where: { teacher_id: teacherId },
+      });
+
+      // 7. Finally, delete the teacher
+      await tx.teacher.delete({
+        where: { id: teacherId },
+      });
     });
+
     res.status(200).json({ message: 'Teacher deleted successfully' });
   } catch (error) {
     console.error(error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Teacher not found' });
+    }
     res.status(500).json({ error: 'Error deleting teacher' });
   }
 };
@@ -116,7 +177,9 @@ exports.get_all_students = async (req, res) => {
   try {
     const students = await prisma.student.findMany({
       include: {
-        class_layout: true,
+        class_layout: {
+          include: { course: true },
+        },
         progress: true,
         absences: true,
         payments: {

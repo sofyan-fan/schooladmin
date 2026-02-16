@@ -177,9 +177,30 @@ const DashboardPage = () => {
 
           const totalStudents = Array.isArray(students) ? students.length : 0;
           const totalTeachers = Array.isArray(teachers) ? teachers.length : 0;
-          // Count students that have at least one tuition payment
+
+          // Count students who have fully paid their lesgeld.
+          // Build a map of student_id -> total "Lesgeld" income from financial logs.
+          const lesgeldPaidByStudent = {};
+          if (Array.isArray(financialLogs)) {
+            financialLogs.forEach((log) => {
+              if (
+                log.student_id &&
+                log.transaction_type === 'income' &&
+                String(log.type || '').toLowerCase().includes('lesgeld')
+              ) {
+                lesgeldPaidByStudent[log.student_id] =
+                  (lesgeldPaidByStudent[log.student_id] || 0) +
+                  (Number(log.amount) || 0);
+              }
+            });
+          }
           const paidStudents = Array.isArray(students)
-            ? students.filter((s) => s.payments && s.payments.length > 0).length
+            ? students.filter((s) => {
+                const coursePrice = Number(s.class_layout?.course?.price);
+                if (!Number.isFinite(coursePrice) || coursePrice <= 0) return false;
+                const paid = lesgeldPaidByStudent[s.id] || 0;
+                return paid >= coursePrice;
+              }).length
             : 0;
           setStats({
             totalStudents,

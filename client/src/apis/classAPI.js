@@ -104,6 +104,19 @@ export const assign_mentor = async (classId, mentorId) => {
   return data;
 };
 
+// Check if a mentor is already assigned to another class
+// Returns the class info if assigned, null otherwise
+export const check_mentor_conflict = async (mentorId, excludeClassId = null) => {
+  if (!mentorId) return null;
+  
+  const classes = await get_classes();
+  const conflictClass = classes.find(
+    (cls) => cls.mentor_id === mentorId && cls.id !== excludeClassId
+  );
+  
+  return conflictClass || null;
+};
+
 const classAPI = {
   get_classes,
   add_class,
@@ -111,6 +124,7 @@ const classAPI = {
   update_class,
   get_class,
   assign_mentor,
+  check_mentor_conflict,
 };
 
 export default classAPI;
