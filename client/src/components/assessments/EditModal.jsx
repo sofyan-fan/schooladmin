@@ -279,7 +279,7 @@ export default function EditModal({ open, onOpenChange, onSave, assessment }) {
               )}
             </div>
             <div className="space-y-2">
-              <Label>Vak</Label>
+              <Label>Module</Label>
               <Controller
                 name="subject_id"
                 control={control}
@@ -297,7 +297,7 @@ export default function EditModal({ open, onOpenChange, onSave, assessment }) {
                             ? 'Selecteer eerst een klas'
                             : filteredSubjects.length === 0
                               ? 'Geen vakken beschikbaar'
-                              : 'Kies een vak'
+                              : 'Kies een module'
                         }
                       />
                     </SelectTrigger>

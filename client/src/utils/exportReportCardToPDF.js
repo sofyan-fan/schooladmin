@@ -203,15 +203,12 @@ const exportReportCardToPDF = async ({
     doc.setFontSize(9);
     doc.text(module.module_name || '-', tableX + 3, yPos + 5.5);
 
-    const checkX = tableX + colWidths.subject + 10;
-    doc.setDrawColor(100, 100, 100);
-    doc.setLineWidth(0.3);
-    doc.rect(checkX, yPos + 1.5, 4, 4);
-    if (module.required) {
-      doc.setTextColor(136, 187, 24);
-      doc.text('✓', checkX + 0.5, yPos + 4.8);
-      doc.setTextColor(50, 50, 50);
-    }
+    // Display "Ja" or "Nee" for Verplicht column instead of checkbox
+    const requiredText = module.required ? 'Ja' : 'Nee';
+    const requiredColor = module.required ? [136, 187, 24] : [156, 163, 175]; // green for Ja, gray for Nee
+    doc.setTextColor(...requiredColor);
+    doc.text(requiredText, tableX + colWidths.subject + 3, yPos + 5.5);
+    doc.setTextColor(50, 50, 50);
 
     let statusLabel = '-';
     let statusTextColor = [156, 163, 175];
@@ -507,15 +504,12 @@ export const exportMultipleReportCardsToPDF = async ({
       doc.setFontSize(9);
       doc.text(module.module_name || '-', tableX + 3, yPos + 5.5);
 
-      const checkX = tableX + colWidths.subject + 10;
-      doc.setDrawColor(100, 100, 100);
-      doc.setLineWidth(0.3);
-      doc.rect(checkX, yPos + 1.5, 4, 4);
-      if (module.required) {
-        doc.setTextColor(136, 187, 24);
-        doc.text('✓', checkX + 0.5, yPos + 4.8);
-        doc.setTextColor(50, 50, 50);
-      }
+      // Display "Ja" or "Nee" for Verplicht column instead of checkbox
+      const requiredText = module.required ? 'Ja' : 'Nee';
+      const requiredColor = module.required ? [136, 187, 24] : [156, 163, 175]; // green for Ja, gray for Nee
+      doc.setTextColor(...requiredColor);
+      doc.text(requiredText, tableX + colWidths.subject + 3, yPos + 5.5);
+      doc.setTextColor(50, 50, 50);
 
       let statusLabel = '-';
       let statusTextColor = [156, 163, 175];

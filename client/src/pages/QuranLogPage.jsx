@@ -44,6 +44,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import exportQuranLogToPDF, { exportNouraniaLogToPDF } from '@/utils/exportQuranLogToPDF';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import {
@@ -51,6 +52,7 @@ import {
   ChevronDown,
   Eye,
   FileDown,
+  FileText,
   Pencil,
   Plus,
   Trash2,
@@ -840,42 +842,71 @@ export default function QuranLogPage() {
               variant="outline"
               onClick={async () => {
                 try {
-                  const rowsToExport = table.getFilteredRowModel().rows || [];
-                  const workbook = new ExcelJS.Workbook();
-                  const ws = workbook.addWorksheet('Quran Logs');
-                  ws.columns = [
-                    { header: 'Leerling', key: 'student', width: 28 },
-                    { header: 'Begin', key: 'from', width: 22 },
-                    { header: 'Einde', key: 'to', width: 22 },
-                    { header: 'Datum', key: 'date', width: 14 },
-                    { header: 'Gememoriseerd', key: 'memo', width: 10 },
-                    { header: 'Nourania', key: 'nourania', width: 10 },
-                    { header: 'Tilawa', key: 'tilawa', width: 10 },
-                    { header: 'Tajweed', key: 'tajweed', width: 10 },
-                    { header: 'Hifdh', key: 'hifdh', width: 10 },
-                  ];
-                  rowsToExport.forEach((r) => {
-                    const o = r.original;
-                    ws.addRow({
-                      student: o.studentLabel,
-                      from: formatPointShort(o.from),
-                      to: formatPointShort(o.to),
-                      date: o.date || '',
-                      memo: o.memorized ? 'Ja' : 'Nee',
-                      nourania: o.nourania ?? '',
-                      tilawa: o.tilawa ?? '',
-                      tajweed: o.tajweed ?? '',
-                      hifdh: o.hifdh ?? '',
+                  if (filters.subject === 'nourania') {
+                    // Export Nourania logs to Excel
+                    const workbook = new ExcelJS.Workbook();
+                    const ws = workbook.addWorksheet('Nourania Logs');
+                    ws.columns = [
+                      { header: 'Leerling', key: 'student', width: 28 },
+                      { header: 'Begin', key: 'begin', width: 15 },
+                      { header: 'Einde', key: 'einde', width: 15 },
+                      { header: 'Datum', key: 'date', width: 14 },
+                      { header: 'Omschrijving', key: 'description', width: 30 },
+                    ];
+                    nouraniaRows.forEach((o) => {
+                      ws.addRow({
+                        student: o.studentLabel,
+                        begin: o.beginLabel,
+                        einde: o.eindeLabel,
+                        date: o.date || '',
+                        description: o.description || '',
+                      });
                     });
-                  });
-                  ws.getRow(1).font = { bold: true };
-                  const buffer = await workbook.xlsx.writeBuffer();
-                  const blob = new Blob([buffer], {
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                  });
-                  const fname = `quran_logs_${new Date().toISOString().split('T')[0]
-                    }.xlsx`;
-                  saveAs(blob, fname);
+                    ws.getRow(1).font = { bold: true };
+                    const buffer = await workbook.xlsx.writeBuffer();
+                    const blob = new Blob([buffer], {
+                      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    });
+                    const fname = `nourania_logs_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    saveAs(blob, fname);
+                  } else {
+                    // Export Quran logs to Excel
+                    const rowsToExport = table.getFilteredRowModel().rows || [];
+                    const workbook = new ExcelJS.Workbook();
+                    const ws = workbook.addWorksheet('Quran Logs');
+                    ws.columns = [
+                      { header: 'Leerling', key: 'student', width: 28 },
+                      { header: 'Begin', key: 'from', width: 22 },
+                      { header: 'Einde', key: 'to', width: 22 },
+                      { header: 'Datum', key: 'date', width: 14 },
+                      { header: 'Gememoriseerd', key: 'memo', width: 10 },
+                      { header: 'Nourania', key: 'nourania', width: 10 },
+                      { header: 'Tilawa', key: 'tilawa', width: 10 },
+                      { header: 'Tajweed', key: 'tajweed', width: 10 },
+                      { header: 'Hifdh', key: 'hifdh', width: 10 },
+                    ];
+                    rowsToExport.forEach((r) => {
+                      const o = r.original;
+                      ws.addRow({
+                        student: o.studentLabel,
+                        from: formatPointShort(o.from),
+                        to: formatPointShort(o.to),
+                        date: o.date || '',
+                        memo: o.memorized ? 'Ja' : 'Nee',
+                        nourania: o.nourania ?? '',
+                        tilawa: o.tilawa ?? '',
+                        tajweed: o.tajweed ?? '',
+                        hifdh: o.hifdh ?? '',
+                      });
+                    });
+                    ws.getRow(1).font = { bold: true };
+                    const buffer = await workbook.xlsx.writeBuffer();
+                    const blob = new Blob([buffer], {
+                      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    });
+                    const fname = `quran_logs_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    saveAs(blob, fname);
+                  }
                   toast.success('Excel export gestart.');
                 } catch (e) {
                   console.error(e);
@@ -883,7 +914,56 @@ export default function QuranLogPage() {
                 }
               }}
             >
-              <FileDown className="mr-2 h-4 w-4" /> Exporteren
+              <FileDown className="mr-2 h-4 w-4" /> Excel
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  if (filters.subject === 'nourania') {
+                    // Export Nourania logs to PDF
+                    const selectedStudent = filters.studentId
+                      ? studentItems.find((s) => s.value === filters.studentId)?.label
+                      : null;
+                    await exportNouraniaLogToPDF({
+                      logs: nouraniaRows,
+                      options: {
+                        studentName: selectedStudent,
+                        fileName: selectedStudent
+                          ? `nourania_log_${selectedStudent.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+                          : `nourania_logs_${new Date().toISOString().split('T')[0]}.pdf`,
+                      },
+                    });
+                  } else {
+                    // Export Quran logs to PDF
+                    const rowsToExport = table.getFilteredRowModel().rows || [];
+                    const logsForPDF = rowsToExport.map((r) => ({
+                      ...r.original,
+                      from: formatPointShort(r.original.from),
+                      to: formatPointShort(r.original.to),
+                    }));
+                    const selectedStudent = filters.studentId
+                      ? studentItems.find((s) => s.value === filters.studentId)?.label
+                      : null;
+                    await exportQuranLogToPDF({
+                      logs: logsForPDF,
+                      options: {
+                        studentName: selectedStudent,
+                        fileName: selectedStudent
+                          ? `quran_log_${selectedStudent.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+                          : `quran_logs_${new Date().toISOString().split('T')[0]}.pdf`,
+                      },
+                    });
+                  }
+                  toast.success('PDF export gestart.');
+                } catch (e) {
+                  console.error(e);
+                  toast.error('PDF export mislukt.');
+                }
+              }}
+            >
+              <FileText className="mr-2 h-4 w-4" /> PDF
             </Button>
 
             <Button

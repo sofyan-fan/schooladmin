@@ -39,6 +39,8 @@ import {
 } from '@tanstack/react-table';
 import {
   AlertTriangle,
+  HandCoins,
+  CreditCard,
   Edit,
   Eye,
   LibraryBig,
@@ -123,7 +125,7 @@ export default function BooksStockPage() {
   });
 
   const restockForm = useForm({
-    defaultValues: { quantity: '', unit_price: '', notes: '' },
+    defaultValues: { quantity: '', unit_price: '', notes: '', payment_method: 'cash' },
     mode: 'onSubmit',
   });
 
@@ -238,6 +240,7 @@ export default function BooksStockPage() {
         quantity: '',
         unit_price: String(book.purchase_price || ''),
         notes: '',
+        payment_method: 'cash',
       });
       setOpenRestockDialog(true);
     },
@@ -260,6 +263,7 @@ export default function BooksStockPage() {
         quantity: Number(values.quantity),
         unit_price: Number(values.unit_price) || restockTarget.purchase_price,
         notes: values.notes,
+        payment_method: values.payment_method,
       });
       setBooks((prev) =>
         prev.map((b) => (b.id === restockTarget.id ? result.book : b))
@@ -676,6 +680,37 @@ export default function BooksStockPage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={restockForm.control}
+                  name="payment_method"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Betaalmethode</FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant={field.value === 'cash' ? 'default' : 'outline'}
+                            className="flex-1 gap-2"
+                            onClick={() => field.onChange('cash')}
+                          >
+                            <HandCoins className="size-4" />
+                            Contant
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={field.value === 'bank' ? 'default' : 'outline'}
+                            className="flex-1 gap-2"
+                            onClick={() => field.onChange('bank')}
+                          >
+                            <CreditCard className="size-4" />
+                            Bank
+                          </Button>
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
                 {/* <FormField
                   control={restockForm.control}
                   name="notes"
@@ -751,6 +786,22 @@ export default function BooksStockPage() {
                   <span className="font-medium">
                     {(restockTarget?.stock || 0) +
                       (Number(restockValues.quantity) || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Betaalmethode</span>
+                  <span className="font-medium flex items-center gap-1.5">
+                    {restockValues.payment_method === 'cash' ? (
+                      <>
+                        <Banknote className="size-4" />
+                        Contant
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="size-4" />
+                        Bank
+                      </>
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between border-t pt-2 mt-2">
