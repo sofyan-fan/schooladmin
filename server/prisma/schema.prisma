@@ -433,6 +433,7 @@ model notification {
   created_at DateTime @default(now())
   user       user     @relation(fields: [user_id], references: [id])
   user_id    Int
+  is_global  Boolean  @default(false) // When true, notification is visible to all users (admin broadcasts)
 }
 
 model time_registration {

@@ -10,6 +10,11 @@ export const add_notification = async (notification) => {
   return response.data;
 };
 
+export const update_notification = async (id, notification) => {
+  const response = await RequestHandler.put(`/notifications/${id}`, notification);
+  return response.data;
+};
+
 export const delete_notification = async (id) => {
   await RequestHandler.del(`/notifications/${id}`);
   return id;
@@ -18,6 +23,7 @@ export const delete_notification = async (id) => {
 const notificationAPI = {
   get_notifications,
   add_notification,
+  update_notification,
   delete_notification,
 };
 

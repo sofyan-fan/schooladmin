@@ -7,14 +7,13 @@ services:
     container_name: schooladmin-client
     ports:
       # Expose port only to localhost (for Nginx)
-      - "127.0.0.1:5173:5173" 
+      - "127.0.0.1:5173:5173"
     volumes:
       - ./client:/usr/src/app:cached
       - /usr/src/app/node_modules
     depends_on:
       - server
     restart: always
-
     # SERVER
   server:
     build:
@@ -32,7 +31,6 @@ services:
     depends_on:
       - db
     restart: always
-
     # DB
   db:
     image: mysql:8.0
@@ -48,11 +46,11 @@ services:
       # Consider removing this line if you don't need direct external access.
       # If removed, Nginx cannot connect, you'd use 'db:3306' internally.
       # For now, leaving it as is.
-      - "3306:3306" 
+      - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      
-# PRISMA STUDIO
+
+  # PRISMA STUDIO
   studio:
     image: node:18
     working_dir: /usr/src/app

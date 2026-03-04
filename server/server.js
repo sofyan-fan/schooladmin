@@ -3,6 +3,8 @@ process.on('unhandledRejection', (e) =>
   console.error('UNHANDLED REJECTION:', e)
 );
 
+const morgan = require('morgan');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -12,6 +14,15 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
+morgan.token('real-ip', (req) =>
+  (req.headers['cf-connecting-ip'] ||
+   req.headers['x-real-ip'] ||
+   req.headers['x-forwarded-for'] ||
+   req.ip || '').toString().split(',')[0].trim()
+);
+
+app.use(morgan(':real-ip - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'));
+
 const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);

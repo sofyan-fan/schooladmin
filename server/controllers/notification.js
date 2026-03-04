@@ -2,7 +2,7 @@ const { prisma } = require('../prisma/connection');
 
 // Get notifications visible for the current user
 // - Admin: all notifications
-// - Other roles (student/teacher): only their own notifications
+// - Other roles (student/teacher): their own notifications + global notifications (admin broadcasts)
 exports.get_notifications = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
@@ -15,12 +15,19 @@ exports.get_notifications = async (req, res) => {
       role === 'admin'
         ? {}
         : {
-            // Filter by related user (current logged-in user)
-            user: {
-              is: {
-                id: Number(sessionUser.id),
+            // Show user's own notifications OR global notifications (admin broadcasts)
+            OR: [
+              {
+                user: {
+                  is: {
+                    id: Number(sessionUser.id),
+                  },
+                },
               },
-            },
+              {
+                is_global: true,
+              },
+            ],
           };
 
     const notifications = await prisma.notification.findMany({
@@ -37,6 +44,7 @@ exports.get_notifications = async (req, res) => {
 };
 
 // Create a new notification
+// Admin users can create global notifications (is_global: true) that all users can see
 exports.create_notification = async (req, res) => {
   try {
     const sessionUser = req.session?.user;
@@ -58,10 +66,15 @@ exports.create_notification = async (req, res) => {
         .json({ error: 'Bericht (message) mag niet leeg zijn.' });
     }
 
+    // Only admins can create global notifications
+    const role = String(sessionUser.role || '').toLowerCase();
+    const isGlobal = role === 'admin' && req.body.is_global === true;
+
     const notification = await prisma.notification.create({
       data: {
         subject,
         message,
+        is_global: isGlobal,
         // Link to the current user via relation
         user: {
           connect: { id: Number(sessionUser.id) },
@@ -75,6 +88,58 @@ exports.create_notification = async (req, res) => {
     res
       .status(500)
       .json({ error: 'An error occurred while creating the notification' });
+  }
+};
+
+// Update a notification by id (admin only)
+exports.update_notification = async (req, res) => {
+  try {
+    const sessionUser = req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const role = String(sessionUser.role || '').toLowerCase();
+    if (role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can edit notifications' });
+    }
+
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'Invalid notification id' });
+    }
+
+    const subjectRaw =
+      typeof req.body.subject === 'string' ? req.body.subject : '';
+    const messageRaw =
+      typeof req.body.message === 'string' ? req.body.message : '';
+
+    const subject = subjectRaw.trim() || 'Melding';
+    const message = messageRaw.trim();
+
+    if (!message) {
+      return res
+        .status(400)
+        .json({ error: 'Bericht (message) mag niet leeg zijn.' });
+    }
+
+    const isGlobal = req.body.is_global === true;
+
+    const notification = await prisma.notification.update({
+      where: { id },
+      data: {
+        subject,
+        message,
+        is_global: isGlobal,
+      },
+    });
+
+    res.status(200).json(notification);
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res
+      .status(500)
+      .json({ error: 'An error occurred while updating the notification' });
   }
 };
 
